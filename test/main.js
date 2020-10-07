@@ -273,7 +273,7 @@ describe("PunkVault", function () {
     ////////////////
 
     await expectRevert(
-      punkVault.connect(initialOwner).migrate(initialOwner._address)
+      punkVault.connect(initialOwner).migrate(initialOwner._address, 100)
     );
     await expectRevert(
       punkVault.connect(alice).transferOwnership(carol._address)
@@ -282,13 +282,13 @@ describe("PunkVault", function () {
       punkVault.connect(carol).transferOwnership(carol._address)
     );
     await punkVault.connect(initialOwner).transferOwnership(carol._address);
-    await expectRevert(punkVault.connect(carol).migrate(carol._address));
+    await expectRevert(punkVault.connect(carol).migrate(carol._address, 100));
     await punkVault.connect(carol).initiateUnlock(0);
     await punkVault.connect(carol).initiateUnlock(1);
     await expectRevert(punkVault.connect(carol).changeTokenName("Name"));
     await expectRevert(punkVault.connect(carol).changeTokenSymbol("NAME"));
     await punkVault.connect(carol).initiateUnlock(2);
-    await expectRevert(punkVault.connect(carol).migrate(carol._address));
+    await expectRevert(punkVault.connect(carol).migrate(carol._address, 100));
     await checkBalances();
     await punkVault.connect(carol).lock(0);
     await punkVault.connect(carol).lock(1);
@@ -481,7 +481,7 @@ describe("PunkVault", function () {
     aliceNFTs = await getUserHoldings(alice._address, 20);
     bobNFTs = await getUserHoldings(bob._address, 20);
 
-    await expectRevert(punkVault.connect(carol).migrate(bob._address));
+    await expectRevert(punkVault.connect(carol).migrate(bob._address, 100));
     ////////////////////////////////////////////////////////////////////////
     await punkVault.connect(carol).initiateUnlock(2);
     console.log("waiting...");
@@ -498,15 +498,27 @@ describe("PunkVault", function () {
     const vaultBal = parseInt(
       (await cpm.balanceOf(punkVault.address)).toString()
     );
-    await punkVault.connect(carol).migrate(bob._address);
-    vaultNFTs = aliceNFTs;
+    vaultNFTs = await getUserHoldings(punkVault.address, 20);
+    await punkVault.connect(carol).migrate(bob._address, 7);
+    expect(await punkToken.owner()).to.equal(punkVault.address);
+    await punkVault.connect(carol).migrate(bob._address, 1);
+    expect(await punkToken.owner()).to.equal(punkVault.address);
+    await punkVault.connect(carol).migrate(bob._address, 1);
+    expect(await punkToken.owner()).to.equal(bob._address);
+
     expect((await cpm.balanceOf(bob._address)).toString()).to.equal(
       (bobBal + vaultBal).toString()
     );
+
     for (let i = 0; i < vaultNFTs.length; i++) {
-      await cpm.connect(bob).transferPunk(punkVault.address, vaultNFTs[i]);
+      await cpm.connect(bob).transferPunk(alice._address, vaultNFTs[i]);
     }
+    await punkToken.connect(alice).burn(BASE.mul(9));
+    await setApprovalForAll(alice, punkVault.address, vaultNFTs);
     await punkToken.connect(bob).transferOwnership(punkVault.address);
+    aliceNFTs = await getUserHoldings(alice._address, 20);
+    await punkVault.connect(alice).mintPunkMultiple(vaultNFTs);
+
     ////////////////////////////////////////////////////////////////////////
 
     bobNFTs = await getUserHoldings(bob._address, 20);
@@ -515,7 +527,6 @@ describe("PunkVault", function () {
     await punkVault.connect(carol).setSupplierBounty([unit.toString(), 5]);
 
     await punkToken.connect(alice).approve(punkVault.address, BASE.mul(9));
-
     await punkVault.connect(alice).redeemPunkMultiple(4);
     for (let i = 0; i < 5; i++) {
       await expectRevert(

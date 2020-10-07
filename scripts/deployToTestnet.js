@@ -24,10 +24,13 @@ async function main() {
   await punkVault.deployed();
 
   await punkToken.transferOwnership(punkVault.address);
-  await punkVault.increaseSecurityLevel();
   await punkVault.transferOwnership(
-    "0x425d33d6bcb86Ece121395133Ed7f5c167F5Fea4"
+    "0x2435eDc484701613A1f22C18EB8fAdCaD6C5F288"
   );
+  // await punkVault.unlock(0);
+  // await punkVault.setReverseLink();
+  // await punkVault.lock(0);
+  // await punkVault.increaseSecurityLevel();
 
   console.log("CPM address:", cpm.address);
   console.log("PunkToken address:", punkToken.address);
