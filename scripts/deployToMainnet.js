@@ -23,11 +23,11 @@ async function main() {
   await punkVault.deployed();
 
   await punkToken.transferOwnership(punkVault.address);
-  await punkVault.increaseSecurityLevel();
-  await punkVault.setReverseLink();
   await punkVault.transferOwnership(
     "0x8F217D5cCCd08fD9dCe24D6d42AbA2BB4fF4785B"
   );
+  // await punkVault.setReverseLink();
+  // await punkVault.increaseSecurityLevel();
 
   console.log("PunkToken address:", punkToken.address);
   console.log("PunkVault address:", punkVault.address);

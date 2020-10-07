@@ -43,7 +43,7 @@ contract Manageable is Randomizable {
         emit TokenSymbolChange(newSymbol);
     }
 
-    function setReverseLink() public onlyOwner whenNotLockedS {
+    function setReverseLink() public onlyOwner {
         getERC20().setVaultAddress(address(this));
     }
 }
