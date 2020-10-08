@@ -126,7 +126,7 @@ contract Profitable is Timelocked {
         return fee;
     }
 
-    function getBurnBounty(uint256 numTokens) internal view returns (uint256) {
+    function getBurnBounty(uint256 numTokens) public view returns (uint256) {
         uint256 bounty = 0;
         uint256 reservesLength = getReserves().length();
         uint256 padding = supplierBounty[1];
@@ -143,7 +143,7 @@ contract Profitable is Timelocked {
         return bounty;
     }
 
-    function getMintBounty(uint256 numTokens) internal view returns (uint256) {
+    function getMintBounty(uint256 numTokens) public view returns (uint256) {
         uint256 bounty = 0;
         uint256 reservesLength = getReserves().length();
         uint256 padding = supplierBounty[1];
