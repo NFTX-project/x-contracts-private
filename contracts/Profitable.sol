@@ -10,7 +10,7 @@ contract Profitable is Timelocked {
     uint256[] private mintFees = [0, 0, 0];
     uint256[] private burnFees = [0, 0, 0];
     uint256[] private dualFees = [0, 0, 0];
-    uint256[] private supplierBounty = [(5 * 10**18), 10];
+    uint256[] private supplierBounty = [(5 * 10**17), 10];
 
     event MintFeesSet(uint256[] mintFees);
     event BurnFeesSet(uint256[] burnFees);
