@@ -49,7 +49,7 @@ describe("PunkVault", function () {
     const Cpm = await ethers.getContractFactory("CryptoPunksMarket");
     const PunkToken = await ethers.getContractFactory("PunkToken");
     const PunkVault = await ethers.getContractFactory("PunkVault");
-    const Aggregator = await ethers.getContractFactory("PunkAggregator");
+    const LarvaLabs = await ethers.getContractFactory("LinkLarvaLabs");
 
     const cpm = await Cpm.deploy();
     await cpm.deployed();
@@ -60,8 +60,8 @@ describe("PunkVault", function () {
     const punkVault = await PunkVault.deploy(punkToken.address, cpm.address);
     await punkVault.deployed();
 
-    const aggregator = await Aggregator.deploy(cpm.address, punkVault.address);
-    await aggregator.deployed();
+    const larvaLabs = await LarvaLabs.deploy(cpm.address, punkVault.address);
+    await larvaLabs.deployed();
 
     const [owner, alice, bob, carol] = await ethers.getSigners();
 
@@ -92,7 +92,7 @@ describe("PunkVault", function () {
     };
 
     await offerForSale(alice, 0);
-    await aggregator.connect(bob).buy(0, { value: PRICE });
+    await larvaLabs.connect(bob).buy(0, { value: PRICE });
 
     console.log("-- DONE --");
   });

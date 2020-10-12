@@ -6,7 +6,7 @@ import "./ICryptoPunksMarket.sol";
 import "./IERC20.sol";
 import "./IPunkVault.sol";
 
-contract PunkAggregator {
+contract LinkLarvaLabs {
     address private cpmAddress;
     address private tokenAddress;
     address private vaultAddress;
