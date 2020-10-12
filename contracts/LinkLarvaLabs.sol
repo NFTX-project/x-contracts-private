@@ -33,10 +33,9 @@ contract LinkLarvaLabs {
         vault = IPunkVault(vaultAddress);
     }
 
-    function buy(uint256 punkId, uint256 price) public payable {
+    function buy(uint256 punkId) public payable {
         (,,, uint256 minValue,) = cpm.punksOfferedForSale(punkId);
-        require(minValue <= price, "Price higher than expected");
-        require(msg.value >= minValue, "Value too low");
+        require(msg.value >= minValue, "Price > payment");
         cpm.buyPunk{value: minValue}(punkId);
         cpm.transferPunk(msg.sender, punkId);
     }
@@ -60,10 +59,9 @@ contract LinkLarvaLabs {
         }
     }
 
-    function buyAndMint(uint256 punkId, uint256 price) public payable {
+    function buyAndMint(uint256 punkId) public payable {
         (,,, uint256 minValue,) = cpm.punksOfferedForSale(punkId);
-        require(minValue <= price, "Price higher than expected");
-        require(msg.value >= minValue, "Value too low");
+        require(msg.value >= minValue, "Price > payment");
         cpm.buyPunk{value: minValue}(punkId);
         cpm.offerPunkForSaleToAddress(punkId, 0, vaultAddress);
         uint256 bounty = vault.getMintBounty(1);

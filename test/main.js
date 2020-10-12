@@ -5,7 +5,7 @@ const { expectRevert } = require("../utils/expectRevert");
 
 const BASE = BigNumber.from(10).pow(18);
 const zeroAddress = "0x0000000000000000000000000000000000000000";
-const PRICE = "1000000000000000";
+const PRICE = BASE.div(1000);
 describe("PunkVault", function () {
   this.timeout(0);
   it("Should run as expected", async function () {
@@ -60,7 +60,11 @@ describe("PunkVault", function () {
     const punkVault = await PunkVault.deploy(punkToken.address, cpm.address);
     await punkVault.deployed();
 
-    const larvaLabs = await LarvaLabs.deploy(cpm.address, punkVault.address);
+    const larvaLabs = await LarvaLabs.deploy(
+      cpm.address,
+      punkToken.address,
+      punkVault.address
+    );
     await larvaLabs.deployed();
 
     const [owner, alice, bob, carol] = await ethers.getSigners();
@@ -92,6 +96,7 @@ describe("PunkVault", function () {
     };
 
     await offerForSale(alice, 0);
+
     await larvaLabs.connect(bob).buy(0, { value: PRICE });
 
     console.log("-- DONE --");
