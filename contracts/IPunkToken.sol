@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-import "./IERC20.sol";
-
 pragma solidity 0.6.8;
+
+import "./IERC20.sol";
 
 interface IPunkToken is IERC20 {
     function burn(uint256 amount) external;

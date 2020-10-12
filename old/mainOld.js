@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { BigNumber } = require("ethers");
+const { BigNumber, ethers } = require("ethers");
 const { check } = require("yargs");
 const { expectRevert } = require("../utils/expectRevert");
 
@@ -10,7 +10,7 @@ describe("PunkVault", function () {
   this.timeout(0);
   it("Should run as expected", async function () {
     const checkBalances = async (alwaysPrint = false) => {
-      let ownerBal = await punkToken.balanceOf(initialOwner._address);
+      let ownerBal = await punkToken.balanceOf(owner._address);
       let aliceBal = await punkToken.balanceOf(alice._address);
       let bobBal = await punkToken.balanceOf(bob._address);
       let carolBal = await punkToken.balanceOf(carol._address);
@@ -49,7 +49,7 @@ describe("PunkVault", function () {
     const Cpm = await ethers.getContractFactory("CryptoPunksMarket");
     const PunkToken = await ethers.getContractFactory("PunkToken");
     const PunkVault = await ethers.getContractFactory("PunkVault");
-    const Aggregator = await ethers.getContractFactory("PunkAggregator");
+    const Aggregator = await ethers.getContractFactory('PunkAggregator');
 
     const cpm = await Cpm.deploy();
     await cpm.deployed();
@@ -68,7 +68,9 @@ describe("PunkVault", function () {
     await punkToken.connect(owner).transferOwnership(punkVault.address);
 
     const initialBalance = await punkToken.balanceOf(owner._address);
-    await punkToken.connect(owner).transfer(punkVault.address, initialBalance);
+    await punkToken
+      .connect(owner)
+      .transfer(punkVault.address, initialBalance);
 
     await punkVault.connect(owner).initiateUnlock(2);
     console.log("");
@@ -92,8 +94,8 @@ describe("PunkVault", function () {
     };
 
     await offerForSale(alice, 0);
-    await aggregator.connect(bob).buy(0, { value: PRICE });
-
+    await aggregator.connect(bob).buy(0, {value: PRICE}
+    
     console.log("-- DONE --");
   });
 });

@@ -72,7 +72,7 @@ interface ICryptoPunksMarket {
         address toAddress
     ) external;
 
-    function buyPunk(uint256 punkIndex) external;
+    function buyPunk(uint256 punkIndex) external payable;
 
     function withdraw() external;
 
