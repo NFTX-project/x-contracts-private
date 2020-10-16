@@ -21,34 +21,39 @@ contract Profitable is Ownable {
     event SupplierBountySet(uint256[] supplierBounty);
     event IntegratorSet(address account, bool isVerified);
 
-    function getMintFees() public view returns (uint256[] memory) {
-        return mintFees;
+    function getFeesArray(FeeType feeType)
+        public
+        view
+        returns (uint256[] memory)
+    {
+        return _getFeesArray(feeType);
     }
 
-    function getBurnFees() public view returns (uint256[] memory) {
-        return burnFees;
+    function _getFeesArray(FeeType feeType)
+        internal
+        view
+        returns (uint256[] storage)
+    {
+        if (feeType == FeeType.Mint) {
+            return mintFees;
+        } else if (feeType == FeeType.Burn) {
+            return burnFees;
+        } else {
+            return dualFees;
+        }
     }
 
-    function getDualFees() public view returns (uint256[] memory) {
-        return dualFees;
-    }
-
-    function setMintFees(uint256[] memory newMintFees) public onlyOwner {
-        require(newMintFees.length == 3, "Wrong length");
-        mintFees = newMintFees;
-        emit MintFeesSet(newMintFees);
-    }
-
-    function setBurnFees(uint256[] memory newBurnFees) public onlyOwner {
-        require(newBurnFees.length == 3, "Wrong length");
-        burnFees = newBurnFees;
-        emit BurnFeesSet(newBurnFees);
-    }
-
-    function setDualFees(uint256[] memory newDualFees) public onlyOwner {
-        require(newDualFees.length == 3, "Wrong length");
-        dualFees = newDualFees;
-        emit DualFeesSet(newDualFees);
+    function setFeesArray(FeeType feeType, uint256[] memory newFees)
+        public
+        onlyOwner
+    {
+        if (feeType == FeeType.Mint) {
+            mintFees = newFees;
+        } else if (feeType == FeeType.Burn) {
+            burnFees = newFees;
+        } else {
+            dualFees = newFees;
+        }
     }
 
     function setSupplierBounty(uint256[] memory newSupplierBounty)
@@ -84,14 +89,7 @@ contract Profitable is Ownable {
         view
         returns (uint256)
     {
-        uint256[] storage fees;
-        if (feeType == FeeType.Mint) {
-            fees = mintFees;
-        } else if (feeType == FeeType.Burn) {
-            fees = burnFees;
-        } else {
-            fees = dualFees;
-        }
+        uint256[] storage fees = _getFeesArray(feeType);
         uint256 fee = 0;
         if (verifiedIntegrators[account]) {
             return 0;

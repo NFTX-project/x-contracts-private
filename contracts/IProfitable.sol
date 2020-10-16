@@ -10,17 +10,12 @@ interface IProfitable {
     event SupplierBountySet(uint256[] supplierBounty);
     event IntegratorSet(address account, bool isVerified);
 
-    function getMintFees() external view returns (uint256[] memory);
+    function getFeesArray(FeeType feeType)
+        external
+        view
+        returns (uint256[] memory);
 
-    function getBurnFees() external view returns (uint256[] memory);
-
-    function getDualFees() external view returns (uint256[] memory);
-
-    function setMintFees(uint256[] calldata newMintFees) external;
-
-    function setBurnFees(uint256[] calldata newBurnFees) external;
-
-    function setDualFees(uint256[] calldata newDualFees) external;
+    function setFeesArray(FeeType feeType, uint256[] calldata newFees) external;
 
     function setSupplierBounty(uint256[] calldata newSupplierBounty) external;
 
@@ -35,8 +30,14 @@ interface IProfitable {
         view
         returns (uint256);
 
-    function getBurnBounty(uint256 numTokens) external view returns (uint256);
+    function getBurnBounty(uint256 numTokens, uint256 reservesLength)
+        external
+        view
+        returns (uint256);
 
-    function getMintBounty(uint256 numTokens) external view returns (uint256);
+    function getMintBounty(uint256 numTokens, uint256 reservesLength)
+        external
+        view
+        returns (uint256);
     function transferOwnership(address newOwner) external;
 }

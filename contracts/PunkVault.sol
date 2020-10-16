@@ -38,7 +38,10 @@ contract PunkVault is Manageable {
             1,
             IProfitable.FeeType.Mint
         );
-        uint256 bounty = profitableContract.getMintBounty(1);
+        uint256 bounty = profitableContract.getMintBounty(
+            1,
+            getReservesLength()
+        );
         if (fee > bounty) {
             uint256 differnce = fee.sub(bounty);
             require(msg.value >= differnce, "Value too low");
@@ -96,7 +99,10 @@ contract PunkVault is Manageable {
             tokenIds.length,
             IProfitable.FeeType.Mint
         );
-        uint256 bounty = profitableContract.getMintBounty(tokenIds.length);
+        uint256 bounty = profitableContract.getMintBounty(
+            tokenIds.length,
+            getReservesLength()
+        );
         require(bounty >= fee || msg.value >= fee.sub(bounty), "Value too low");
         uint256 numTokens = _mintPunkMultiple(tokenIds, false);
         require(numTokens > 0, "No tokens minted");
@@ -167,7 +173,7 @@ contract PunkVault is Manageable {
             1,
             IProfitable.FeeType.Burn
         ) +
-            profitableContract.getBurnBounty(1);
+            profitableContract.getBurnBounty(1, getReservesLength());
         require(msg.value >= fee, "Value too low");
         _redeemPunk(false);
     }
@@ -208,7 +214,7 @@ contract PunkVault is Manageable {
             numTokens,
             IProfitable.FeeType.Burn
         ) +
-            profitableContract.getBurnBounty(numTokens);
+            profitableContract.getBurnBounty(numTokens, getReservesLength());
         require(msg.value >= fee, "Value too low");
         _redeemPunkMultiple(numTokens, false);
     }

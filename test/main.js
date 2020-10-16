@@ -74,33 +74,43 @@ describe("PunkVault", function () {
 
     const VaultController = await ethers.getContractFactory("VaultController");
     const vaultController = await VaultController.deploy(
+      punkVault.address,
       eligibleContract.address,
       controllableContract.address,
-      profitableContract.address,
-      punkVault.address
+      profitableContract.address
     );
     await vaultController.deployed();
-    await vaultController.deployed();
-
-    return;
-    //
 
     const [initialOwner, alice, bob, carol] = await ethers.getSigners();
 
     await punkToken.connect(initialOwner).transferOwnership(punkVault.address);
+    await eligibleContract
+      .connect(initialOwner)
+      .transferOwnership(vaultController.address);
+    await controllableContract
+      .connect(initialOwner)
+      .transferOwnership(vaultController.address);
+    await profitableContract
+      .connect(initialOwner)
+      .transferOwnership(vaultController.address);
+    await punkVault
+      .connect(initialOwner)
+      .transferOwnership(vaultController.address);
 
-    const initialBalance = await punkToken.balanceOf(initialOwner._address);
+    /* const initialBalance = await punkToken.balanceOf(initialOwner._address);
     await punkToken
       .connect(initialOwner)
-      .transfer(punkVault.address, initialBalance);
+      .transfer(punkVault.address, initialBalance); */
 
-    await punkVault.connect(initialOwner).initiateUnlock(2);
+    await vaultController.connect(initialOwner).initiateUnlock(2);
     console.log("");
     console.log("unlocking...");
     await new Promise((resolve) => setTimeout(() => resolve(), 3000));
-    await punkVault.connect(initialOwner).setSupplierBounty([0, 0]);
-    await punkVault.connect(initialOwner).setEligibilities(zombieIds(), true);
-    await punkVault.connect(initialOwner).lock(2);
+    await vaultController.connect(initialOwner).setSupplierBounty([0, 0]);
+    await vaultController
+      .connect(initialOwner)
+      .setEligibilities(zombieIds(), true);
+    await vaultController.connect(initialOwner).lock(2);
 
     /////////////////////////////////////
     // PunkVault: *.mintPunk *.redeemPunk //
@@ -112,12 +122,17 @@ describe("PunkVault", function () {
       value = 0,
       tokenAlreadyExists = false
     ) => {
+      console.log(999991);
       if (!tokenAlreadyExists) {
+        console.log(99999);
+
         await cpm.connect(signer).setInitialOwner(signer._address, tokenId);
+        return;
       }
       await cpm
         .connect(signer)
         .offerPunkForSaleToAddress(tokenId, 0, punkVault.address);
+
       await punkVault.connect(signer).mintPunk(tokenId, { value: value });
     };
 
@@ -128,13 +143,14 @@ describe("PunkVault", function () {
 
     for (let _i = 0; _i < 10; _i++) {
       const i = zombieIds()[_i];
+      // return;
       await approveAndMint(alice, i);
+      return;
       const i2 = zombieIds()[_i + 10];
       await approveAndMint(bob, i2);
     }
 
     for (let _i = 0; _i < 10; _i++) {
-      const i = zombieIds()[_i];
       await approveAndRedeem(alice);
       await approveAndRedeem(bob);
     }
@@ -160,8 +176,6 @@ describe("PunkVault", function () {
     console.log("✓ PunkVault: mintPunk, redeemPunk");
     console.log();
 
-    await punkVault.connect(initialOwner).setSafeMode(false);
-
     await checkBalances();
 
     /////////////////////////////
@@ -173,9 +187,6 @@ describe("PunkVault", function () {
     await cpm
       .connect(alice)
       .offerPunkForSaleToAddress(aliceNFTs[0], 0, punkVault.address);
-    await punkVault.connect(initialOwner).setSafeMode(true);
-    await expectRevert(punkVault.connect(alice).mintAndRedeem(aliceNFTs[0]));
-    await punkVault.connect(initialOwner).setSafeMode(false);
     await punkVault.connect(alice).mintAndRedeem(aliceNFTs[0]);
     expect(await cpm.punkIndexToAddress(aliceNFTs[0])).to.equal(alice._address);
     await cpm
@@ -184,6 +195,7 @@ describe("PunkVault", function () {
     await cpm
       .connect(bob)
       .offerPunkForSaleToAddress(bobNFTs[1], 0, punkVault.address);
+
     await punkVault.connect(bob).mintPunk(bobNFTs[0]);
     await punkVault.connect(bob).mintPunk(bobNFTs[1]);
     await cpm
@@ -326,7 +338,7 @@ describe("PunkVault", function () {
     await punkVault.connect(carol).lock(1);
     await punkVault.connect(carol).lock(2);
 
-    if (!(await checkBalances())) return;
+    await checkBalances();
     console.log();
     console.log("✓ Manageable");
     console.log();
