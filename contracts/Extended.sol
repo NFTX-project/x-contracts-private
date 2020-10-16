@@ -17,7 +17,7 @@ contract Extended is PunkVaultSafe {
     IControllable internal controllableContract;
     IProfitable internal profitableContract;
 
-    function setContracts(
+    function setExtensions(
         address eligibleAddress,
         address randomizableAddress,
         address controllableAddress,

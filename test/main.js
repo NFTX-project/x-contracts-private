@@ -69,7 +69,14 @@ describe("PunkVault", function () {
     await punkToken.deployed();
 
     const PunkVault = await ethers.getContractFactory("PunkVault");
-    const punkVault = await PunkVault.deploy(punkToken.address, cpm.address);
+    const punkVault = await PunkVault.deploy(
+      punkToken.address, 
+      cpm.address, 
+      eligibleContract.address, 
+      randomizableContract.address,
+      controllableContract.address,
+      profitableContract.address
+    );
     await punkVault.deployed();
 
     const VaultController = await ethers.getContractFactory("VaultController");
@@ -122,17 +129,12 @@ describe("PunkVault", function () {
       value = 0,
       tokenAlreadyExists = false
     ) => {
-      console.log(999991);
       if (!tokenAlreadyExists) {
-        console.log(99999);
-
         await cpm.connect(signer).setInitialOwner(signer._address, tokenId);
-        return;
       }
       await cpm
         .connect(signer)
         .offerPunkForSaleToAddress(tokenId, 0, punkVault.address);
-
       await punkVault.connect(signer).mintPunk(tokenId, { value: value });
     };
 
@@ -143,9 +145,7 @@ describe("PunkVault", function () {
 
     for (let _i = 0; _i < 10; _i++) {
       const i = zombieIds()[_i];
-      // return;
       await approveAndMint(alice, i);
-      return;
       const i2 = zombieIds()[_i + 10];
       await approveAndMint(bob, i2);
     }

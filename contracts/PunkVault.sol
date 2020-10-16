@@ -10,9 +10,22 @@ contract PunkVault is Manageable {
     event TokenBurned(uint256 tokenId, address indexed to);
     event TokensBurned(uint256[] tokenIds, address indexed to);
 
-    constructor(address erc20Address, address cpmAddress) public {
+    constructor(
+        address erc20Address, 
+        address cpmAddress, 
+        address eligibleAddress,
+        address randomizableAddress,
+        address controllableAddress,
+        address profitableAddress
+    ) public {
         setERC20Address(erc20Address);
         setCpmAddress(cpmAddress);
+        setExtensions(
+            eligibleAddress,
+            randomizableAddress,
+            controllableAddress,
+            profitableAddress
+        );
     }
 
     function getCryptoPunkAtIndex(uint256 index) public view returns (uint256) {
