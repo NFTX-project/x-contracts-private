@@ -33,8 +33,12 @@ contract PunkVault is Manageable {
         nonReentrant
         whenNotPaused
     {
-        uint256 fee = getFee(_msgSender(), 1, _getMintFees());
-        uint256 bounty = getMintBounty(1);
+        uint256 fee = profitableContract.getFee(
+            _msgSender(),
+            1,
+            IProfitable.FeeType.Mint
+        );
+        uint256 bounty = profitableContract.getMintBounty(1);
         if (fee > bounty) {
             uint256 differnce = fee.sub(bounty);
             require(msg.value >= differnce, "Value too low");
@@ -62,6 +66,7 @@ contract PunkVault is Manageable {
         (bool forSale, uint256 _tokenId, address seller, uint256 minVal, address buyer) = getCPM()
             .punksOfferedForSale(tokenId);
         require(_tokenId == tokenId, "Wrong punk");
+        require(eligibleContract.isEligible(tokenId), "Not eligiblle");
         require(forSale, "Punk not available");
         require(buyer == address(this), "Transfer not approved");
         require(minVal == 0, "Min value not zero");
@@ -85,10 +90,13 @@ contract PunkVault is Manageable {
         payable
         nonReentrant
         whenNotPaused
-        whenNotInSafeMode
     {
-        uint256 fee = getFee(_msgSender(), tokenIds.length, _getMintFees());
-        uint256 bounty = getMintBounty(tokenIds.length);
+        uint256 fee = profitableContract.getFee(
+            _msgSender(),
+            tokenIds.length,
+            IProfitable.FeeType.Mint
+        );
+        uint256 bounty = profitableContract.getMintBounty(tokenIds.length);
         require(bounty >= fee || msg.value >= fee.sub(bounty), "Value too low");
         uint256 numTokens = _mintPunkMultiple(tokenIds, false);
         require(numTokens > 0, "No tokens minted");
@@ -122,20 +130,20 @@ contract PunkVault is Manageable {
         for (uint256 i = 0; i < tokenIds.length; i++) {
             uint256 tokenId = tokenIds[i];
             require(tokenId < 10000, "tokenId too high");
-            (bool forSale, uint256 _tokenId, address seller, uint256 minVal, address buyer) = getCPM()
+            (bool forSale, , address seller, uint256 minVal, address buyer) = getCPM()
                 .punksOfferedForSale(tokenId);
-            bool rightToken = _tokenId == tokenId;
             bool isApproved = buyer == address(this);
             bool priceIsZero = minVal == 0;
             bool isSeller = msgSender == seller;
             bool isOwner = msgSender == getCPM().punkIndexToAddress(tokenId);
+            bool isEligible = eligibleContract.isEligible(tokenId);
             if (
                 forSale &&
-                rightToken &&
                 isApproved &&
                 priceIsZero &&
                 isSeller &&
-                isOwner
+                isOwner &&
+                isEligible
             ) {
                 getCPM().buyPunk(tokenId);
                 getReserves().add(tokenId);
@@ -154,8 +162,12 @@ contract PunkVault is Manageable {
     }
 
     function redeemPunk() public payable nonReentrant whenNotPaused {
-        uint256 fee = getFee(_msgSender(), 1, _getBurnFees()) +
-            getBurnBounty(1);
+        uint256 fee = profitableContract.getFee(
+            _msgSender(),
+            1,
+            IProfitable.FeeType.Burn
+        ) +
+            profitableContract.getBurnBounty(1);
         require(msg.value >= fee, "Value too low");
         _redeemPunk(false);
     }
@@ -173,7 +185,9 @@ contract PunkVault is Manageable {
             "ERC20 allowance too small"
         );
         uint256 reservesLength = getReserves().length();
-        uint256 randomIndex = getPseudoRand(reservesLength);
+        uint256 randomIndex = randomizableContract.getPseudoRand(
+            reservesLength
+        );
         uint256 tokenId = getReserves().at(randomIndex);
         if (!partOfDualOp) {
             getERC20().burnFrom(msgSender, tokenAmount);
@@ -188,10 +202,13 @@ contract PunkVault is Manageable {
         payable
         nonReentrant
         whenNotPaused
-        whenNotInSafeMode
     {
-        uint256 fee = getFee(_msgSender(), numTokens, _getBurnFees()) +
-            getBurnBounty(numTokens);
+        uint256 fee = profitableContract.getFee(
+            _msgSender(),
+            numTokens,
+            IProfitable.FeeType.Burn
+        ) +
+            profitableContract.getBurnBounty(numTokens);
         require(msg.value >= fee, "Value too low");
         _redeemPunkMultiple(numTokens, false);
     }
@@ -216,7 +233,9 @@ contract PunkVault is Manageable {
         uint256[] memory tokenIds = new uint256[](numTokens);
         for (uint256 i = 0; i < numTokens; i++) {
             uint256 reservesLength = getReserves().length();
-            uint256 randomIndex = getPseudoRand(reservesLength);
+            uint256 randomIndex = randomizableContract.getPseudoRand(
+                reservesLength
+            );
             uint256 tokenId = getReserves().at(randomIndex);
             tokenIds[i] = tokenId;
             getReserves().remove(tokenId);
@@ -230,9 +249,12 @@ contract PunkVault is Manageable {
         payable
         nonReentrant
         whenNotPaused
-        whenNotInSafeMode
     {
-        uint256 fee = getFee(_msgSender(), 1, _getDualFees());
+        uint256 fee = profitableContract.getFee(
+            _msgSender(),
+            1,
+            IProfitable.FeeType.Dual
+        );
         require(msg.value >= fee, "Value too low");
         require(_mintPunk(tokenId, true), "Minting failed");
         _redeemPunk(true);
@@ -243,12 +265,15 @@ contract PunkVault is Manageable {
         payable
         nonReentrant
         whenNotPaused
-        whenNotInSafeMode
     {
         uint256 numTokens = tokenIds.length;
         require(numTokens > 0, "No tokens");
         require(numTokens <= 20, "Over 20 tokens");
-        uint256 fee = getFee(_msgSender(), numTokens, _getDualFees());
+        uint256 fee = profitableContract.getFee(
+            _msgSender(),
+            numTokens,
+            IProfitable.FeeType.Dual
+        );
         require(msg.value >= fee, "Value too low");
         uint256 numTokensMinted = _mintPunkMultiple(tokenIds, true);
         if (numTokensMinted > 0) {
@@ -256,11 +281,7 @@ contract PunkVault is Manageable {
         }
     }
 
-    function mintRetroactively(uint256 tokenId, address to)
-        public
-        onlyOwner
-        whenNotLockedS
-    {
+    function mintRetroactively(uint256 tokenId, address to) public onlyOwner {
         require(
             getCPM().punkIndexToAddress(tokenId) == address(this),
             "Not owner"
@@ -276,14 +297,16 @@ contract PunkVault is Manageable {
         emit TokenMinted(tokenId, _msgSender());
     }
 
-    function redeemRetroactively(address to) public onlyOwner whenNotLockedS {
+    function redeemRetroactively(address to) public onlyOwner {
         require(
             getERC20().balanceOf(address(this)) >= (10**18),
             "Not enough PUNK"
         );
         getERC20().burn(10**18);
         uint256 reservesLength = getReserves().length();
-        uint256 randomIndex = getPseudoRand(reservesLength);
+        uint256 randomIndex = randomizableContract.getPseudoRand(
+            reservesLength
+        );
 
         uint256 tokenId = getReserves().at(randomIndex);
         getReserves().remove(tokenId);

@@ -2,9 +2,12 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "./Timelocked.sol";
+import "./Ownable.sol";
+import "./SafeMath.sol";
 
-contract Profitable is Timelocked {
+contract Profitable is Ownable {
+    using SafeMath for uint256;
+    enum FeeType {Mint, Burn, Dual}
     mapping(address => bool) private verifiedIntegrators;
     uint256 private numIntegrators = 0;
     uint256[] private mintFees = [0, 0, 0];
@@ -17,7 +20,6 @@ contract Profitable is Timelocked {
     event DualFeesSet(uint256[] dualFees);
     event SupplierBountySet(uint256[] supplierBounty);
     event IntegratorSet(address account, bool isVerified);
-    event Withdrawal(address to, uint256 amount);
 
     function getMintFees() public view returns (uint256[] memory) {
         return mintFees;
@@ -31,47 +33,19 @@ contract Profitable is Timelocked {
         return dualFees;
     }
 
-    function getSupplierBounty() public view returns (uint256[] memory) {
-        return supplierBounty;
-    }
-
-    function _getMintFees() internal view returns (uint256[] storage) {
-        return mintFees;
-    }
-
-    function _getBurnFees() internal view returns (uint256[] storage) {
-        return burnFees;
-    }
-
-    function _getDualFees() internal view returns (uint256[] storage) {
-        return dualFees;
-    }
-
-    function setMintFees(uint256[] memory newMintFees)
-        public
-        onlyOwner
-        whenNotLockedM
-    {
+    function setMintFees(uint256[] memory newMintFees) public onlyOwner {
         require(newMintFees.length == 3, "Wrong length");
         mintFees = newMintFees;
         emit MintFeesSet(newMintFees);
     }
 
-    function setBurnFees(uint256[] memory newBurnFees)
-        public
-        onlyOwner
-        whenNotLockedL
-    {
+    function setBurnFees(uint256[] memory newBurnFees) public onlyOwner {
         require(newBurnFees.length == 3, "Wrong length");
         burnFees = newBurnFees;
         emit BurnFeesSet(newBurnFees);
     }
 
-    function setDualFees(uint256[] memory newDualFees)
-        public
-        onlyOwner
-        whenNotLockedM
-    {
+    function setDualFees(uint256[] memory newDualFees) public onlyOwner {
         require(newDualFees.length == 3, "Wrong length");
         dualFees = newDualFees;
         emit DualFeesSet(newDualFees);
@@ -80,7 +54,6 @@ contract Profitable is Timelocked {
     function setSupplierBounty(uint256[] memory newSupplierBounty)
         public
         onlyOwner
-        whenNotLockedL
     {
         require(newSupplierBounty.length == 2, "Wrong length");
         supplierBounty = newSupplierBounty;
@@ -95,11 +68,7 @@ contract Profitable is Timelocked {
         return numIntegrators;
     }
 
-    function setIntegrator(address account, bool isVerified)
-        public
-        onlyOwner
-        whenNotLockedM
-    {
+    function setIntegrator(address account, bool isVerified) public onlyOwner {
         require(isVerified != verifiedIntegrators[account], "Already set");
         if (isVerified) {
             numIntegrators = numIntegrators.add(1);
@@ -110,11 +79,19 @@ contract Profitable is Timelocked {
         emit IntegratorSet(account, isVerified);
     }
 
-    function getFee(address account, uint256 numTokens, uint256[] storage fees)
-        internal
+    function getFee(address account, uint256 numTokens, FeeType feeType)
+        public
         view
         returns (uint256)
     {
+        uint256[] storage fees;
+        if (feeType == FeeType.Mint) {
+            fees = mintFees;
+        } else if (feeType == FeeType.Burn) {
+            fees = burnFees;
+        } else {
+            fees = dualFees;
+        }
         uint256 fee = 0;
         if (verifiedIntegrators[account]) {
             return 0;
@@ -126,9 +103,12 @@ contract Profitable is Timelocked {
         return fee;
     }
 
-    function getBurnBounty(uint256 numTokens) public view returns (uint256) {
+    function getBurnBounty(uint256 numTokens, uint256 reservesLength)
+        public
+        view
+        returns (uint256)
+    {
         uint256 bounty = 0;
-        uint256 reservesLength = getReserves().length();
         uint256 padding = supplierBounty[1];
         if (reservesLength - numTokens <= padding) {
             uint256 addedAmount = 0;
@@ -143,9 +123,12 @@ contract Profitable is Timelocked {
         return bounty;
     }
 
-    function getMintBounty(uint256 numTokens) public view returns (uint256) {
+    function getMintBounty(uint256 numTokens, uint256 reservesLength)
+        public
+        view
+        returns (uint256)
+    {
         uint256 bounty = 0;
-        uint256 reservesLength = getReserves().length();
         uint256 padding = supplierBounty[1];
         if (reservesLength <= padding) {
             uint256 addedAmount = 0;
@@ -160,9 +143,4 @@ contract Profitable is Timelocked {
         return bounty;
     }
 
-    function withdraw(address payable to) public onlyOwner whenNotLockedM {
-        uint256 balance = address(this).balance;
-        to.transfer(balance);
-        emit Withdrawal(to, balance);
-    }
 }

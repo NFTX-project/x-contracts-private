@@ -2,10 +2,10 @@
 
 pragma solidity 0.6.8;
 
-import "./PunkVaultSafe.sol";
+import "./Ownable.sol";
 import "./SafeMath.sol";
 
-contract Timelocked is PunkVaultSafe {
+contract Timelocked is Ownable {
     using SafeMath for uint256;
     enum Timelock {Short, Medium, Long}
 

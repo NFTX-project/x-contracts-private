@@ -2,14 +2,18 @@
 
 pragma solidity 0.6.8;
 
-import "./Randomizable.sol";
+import "./Extended.sol";
+import "./SafeMath.sol";
 
-contract Manageable is Randomizable {
+contract Manageable is Extended {
+    using SafeMath for uint256;
+
     event MigrationComplete(address to);
     event TokenNameChange(string name);
     event TokenSymbolChange(string symbol);
+    event Withdrawal(address to, uint256 amount);
 
-    function migrate(address to, uint256 max) public onlyOwner whenNotLockedL {
+    function migrate(address to, uint256 max) public onlyOwner {
         uint256 count = 0;
         uint256 reservesLength = getReserves().length();
         for (uint256 i = 0; i < reservesLength; i++) {
@@ -25,25 +29,23 @@ contract Manageable is Randomizable {
         emit MigrationComplete(to);
     }
 
-    function changeTokenName(string memory newName)
-        public
-        onlyOwner
-        whenNotLockedM
-    {
+    function changeTokenName(string memory newName) public onlyOwner {
         getERC20().changeName(newName);
         emit TokenNameChange(newName);
     }
 
-    function changeTokenSymbol(string memory newSymbol)
-        public
-        onlyOwner
-        whenNotLockedM
-    {
+    function changeTokenSymbol(string memory newSymbol) public onlyOwner {
         getERC20().changeSymbol(newSymbol);
         emit TokenSymbolChange(newSymbol);
     }
 
     function setReverseLink() public onlyOwner {
         getERC20().setVaultAddress(address(this));
+    }
+
+    function withdraw(address payable to) public onlyOwner {
+        uint256 balance = address(this).balance;
+        to.transfer(balance);
+        emit Withdrawal(to, balance);
     }
 }

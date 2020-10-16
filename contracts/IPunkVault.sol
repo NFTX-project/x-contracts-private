@@ -14,4 +14,24 @@ interface IPunkVault {
     function mintPunkMultiple(uint256[] calldata tokenIds) external payable;
 
     function getMintBounty(uint256 numTokens) external view returns (uint256);
+
+    function transferOwnership(address newOwner) external;
+
+    function mintRetroactively(uint256 tokenId, address to) external;
+
+    function redeemRetroactively(address to) external;
+
+    function migrate(address to, uint256 max) external;
+
+    function changeTokenName(string calldata newName) external;
+
+    function changeTokenSymbol(string calldata newSymbol) external;
+
+    function setReverseLink() external;
+
+    function withdraw(address payable to) external;
+
+    function pause() external;
+
+    function unpause() external;
 }
