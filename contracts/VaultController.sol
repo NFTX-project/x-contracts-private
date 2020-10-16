@@ -139,6 +139,7 @@ contract VaultController is Timelocked {
     function setFeesArray(IProfitable.FeeType feeType, uint256[] memory newFees)
         public
         onlyOwner
+        whenNotLockedM
     {
         profitableContract.setFeesArray(feeType, newFees);
     }

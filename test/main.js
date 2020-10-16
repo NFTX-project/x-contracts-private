@@ -382,13 +382,13 @@ describe("PunkVault", function () {
     bobNFTs = await getUserHoldings(bob._address, 20);
 
     await checkBalances();
-    await expectRevert(punkVault.connect(carol).changeTokenName("Name"));
-    await expectRevert(punkVault.connect(carol).changeTokenSymbol("NAME"));
-    await expectRevert(punkVault.connect(carol).setMintFees([1, 1, 1]));
-    await expectRevert(punkVault.connect(carol).setBurnFees([1, 1, 1]));
-    await expectRevert(punkVault.connect(carol).setDualFees([1, 1, 1]));
+    await expectRevert(vaultController.connect(carol).changeTokenName("Name"));
+    await expectRevert(vaultController.connect(carol).changeTokenSymbol("NAME"));
+    await expectRevert(vaultController.connect(carol).setFeesArray(0,[1, 1, 1]));
+    await expectRevert(vaultController.connect(carol).setFeesArray(1, [1, 1, 1]));
+    await expectRevert(vaultController.connect(carol).setFeesArray(2, [1, 1, 1]));
     ////////////////////////////////////////////////////////////////////////
-    await punkVault.connect(carol).initiateUnlock(1);
+    await vaultController.connect(carol).initiateUnlock(1);
     console.log("waiting...");
     console.log();
     await new Promise((resolve) => setTimeout(() => resolve(), 3000));
@@ -396,10 +396,10 @@ describe("PunkVault", function () {
 
     // Manageable: *.changeTokenName, *.changeTokenSymbol
 
-    await expectRevert(punkVault.connect(alice).changeTokenName("Name"));
-    await expectRevert(punkVault.connect(alice).changeTokenSymbol("NAME"));
-    await punkVault.connect(carol).changeTokenName("Name");
-    await punkVault.connect(carol).changeTokenSymbol("NAME");
+    await expectRevert(vaultController.connect(alice).changeTokenName("Name"));
+    await expectRevert(vaultController.connect(alice).changeTokenSymbol("NAME"));
+    await vaultController.connect(carol).changeTokenName("Name");
+    await vaultController.connect(carol).changeTokenSymbol("NAME");
     expect(await punkToken.name()).to.equal("Name");
     expect(await punkToken.symbol()).to.equal("NAME");
     await checkBalances();
@@ -410,7 +410,7 @@ describe("PunkVault", function () {
     // Profitable: *.setMintFees
     await setApprovalForAll(alice, punkVault.address, aliceNFTs.slice(0, 5));
 
-    await punkVault.connect(carol).setMintFees([2, 2, 2]);
+    await vaultController.connect(carol).setFeesArray(0, [2, 2, 2]);
     await expectRevert(
       punkVault.connect(alice).mintPunk(aliceNFTs[0], { value: 1 })
     );
@@ -431,7 +431,7 @@ describe("PunkVault", function () {
     // Profitable: *.setDualFees
     aliceNFTs = await getUserHoldings(alice._address, 20);
     await setApprovalForAll(alice, punkVault.address, aliceNFTs.slice(0, 5));
-    await punkVault.connect(carol).setDualFees([2, 2, 2]);
+    await vaultController.connect(carol).setFeesArray(2, [2, 2, 2]);
     await expectRevert(
       punkVault.connect(alice).mintAndRedeem(aliceNFTs[1], { value: 1 })
     );
@@ -455,7 +455,7 @@ describe("PunkVault", function () {
     aliceNFTs = await getUserHoldings(alice._address, 20);
 
     await expectRevert(
-      punkVault.connect(alice).setIntegrator(alice._address, true)
+      vaultController.connect(alice).setIntegrator(alice._address, true)
     );
     await cpm
       .connect(alice)
