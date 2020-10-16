@@ -9,18 +9,14 @@ contract Eligible is Ownable {
 
     event SetEligible(uint256 punkId, bool isEligible);
 
-    function setEligibility(uint256 punkId, bool isEligible) public onlyOwner {
-        punkIsEligible[punkId] = isEligible;
-        emit SetEligible(punkId, isEligible);
-    }
-
     function setEligibilities(uint256[] memory punkIds, bool areEligible)
         public
         onlyOwner
     {
         require(punkIds.length <= 100, "Too many items");
         for (uint256 i = 0; i < punkIds.length; i++) {
-            setEligibility(punkIds[i], areEligible);
+            punkIsEligible[punkIds[i]] = areEligible;
+            emit SetEligible(punkIds[i], areEligible);
         }
     }
 

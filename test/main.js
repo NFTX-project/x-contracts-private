@@ -70,9 +70,9 @@ describe("PunkVault", function () {
 
     const PunkVault = await ethers.getContractFactory("PunkVault");
     const punkVault = await PunkVault.deploy(
-      punkToken.address, 
-      cpm.address, 
-      eligibleContract.address, 
+      punkToken.address,
+      cpm.address,
+      eligibleContract.address,
       randomizableContract.address,
       controllableContract.address,
       profitableContract.address
@@ -244,11 +244,6 @@ describe("PunkVault", function () {
     bobNFTs = await getUserHoldings(bob._address, 20);
     await setApprovalForAll(alice, punkVault.address, aliceNFTs);
     await setApprovalForAll(bob, punkVault.address, bobNFTs);
-    await punkVault.connect(initialOwner).setSafeMode(true);
-    await expectRevert(
-      punkVault.connect(alice).mintPunkMultiple(aliceNFTs.slice(0, 5))
-    );
-    await punkVault.connect(initialOwner).setSafeMode(false);
     await punkVault.connect(alice).mintPunkMultiple(aliceNFTs.slice(0, 5));
     for (let i = 0; i < 5; i++) {
       expect(await cpm.punkIndexToAddress(aliceNFTs[i])).to.equal(
@@ -265,9 +260,6 @@ describe("PunkVault", function () {
       FIVE
     );
     await punkToken.connect(alice).approve(punkVault.address, FIVE);
-    await punkVault.connect(initialOwner).setSafeMode(true);
-    await expectRevert(punkVault.connect(alice).redeemPunkMultiple(5));
-    await punkVault.connect(initialOwner).setSafeMode(false);
     await punkVault.connect(alice).redeemPunkMultiple(5);
     for (let i = 0; i < 10; i++) {
       expect(await cpm.punkIndexToAddress(aliceNFTs[i])).to.equal(
@@ -316,27 +308,26 @@ describe("PunkVault", function () {
     // Manageable //
     ////////////////
 
+    await vaultController
+      .connect(initialOwner)
+      .transferOwnership(carol._address);
     await expectRevert(
-      punkVault.connect(initialOwner).migrate(initialOwner._address, 100)
+      vaultController.connect(carol).migrate(carol._address, 100)
     );
+    await vaultController.connect(carol).initiateUnlock(0);
+    await vaultController.connect(carol).initiateUnlock(1);
+    await expectRevert(vaultController.connect(carol).changeTokenName("Name"));
     await expectRevert(
-      punkVault.connect(alice).transferOwnership(carol._address)
+      vaultController.connect(carol).changeTokenSymbol("NAME")
     );
+    await vaultController.connect(carol).initiateUnlock(2);
     await expectRevert(
-      punkVault.connect(carol).transferOwnership(carol._address)
+      vaultController.connect(carol).migrate(carol._address, 100)
     );
-    await punkVault.connect(initialOwner).transferOwnership(carol._address);
-    await expectRevert(punkVault.connect(carol).migrate(carol._address, 100));
-    await punkVault.connect(carol).initiateUnlock(0);
-    await punkVault.connect(carol).initiateUnlock(1);
-    await expectRevert(punkVault.connect(carol).changeTokenName("Name"));
-    await expectRevert(punkVault.connect(carol).changeTokenSymbol("NAME"));
-    await punkVault.connect(carol).initiateUnlock(2);
-    await expectRevert(punkVault.connect(carol).migrate(carol._address, 100));
     await checkBalances();
-    await punkVault.connect(carol).lock(0);
-    await punkVault.connect(carol).lock(1);
-    await punkVault.connect(carol).lock(2);
+    await vaultController.connect(carol).lock(0);
+    await vaultController.connect(carol).lock(1);
+    await vaultController.connect(carol).lock(2);
 
     await checkBalances();
     console.log();
@@ -351,30 +342,34 @@ describe("PunkVault", function () {
     ////////////////////
 
     await expectRevert(
-      punkVault.connect(carol).mintRetroactively(aliceNFTs[0], alice._address)
+      vaultController
+        .connect(carol)
+        .mintRetroactively(aliceNFTs[0], alice._address)
     );
     await cpm.connect(alice).transferPunk(punkVault.address, aliceNFTs[0]);
     ////////////////////////////////////////////////////////////////////////
-    await punkVault.connect(carol).initiateUnlock(0);
+    await vaultController.connect(carol).initiateUnlock(0);
     console.log("waiting...");
     console.log();
     await new Promise((resolve) => setTimeout(() => resolve(), 3000));
     ////////////////////////////////////////////////////////////////////////
     await expectRevert(punkVault.connect(alice).mintPunk(aliceNFTs[0]));
     await expectRevert(
-      punkVault.connect(carol).mintRetroactively(bobNFTs[0], alice._address)
+      vaultController
+        .connect(carol)
+        .mintRetroactively(bobNFTs[0], alice._address)
     );
-    await punkVault
+    await vaultController
       .connect(carol)
       .mintRetroactively(aliceNFTs[0], alice._address);
     await punkToken.connect(alice).transfer(punkVault.address, BASE.div(2));
     await expectRevert(
-      punkVault.connect(carol).redeemRetroactively(alice._address)
+      vaultController.connect(carol).redeemRetroactively(alice._address)
     );
     await punkToken.connect(alice).transfer(punkVault.address, BASE.div(2));
-    await punkVault.connect(carol).redeemRetroactively(alice._address);
+    await vaultController.connect(carol).redeemRetroactively(alice._address);
     ////////////////////////////////////////////////////////////////////////
-    await punkVault.connect(carol).lock(0);
+    await vaultController.connect(carol).lock(0);
 
     console.log("✓ Timelock.Short");
     console.log();
