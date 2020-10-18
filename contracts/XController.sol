@@ -9,7 +9,7 @@ import "./IRandomizable.sol";
 import "./IControllable.sol";
 import "./IProfitable.sol";
 
-contract VaultController is Timelocked {
+contract XController is Timelocked {
     IXVault private vault;
     IEligible internal eligibleContract;
     IControllable internal controllableContract;

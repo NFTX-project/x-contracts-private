@@ -2,14 +2,14 @@
 
 pragma solidity 0.6.8;
 
-import "./XVaultSafe.sol";
+import "./XVaultBase.sol";
 
 import "./IEligible.sol";
 import "./IRandomizable.sol";
 import "./IControllable.sol";
 import "./IProfitable.sol";
 
-contract Extended is XVaultSafe {
+contract Extended is XVaultBase {
     event DirectRedemption(uint256 xId, address by, address indexed to);
 
     IEligible internal eligibleContract;
