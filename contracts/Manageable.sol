@@ -21,7 +21,7 @@ contract Manageable is Extended {
                 return;
             }
             uint256 tokenId = getReserves().at(0);
-            getCPM().transferPunk(to, tokenId);
+            getCPM().transferX(to, tokenId);
             getReserves().remove(tokenId);
             count = count.add(1);
         }

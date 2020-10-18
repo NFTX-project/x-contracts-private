@@ -7,7 +7,7 @@ import "./Context.sol";
 import "./ERC20.sol";
 import "./ERC20Burnable.sol";
 
-contract PunkToken is Context, Ownable, ERC20Burnable {
+contract XToken is Context, Ownable, ERC20Burnable {
     address private vaultAddress;
 
     constructor(string memory name, string memory symbol)

@@ -1,7 +1,7 @@
 {
-  "name": "punkvault-contracts",
+  "name": "xvault-contracts",
   "version": "0.0.1",
-  "description": "PunkVault smart contracts",
+  "description": "XVault smart contracts",
   "main": "index.js",
   "scripts": {
     "test": "test"

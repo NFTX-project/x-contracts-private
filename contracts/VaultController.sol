@@ -3,14 +3,14 @@
 pragma solidity 0.6.8;
 
 import "./Timelocked.sol";
-import "./IPunkVault.sol";
+import "./IXVault.sol";
 import "./IEligible.sol";
 import "./IRandomizable.sol";
 import "./IControllable.sol";
 import "./IProfitable.sol";
 
 contract VaultController is Timelocked {
-    IPunkVault private vault;
+    IXVault private vault;
     IEligible internal eligibleContract;
     IControllable internal controllableContract;
     IProfitable internal profitableContract;
@@ -52,7 +52,7 @@ contract VaultController is Timelocked {
         address controllableAddress,
         address profitableAddress
     ) public {
-        vault = IPunkVault(vaultAddress);
+        vault = IXVault(vaultAddress);
         eligibleContract = IEligible(eligibleAddress);
         controllableContract = IControllable(controllableAddress);
         profitableContract = IProfitable(profitableAddress);
@@ -69,7 +69,7 @@ contract VaultController is Timelocked {
         profitableContract.transferOwnership(newOwner);
     }
 
-    // PunkVault.sol
+    // XVault.sol
 
     function mintRetroactively(uint256 tokenId, address to)
         public
@@ -121,11 +121,11 @@ contract VaultController is Timelocked {
         vault.unpause();
     }
 
-    function setEligibilities(uint256[] memory punkIds, bool areEligible)
+    function setEligibilities(uint256[] memory xIds, bool areEligible)
         public
         onlyOwner
     {
-        eligibleContract.setEligibilities(punkIds, areEligible);
+        eligibleContract.setEligibilities(xIds, areEligible);
     }
 
     // Controllable.sol
@@ -139,7 +139,7 @@ contract VaultController is Timelocked {
     function setFeesArray(IProfitable.FeeType feeType, uint256[] memory newFees)
         public
         onlyOwner
-        whenNotLockedM
+        whenNotLockedL
     {
         profitableContract.setFeesArray(feeType, newFees);
     }

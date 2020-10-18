@@ -2,15 +2,15 @@
 
 pragma solidity 0.6.8;
 
-import "./PunkVaultSafe.sol";
+import "./XVaultSafe.sol";
 
 import "./IEligible.sol";
 import "./IRandomizable.sol";
 import "./IControllable.sol";
 import "./IProfitable.sol";
 
-contract Extended is PunkVaultSafe {
-    event DirectRedemption(uint256 punkId, address by, address indexed to);
+contract Extended is XVaultSafe {
+    event DirectRedemption(uint256 xId, address by, address indexed to);
 
     IEligible internal eligibleContract;
     IRandomizable internal randomizableContract;
@@ -48,7 +48,7 @@ contract Extended is PunkVaultSafe {
         getERC20().burnFrom(to, 10**18);
         getReserves().remove(tokenId);
         if (!toSelf) {
-            getCPM().transferPunk(to, tokenId);
+            getCPM().transferX(to, tokenId);
         }
         emit DirectRedemption(tokenId, _msgSender(), to);
     }

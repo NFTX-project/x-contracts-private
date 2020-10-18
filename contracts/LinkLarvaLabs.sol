@@ -2,22 +2,22 @@
 
 pragma solidity 0.6.8;
 
-import "./ICryptoPunksMarket.sol";
+import "./ICryptoXsMarket.sol";
 import "./IERC20.sol";
-import "./IPunkVault.sol";
+import "./IXVault.sol";
 
 contract LinkLarvaLabs {
     address private cpmAddress;
     address private tokenAddress;
     address private vaultAddress;
 
-    ICryptoPunksMarket private cpm;
+    ICryptoXsMarket private cpm;
     IERC20 private token;
-    IPunkVault private vault;
+    IXVault private vault;
 
     struct Offer {
         bool isForSale;
-        uint256 punkIndex;
+        uint256 xIndex;
         address seller;
         uint256 minValue;
         address onlySellTo;
@@ -28,30 +28,30 @@ contract LinkLarvaLabs {
         tokenAddress = _tokenAddress;
         vaultAddress = _vaultAddress;
 
-        cpm = ICryptoPunksMarket(cpmAddress);
+        cpm = ICryptoXsMarket(cpmAddress);
         token = IERC20(tokenAddress);
-        vault = IPunkVault(vaultAddress);
+        vault = IXVault(vaultAddress);
     }
 
-    function buy(uint256 punkId) public payable {
-        (,,, uint256 minValue,) = cpm.punksOfferedForSale(punkId);
+    function buy(uint256 xId) public payable {
+        (,,, uint256 minValue,) = cpm.xsOfferedForSale(xId);
         require(msg.value >= minValue, "Price > payment");
-        cpm.buyPunk{value: minValue}(punkId);
-        cpm.transferPunk(msg.sender, punkId);
+        cpm.buyX{value: minValue}(xId);
+        cpm.transferX(msg.sender, xId);
     }
 
-    function buyMultiple(uint256[] memory punkIds, uint256[] memory prices) public payable {
+    function buyMultiple(uint256[] memory xIds, uint256[] memory prices) public payable {
         uint256 accCost = 0;
         uint256 payment = msg.value;
-        for (uint256 i = 0; i < punkIds.length; i++) {
-            uint256 punkId = punkIds[i];
+        for (uint256 i = 0; i < xIds.length; i++) {
+            uint256 xId = xIds[i];
             uint256 price = prices[i];
-            (,,, uint256 minValue,) = cpm.punksOfferedForSale(punkId);
+            (,,, uint256 minValue,) = cpm.xsOfferedForSale(xId);
             if (minValue <= price) {
                 accCost += minValue;
                 require(payment >= accCost, "Value too low");
-                cpm.buyPunk{value: minValue}(punkId);
-                cpm.transferPunk(msg.sender, punkId);
+                cpm.buyX{value: minValue}(xId);
+                cpm.transferX(msg.sender, xId);
             }
         }
         if (payment > accCost) {
@@ -59,36 +59,36 @@ contract LinkLarvaLabs {
         }
     }
 
-    function buyAndMint(uint256 punkId) public payable {
-        (,,, uint256 minValue,) = cpm.punksOfferedForSale(punkId);
+    function buyAndMint(uint256 xId) public payable {
+        (,,, uint256 minValue,) = cpm.xsOfferedForSale(xId);
         require(msg.value >= minValue, "Price > payment");
-        cpm.buyPunk{value: minValue}(punkId);
-        cpm.offerPunkForSaleToAddress(punkId, 0, vaultAddress);
+        cpm.buyX{value: minValue}(xId);
+        cpm.offerXForSaleToAddress(xId, 0, vaultAddress);
         uint256 bounty = vault.getMintBounty(1);
-        vault.mintPunk(punkId);
+        vault.mintX(xId);
         if (bounty > 0) {
             msg.sender.transfer(bounty);
         }
         token.transfer(msg.sender, 10**18);
     }
 
-    function buyAndMintMultiple(uint256[] memory punkIds, uint256[] memory prices) public payable {
+    function buyAndMintMultiple(uint256[] memory xIds, uint256[] memory prices) public payable {
         uint256 accCost = 0;
         uint256 accBounty = 0;
         uint256 tokenCount = 0;
         uint256 payment = msg.value;
-        for (uint256 i = 0; i < punkIds.length; i++) {
-            uint256 punkId = punkIds[i];
+        for (uint256 i = 0; i < xIds.length; i++) {
+            uint256 xId = xIds[i];
             uint256 price = prices[i];
-            (,,, uint256 minValue,) = cpm.punksOfferedForSale(punkId);
+            (,,, uint256 minValue,) = cpm.xsOfferedForSale(xId);
             if (minValue <= price) {
                 accCost += minValue;
                 require(payment >= accCost, "Value too low");
-                cpm.buyPunk{value: minValue}(punkId);
+                cpm.buyX{value: minValue}(xId);
                 
-                cpm.offerPunkForSaleToAddress(punkId, 0, vaultAddress);
+                cpm.offerXForSaleToAddress(xId, 0, vaultAddress);
                 uint256 bounty = vault.getMintBounty(1);
-                vault.mintPunk(punkId);
+                vault.mintX(xId);
                 accBounty += bounty;
                 tokenCount += 1;
             }

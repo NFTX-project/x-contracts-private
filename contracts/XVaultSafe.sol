@@ -2,15 +2,15 @@
 
 pragma solidity 0.6.8;
 
-import "./PunkVaultBase.sol";
+import "./XVaultBase.sol";
 import "./EnumerableSet.sol";
 import "./ReentrancyGuard.sol";
 
-contract PunkVaultSafe is PunkVaultBase, ReentrancyGuard {
+contract XVaultSafe is XVaultBase, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.UintSet;
     EnumerableSet.UintSet private reserves;
 
-    event TokenBurnedSafely(uint256 punkId, address indexed to);
+    event TokenBurnedSafely(uint256 xId, address indexed to);
 
     function getReserves()
         internal
@@ -32,7 +32,7 @@ contract PunkVaultSafe is PunkVaultBase, ReentrancyGuard {
         uint256 tokenId = reserves.at(0);
         getERC20().burnFrom(msg.sender, 10**18);
         reserves.remove(tokenId);
-        getCPM().transferPunk(msg.sender, tokenId);
+        getCPM().transferX(msg.sender, tokenId);
         emit TokenBurnedSafely(tokenId, msg.sender);
     }
 }

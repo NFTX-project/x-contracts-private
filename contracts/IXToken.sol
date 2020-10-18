@@ -4,7 +4,7 @@ pragma solidity 0.6.8;
 
 import "./IERC20.sol";
 
-interface IPunkToken is IERC20 {
+interface IXToken is IERC20 {
     function burn(uint256 amount) external;
 
     function burnFrom(address account, uint256 amount) external;

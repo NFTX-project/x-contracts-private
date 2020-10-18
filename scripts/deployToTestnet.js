@@ -10,40 +10,36 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const CryptoPunksMarket = await ethers.getContractFactory(
-    "CryptoPunksMarket"
-  );
-  const PunkToken = await ethers.getContractFactory("PunkToken");
-  const PunkVault = await ethers.getContractFactory("PunkVault");
+  const CryptoXsMarket = await ethers.getContractFactory("CryptoXsMarket");
+  const XToken = await ethers.getContractFactory("XToken");
+  const XVault = await ethers.getContractFactory("XVault");
 
-  const cpm = await CryptoPunksMarket.deploy();
+  const cpm = await CryptoXsMarket.deploy();
   await cpm.deployed();
 
-  const punkToken = await PunkToken.deploy("PunkToken", "PUNK");
-  await punkToken.deployed();
+  const xToken = await XToken.deploy("XToken", "PUNK");
+  await xToken.deployed();
 
-  const punkVault = await PunkVault.deploy(punkToken.address, cpm.address);
-  await punkVault.deployed();
+  const xVault = await XVault.deploy(xToken.address, cpm.address);
+  await xVault.deployed();
 
-  await punkToken.transferOwnership(punkVault.address);
-  await punkVault.transferOwnership(
-    "0x2435eDc484701613A1f22C18EB8fAdCaD6C5F288"
-  );
+  await xToken.transferOwnership(xVault.address);
+  await xVault.transferOwnership("0x2435eDc484701613A1f22C18EB8fAdCaD6C5F288");
 
-  // await punkVault.setReverseLink();
+  // await xVault.setReverseLink();
 
-  /* await punkVault.initiateUnlock(2);
-  await punkVault.setEligibilities(
+  /* await xVault.initiateUnlock(2);
+  await xVault.setEligibilities(
     zombieIds(),
     true
   );
  */
 
-  // await punkVault.increaseSecurityLevel();
+  // await xVault.increaseSecurityLevel();
 
   console.log("CPM address:", cpm.address);
-  console.log("PunkToken address:", punkToken.address);
-  console.log("PunkVault address:", punkVault.address);
+  console.log("XToken address:", xToken.address);
+  console.log("XVault address:", xVault.address);
 }
 
 main()

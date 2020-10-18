@@ -2,16 +2,16 @@
 
 pragma solidity 0.6.8;
 
-interface IPunkVault {
-    event TokenBurnedSafely(uint256 punkId, address indexed to);
+interface IXVault {
+    event TokenBurnedSafely(uint256 xId, address indexed to);
 
     event TokenMinted(uint256 tokenId, address indexed to);
     event TokensMinted(uint256[] tokenIds, address indexed to);
     event TokenBurned(uint256 tokenId, address indexed to);
     event TokensBurned(uint256[] tokenIds, address indexed to);
 
-    function mintPunk(uint256 tokenId) external payable;
-    function mintPunkMultiple(uint256[] calldata tokenIds) external payable;
+    function mintX(uint256 tokenId) external payable;
+    function mintXMultiple(uint256[] calldata tokenIds) external payable;
 
     function getMintBounty(uint256 numTokens) external view returns (uint256);
 

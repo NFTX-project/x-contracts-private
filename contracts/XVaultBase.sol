@@ -3,15 +3,17 @@
 pragma solidity 0.6.8;
 
 import "./Pausable.sol";
-import "./IPunkToken.sol";
-import "./ICryptoPunksMarket.sol";
+import "./IXToken.sol";
+import "./ICryptoXsMarket.sol";
 
-contract PunkVaultBase is Pausable {
-    address private erc20Address;
-    address private cpmAddress;
+contract XVaultBase is Pausable {
+    struct VaultInfo {
+        address erc20Address;
+        address nftAddress;
+    }
 
-    IPunkToken private erc20;
-    ICryptoPunksMarket private cpm;
+    IXToken private erc20;
+    ICryptoXsMarket private cpm;
 
     function getERC20Address() public view returns (address) {
         return erc20Address;
@@ -21,23 +23,23 @@ contract PunkVaultBase is Pausable {
         return cpmAddress;
     }
 
-    function getERC20() internal view returns (IPunkToken) {
+    function getERC20() internal view returns (IXToken) {
         return erc20;
     }
 
-    function getCPM() internal view returns (ICryptoPunksMarket) {
+    function getCPM() internal view returns (ICryptoXsMarket) {
         return cpm;
     }
 
     function setERC20Address(address newAddress) internal {
         require(erc20Address == address(0), "Already initialized ERC20");
         erc20Address = newAddress;
-        erc20 = IPunkToken(erc20Address);
+        erc20 = IXToken(erc20Address);
     }
 
     function setCpmAddress(address newAddress) internal {
         require(cpmAddress == address(0), "Already initialized CPM");
         cpmAddress = newAddress;
-        cpm = ICryptoPunksMarket(cpmAddress);
+        cpm = ICryptoXsMarket(cpmAddress);
     }
 }
