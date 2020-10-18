@@ -9,7 +9,7 @@ import "./IRandomizable.sol";
 import "./IControllable.sol";
 import "./IProfitable.sol";
 
-contract Extended is XVaultBase {
+contract Modules is XVaultBase {
     event DirectRedemption(uint256 xId, address by, address indexed to);
 
     IEligible internal eligibleContract;

@@ -2,10 +2,10 @@
 
 pragma solidity 0.6.8;
 
-import "./Extended.sol";
+import "./Modules.sol";
 import "./SafeMath.sol";
 
-contract Manageable is Extended {
+contract Manageable is Modules {
     using SafeMath for uint256;
 
     event MigrationComplete(address to);

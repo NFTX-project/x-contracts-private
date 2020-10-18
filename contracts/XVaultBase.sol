@@ -12,7 +12,7 @@ import "./ReentrancyGuard.sol";
 
 contract XVaultBase is Pausable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.UintSet;
-    
+
     event NFTsDeposited(uint256 vaultId, uint256[] nftIds, address from);
     event NFTsRedeemed(uint256 vaultId, uint256[] nftIds, address to);
     event TokensMinted(uint256 vaultId, address to);
@@ -24,13 +24,27 @@ contract XVaultBase is Pausable, ReentrancyGuard {
         IXToken erc20;
         IERC721 nft;
         EnumerableSet.UintSet holdings;
+        EnumerableSet.UintSet reserves;
         string description;
+        mapping(uint256 => bool) allowlist;
+        bool negateAllowlist;
+        address creator;
+        bool isFinalized;
+        uint256[] mintFees;
+        uint256[] burnFees;
+        uint256[] swapFees;
+        uint256[] supplierBounty;
+        uint256 status;
     }
 
     address public cpmAddress;
     ICryptoPunksMarket internal cpm;
 
     Vault[] internal vaults;
+
+    function numVaults() public view returns (uint256) {
+        return vaults.length;
+    }
 
     function simpleRedeem(uint256 vaultId) public whenPaused nonReentrant {
         Vault storage vault = vaults[vaultId];
@@ -55,4 +69,27 @@ contract XVaultBase is Pausable, ReentrancyGuard {
         emit NFTsRedeemed(vaultId, nftIds, msg.sender);
         emit TokensBurned(vaultId, msg.sender);
     }
+
+    function createVault(address _erc20Address, address _nftAddress)
+        public
+        whenNotPaused
+        nonReentrant
+    {
+        Vault memory newVault;
+        newVault.erc20Address = _erc20Address;
+        newVault.nftAddress = _nftAddress;
+        newVault.erc20 = IXToken(_erc20Address);
+        if (_nftAddress != cpmAddress) {
+            newVault.nft = IERC721(_nftAddress);
+        }
+    }
+
+    /* function updateVault(
+        string description,
+        uint256 status,
+        bool negateAllowlist
+    ) public {
+
+    } */
+
 }
