@@ -9,6 +9,7 @@ import "./ICryptoPunksMarket.sol";
 import "./IERC721.sol";
 import "./EnumerableSet.sol";
 import "./ReentrancyGuard.sol";
+import "./IXUtils.sol";
 
 contract XVaultBase is Pausable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.UintSet;
@@ -36,6 +37,9 @@ contract XVaultBase is Pausable, ReentrancyGuard {
         uint256[] supplierBounty;
         uint256 status;
     }
+
+    address public xUtilsAddress;
+    IXUtils internal xUtils;
 
     address public cpmAddress;
     ICryptoPunksMarket internal cpm;
@@ -69,6 +73,24 @@ contract XVaultBase is Pausable, ReentrancyGuard {
         emit NFTsRedeemed(vaultId, nftIds, msg.sender);
         emit TokensBurned(vaultId, msg.sender);
     }
+
+    // TODO: directRedeem
+
+    // function directRedeem(uint256 tokenId, address to) public onlyController {
+    //     require(getERC20().balanceOf(to) >= 10**18, "ERC20 balance too small");
+    //     bool toSelf = (to == address(this));
+    //     require(
+    //         toSelf || (getERC20().allowance(to, address(this)) >= 10**18),
+    //         "ERC20 allowance too small"
+    //     );
+    //     require(getReserves().contains(tokenId), "Not in holdings");
+    //     getERC20().burnFrom(to, 10**18);
+    //     getReserves().remove(tokenId);
+    //     if (!toSelf) {
+    //         getCPM().transferX(to, tokenId);
+    //     }
+    //     emit DirectRedemption(tokenId, _msgSender(), to);
+    // }
 
     function createVault(address _erc20Address, address _nftAddress)
         public

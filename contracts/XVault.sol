@@ -4,7 +4,7 @@ pragma solidity 0.6.8;
 
 import "./Manageable.sol";
 
-contract XVault is Manageable {
+contract XVaults is Manageable {
     event TokenMinted(uint256 vaultId, uint256 tokenId, address indexed to);
     event TokensMinted(uint256 vaultId, uint256[] tokenIds, address indexed to);
     event TokenBurned(uint256 vaultId, uint256 tokenId, address indexed to);
