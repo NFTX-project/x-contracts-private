@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.6.8;
-// pragma experimental ABIEncoderV2;
 
 import "./Pausable.sol";
 import "./IXToken.sol";
@@ -25,6 +24,8 @@ contract XVaultBase is Pausable, ReentrancyGuard {
     event ReservesIncreased(uint256 vaultId, uint256 nftId);
     event ReservesDecreased(uint256 vaultId, uint256 nftId);
 
+    //TODO: add ethBalanceIncreased / Decreased + other events
+
     struct Vault {
         address erc20Address;
         address nftAddress;
@@ -39,7 +40,7 @@ contract XVaultBase is Pausable, ReentrancyGuard {
         address creator;
         bool isFinalized;
         bool isApproved;
-        bool isShutdown;
+        bool isClosed;
         uint256[] mintFees;
         uint256[] burnFees;
         uint256[] swapFees;
@@ -81,6 +82,12 @@ contract XVaultBase is Pausable, ReentrancyGuard {
         } else {
             return vaults[vaultId].isEligible[nftId];
         }
+    }
+
+    function vaultSize(vaultId) public view returns (uint256) {
+        require(vaultId < vaults.length, "Invalid vaultId");
+        Vault storage vault = vaults[vaultId];
+        return vault.holdings.length() + vault.reserves.length();
     }
 
     // Management ----------------------------------------------//
@@ -273,17 +280,18 @@ contract XVaultBase is Pausable, ReentrancyGuard {
 
     // whenPaused ----------------------------------------------//
 
-    function simpleRedeem(uint256 vaultId, uint256 numNFTs)
-        public
-        whenPaused
-        nonReentrant
-    {
-        require(vaultId < vaults.length, "Invalid vaultId");
-        uint256[] memory nftIds;
-        nftIds[0] = vaults[vaultId].holdings.at(0);
-        _redeem(vaultId, numNFTs, false);
-        _directRedeem(vaultId, nftIds, _msgSender(), false);
-    }
+    // function simpleRedeem(uint256 vaultId, uint256 numNFTs)
+    //     public
+    //     whenPaused
+    //     nonReentrant
+    // {
+    //     require(vaultId < vaults.length, "Invalid vaultId");
+    //     uint256[] memory nftIds;
+    //     if (vault.holdings.lenght() > 0) {}
+    //     nftIds[0] = vaults[vaultId].holdings.at(0);
+    //     _redeem(vaultId, numNFTs, false);
+    //     _directRedeem(vaultId, nftIds, _msgSender(), false);
+    // }
 
     // public --------------------------------------------------//
 
@@ -291,12 +299,14 @@ contract XVaultBase is Pausable, ReentrancyGuard {
         public
         payable
         nonReentrant
+        whenNotPaused
     {
         require(vaultId < vaults.length, "Invalid vaultId");
         Vault storage vault = vaults[vaultId];
+        require(!vault.isClosed, "Vault is closed");
         uint256 bounty = xUtils.calcMintBounty(
             nftIds.length,
-            vault.holdings.length() + vault.reserves.length(),
+            vaultSize(vaultId),
             vault.supplierBounty
         );
         uint256 fee = xUtils.calcFee(nftIds.length, vault.mintFees);
@@ -314,7 +324,22 @@ contract XVaultBase is Pausable, ReentrancyGuard {
         }
     }
 
-    // TODO: redeem
+    function redeem(uint256 vaultId, uint256 numNFTs) public payable nonReentrant {
+        require(vaultId < vaults.length, "Invalid vaultId");
+        Vault storage vault = vaults[vaultId];
+        if (!getIsPaused() && !vault.isClosed) {
+            uint256 bounty = xUtils.calcBurnBounty(
+                numNFTs, 
+                vaultSize(vaultId), 
+                vault.supplierBounty
+            );
+            uint256 fee = xUtils.calcFee(numNFTs, vault.burnFees);
+            if (bounty.add(fee) > 0) {
+                require(msg.value >= bounty.add(fee), "Value too low");
+            }
+        }
+        _redeem(vaultId, numNFTs, false);
+    }
 
     // TODO: swap
 
