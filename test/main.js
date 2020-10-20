@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { BigNumber } = require("ethers");
+const { BigNumber, ethers } = require("ethers");
 const { check } = require("yargs");
 const { expectRevert } = require("../utils/expectRevert");
 
@@ -47,12 +47,10 @@ describe("XVault", function () {
     // Initialize... //
     ///////////////////
 
-    const Eligible = await ethers.getContractFactory("Eligible");
-    const Randomizable = await ethers.getContractFactory("Randomizable");
-    const Controllable = await ethers.getContractFactory("Controllable");
-    const Profitable = await ethers.getContractFactory("Profitable");
-    const Cpm = await ethers.getContractFactory("CryptoXsMarket");
-    const XToken = await ethers.getContractFactory("XToken");
+    const Cpm = await ethers.getContractFactory("CryptoPunksMarket");
+    const XController = await ethers.getContractFactory("XController");
+    const XUtils = await ethers.getContractFactory("XUtils");
+    const Nftx = await ethers.getContractFactory("NFTX");
 
     const eligibleContract = await Eligible.deploy();
     const randomizableContract = await Randomizable.deploy();
