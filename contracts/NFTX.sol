@@ -91,12 +91,8 @@ contract NFTX is Pausable, ReentrancyGuard {
         view
         returns (bool)
     {
-        require(vaultId < vaults.length, "Invalid vaultId");
-        if (vaults[vaultId].negateEligibility) {
-            return !vaults[vaultId].isEligible[nftId];
-        } else {
-            return vaults[vaultId].isEligible[nftId];
-        }
+        Vault storage vault = _getVault(vaultId);
+        return vault.negateEligibility ? !vault.isEligible[nftId] : vault.isEligible[nftId];
     }
 
     function vaultSize(uint256 vaultId) public view returns (uint256) {
@@ -186,6 +182,7 @@ contract NFTX is Pausable, ReentrancyGuard {
         if (_nftAddress != cpmAddress) {
             newVault.nft = IERC721(_nftAddress);
         }
+        newVault.negateEligibility = true;
         newVault.manager = _msgSender();
         vaults.push(newVault);
         return vaults.length.sub(1);
