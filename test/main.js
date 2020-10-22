@@ -3,7 +3,7 @@ const { BigNumber } = require("ethers");
 const { check } = require("yargs");
 const { expectRevert } = require("../utils/expectRevert");
 
-const zombieIds = require("../data/punk-zombie");
+const eligibleIds = require("../data/punk/punkAttr5");
 
 const BASE = BigNumber.from(10).pow(18);
 const zeroAddress = "0x0000000000000000000000000000000000000000";
@@ -73,7 +73,12 @@ describe("NFTX", function () {
       await nftx.connect(alice).createVault(zToken.address, cpm.address)
     ).value.toNumber();
     await nftx.connect(alice).setSupplierBounty(zVaultId, 0, 0, 0);
-    await nftx.connect(alice).setIsEligible(zVaultId, zombieIds(), true);
+    for (let i = 0; i < eligibleIds().length; i += 150) {
+      let j = eligibleIds().length <= i + 150 ? eligibleIds().length : i + 150;
+      await nftx
+        .connect(alice)
+        .setIsEligible(zVaultId, eligibleIds().splice(i, j), true);
+    }
     await nftx.connect(alice).finalizeVault(zVaultId);
 
     /////////////////////////////////////
@@ -100,9 +105,9 @@ describe("NFTX", function () {
       await nftx.connect(signer).redeem(zVaultId, 1, { value: value });
     };
     for (let _i = 0; _i < 10; _i++) {
-      const i = zombieIds()[_i];
+      const i = eligibleIds()[_i];
       await approveAndMint(alice, i);
-      const i2 = zombieIds()[_i + 10];
+      const i2 = eligibleIds()[_i + 10];
       await approveAndMint(bob, i2);
     }
     for (let _i = 0; _i < 10; _i++) {
@@ -112,7 +117,7 @@ describe("NFTX", function () {
     const getUserHoldings = async (address, tokenSupply) => {
       let list = [];
       for (let _i = 0; _i < tokenSupply; _i++) {
-        const i = zombieIds()[_i];
+        const i = eligibleIds()[_i];
         const nftOwner = await cpm.punkIndexToAddress(i);
         if (nftOwner === address) {
           list.push(i);

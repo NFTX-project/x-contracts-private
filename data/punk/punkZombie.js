@@ -1,4 +1,4 @@
-const zombieIds = () => {
+const punkZombieIds = () => {
   return [
     117,
     987,
@@ -91,4 +91,4 @@ const zombieIds = () => {
   ];
 };
 
-module.exports = zombieIds;
+module.exports = punkZombieIds;
