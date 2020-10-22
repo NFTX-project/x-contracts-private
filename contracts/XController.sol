@@ -101,9 +101,10 @@ contract XController is Timelocked {
         nftx.setIsEligible(vaultId, nftIds, areEligible);
     }
 
-    function setIntegrator(address account, bool isIntegrator)
+    function setIsIntegrator(address account, bool isIntegrator)
         public
         onlyOwner
+        whenNotLockedM
     {
         nftx.setIsIntegrator(account, isIntegrator);
     }
@@ -113,7 +114,7 @@ contract XController is Timelocked {
         uint256 _ethBase,
         uint256 _ethStep,
         uint256 _tokenShare
-    ) public onlyOwner {
+    ) public onlyOwner whenNotLockedM {
         nftx.setMintFees(vaultId, _ethBase, _ethStep, _tokenShare);
     }
 
@@ -122,7 +123,7 @@ contract XController is Timelocked {
         uint256 _ethBase,
         uint256 _ethStep,
         uint256 _tokenShare
-    ) public onlyOwner {
+    ) public onlyOwner whenNotLockedL {
         nftx.setBurnFees(vaultId, _ethBase, _ethStep, _tokenShare);
     }
 
@@ -131,7 +132,7 @@ contract XController is Timelocked {
         uint256 _ethBase,
         uint256 _ethStep,
         uint256 _tokenShare
-    ) public onlyOwner {
+    ) public onlyOwner whenNotLockedM {
         nftx.setDualFees(vaultId, _ethBase, _ethStep, _tokenShare);
     }
 
@@ -140,7 +141,15 @@ contract XController is Timelocked {
         uint256 ethMax,
         uint256 tokenMax,
         uint256 length
-    ) public onlyOwner {
+    ) public onlyOwner whenNotLockedL {
         nftx.setSupplierBounty(vaultId, ethMax, tokenMax, length);
+    }
+
+    function transferTokenOwnership(uint256 vaultId, address to)
+        public
+        onlyOwner
+        whenNotLockedL
+    {
+        nftx.transferTokenOwnership(vaultId, to);
     }
 }

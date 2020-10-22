@@ -60,6 +60,8 @@ interface INFTX {
 
     function isIntegrator(address) external view returns (bool);
 
+    function numIntegrators() external view returns (uint256);
+
     function numVaults() external view returns (uint256);
 
     function isEligible(uint256 vaultId, uint256 nftId)
@@ -69,7 +71,9 @@ interface INFTX {
 
     function vaultSize(uint256 vaultId) external view returns (uint256);
 
-    function createVault(address _erc20Address, address _nftAddress) external;
+    function createVault(address _erc20Address, address _nftAddress)
+        external
+        returns (uint256);
 
     function depositETH(uint256 vaultId) external payable;
 
@@ -148,4 +152,5 @@ interface INFTX {
         uint256 length
     ) external;
 
+    function transferTokenOwnership(uint256 vaultId, address to) external;
 }
