@@ -85,12 +85,8 @@ contract XController is Timelocked {
         nftx.withdraw(amount, to);
     }
 
-    function pause() public onlyOwner {
-        nftx.pause();
-    }
-
-    function unpause() public onlyOwner {
-        nftx.unpause();
+    function setPaused(bool shouldPause) public onlyOwner {
+        nftx.setPaused(shouldPause);
     }
 
     function setIsEligible(

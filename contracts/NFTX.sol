@@ -68,7 +68,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         IERC20 d2Asset;
         uint256 d2Holdings;
         uint256 d2Ratio;
-        D2Weighting[] d2Weightings;
+        uint256[] d2UnderlyingVaults;
+        uint256[] d2UnderlyingWeights;
     }
 
     address public council;
@@ -165,24 +166,6 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
                 n = 1;
             }
             uint256 nSub1 = amount >= 1 ? n.sub(1) : 0;
-            return (
-                feeP.ethBase.add(feeP.ethStep.mul(nSub1)),
-                feeP.tokenShare.mul(n)
-            );
-        }
-    }
-
-    function _calcFeeD2(
-        uint256 amount,
-        FeeParams storage feeP,
-        uint256 _d2Ratio
-    ) internal view returns (uint256, uint256) {
-        uint256 _amount = amount.mul(_d2Ratio).div(10**18);
-        if (_amount == 0) {
-            return (0, 0);
-        } else {
-            uint256 n = _amount.div(10**18);
-            uint256 nSub1 = n >= 1 ? n.sub(1) : 0;
             return (
                 feeP.ethBase.add(feeP.ethStep.mul(nSub1)),
                 feeP.tokenShare.mul(n)
@@ -473,7 +456,11 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
             amount,
             false
         );
-        (uint256 ethFee, uint256 tokenFee) = _calcFee(amount, vault.mintFees);
+        (uint256 ethFee, uint256 tokenFee) = _calcFee(
+            amount,
+            vault.mintFees,
+            vault.d2Ratio
+        );
         if (ethFee > ethBounty) {
             _receiveEthToVault(vaultId, ethFee.sub(ethBounty), msg.value);
         }
@@ -519,7 +506,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
             );
             (uint256 ethFee, uint256 tokenFee) = _calcFee(
                 amount,
-                vault.burnFees
+                vault.burnFees,
+                vault.d2Ratio
             );
             if (ethBounty.add(ethFee) > 0) {
                 _receiveEthToVault(vaultId, ethBounty.add(ethFee), msg.value);
@@ -550,7 +538,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         require(!vault.isClosed, "Vault is closed");
         (uint256 ethFee, uint256 tokenFee) = _calcFee(
             nftIds.length,
-            vault.dualFees
+            vault.dualFees,
+            vault.d2Ratio
         );
         if (ethFee > 0) {
             _receiveEthToVault(vaultId, ethFee, msg.value);
@@ -725,17 +714,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         Vault storage vault = _getVault(vaultId);
         require(vault.isD2Vault, "Not D2 vault");
         require(_vaultIds.length == _weightings.length, "Wrong array lengths");
-        D2Weighting[] memory _d2Weightings = new D2Weighting[](
-            _vaultIds.length
-        );
-        for (uint256 i = 0; i < _vaultIds.length; i = i.add(1)) {
-            D2Weighting memory _d2Weighting = D2Weighting(
-                _vaultIds[i],
-                _weightings[i]
-            );
-            _d2Weightings[i] = _d2Weighting;
-        }
-        vault.d2Weightings = _d2Weightings;
+        vault.d2UnderlyingVaults = _vaultIds;
+        vault.d2UnderlyingWeights = _weightings;
     }
 
     function setD2Ratio(uint256 vaultId, uint256 newRatio)

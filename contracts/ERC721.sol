@@ -109,7 +109,7 @@ contract ERC721 is
     /**
      * @dev See {IERC721-balanceOf}.
      */
-    function balanceOf(address owner) public override view returns (uint256) {
+    function balanceOf(address owner) public view override returns (uint256) {
         require(
             owner != address(0),
             "ERC721: balance query for the zero address"
@@ -121,7 +121,7 @@ contract ERC721 is
     /**
      * @dev See {IERC721-ownerOf}.
      */
-    function ownerOf(uint256 tokenId) public override view returns (address) {
+    function ownerOf(uint256 tokenId) public view override returns (address) {
         return
             _tokenOwners.get(
                 tokenId,
@@ -132,14 +132,14 @@ contract ERC721 is
     /**
      * @dev See {IERC721Metadata-name}.
      */
-    function name() public override view returns (string memory) {
+    function name() public view override returns (string memory) {
         return _name;
     }
 
     /**
      * @dev See {IERC721Metadata-symbol}.
      */
-    function symbol() public override view returns (string memory) {
+    function symbol() public view override returns (string memory) {
         return _symbol;
     }
 
@@ -148,8 +148,8 @@ contract ERC721 is
      */
     function tokenURI(uint256 tokenId)
         public
-        override
         view
+        override
         returns (string memory)
     {
         require(
@@ -185,8 +185,8 @@ contract ERC721 is
      */
     function tokenOfOwnerByIndex(address owner, uint256 index)
         public
-        override
         view
+        override
         returns (uint256)
     {
         return _holderTokens[owner].at(index);
@@ -195,7 +195,7 @@ contract ERC721 is
     /**
      * @dev See {IERC721Enumerable-totalSupply}.
      */
-    function totalSupply() public override view returns (uint256) {
+    function totalSupply() public view override returns (uint256) {
         // _tokenOwners are indexed by tokenIds, so .length() returns the number of tokenIds
         return _tokenOwners.length();
     }
@@ -205,8 +205,8 @@ contract ERC721 is
      */
     function tokenByIndex(uint256 index)
         public
-        override
         view
+        override
         returns (uint256)
     {
         (uint256 tokenId, ) = _tokenOwners.at(index);
@@ -233,8 +233,8 @@ contract ERC721 is
      */
     function getApproved(uint256 tokenId)
         public
-        override
         view
+        override
         returns (address)
     {
         require(
@@ -264,8 +264,8 @@ contract ERC721 is
      */
     function isApprovedForAll(address owner, address operator)
         public
-        override
         view
+        override
         returns (bool)
     {
         return _operatorApprovals[owner][operator];
@@ -274,11 +274,11 @@ contract ERC721 is
     /**
      * @dev See {IERC721-transferFrom}.
      */
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public virtual override {
+    function transferFrom(address from, address to, uint256 tokenId)
+        public
+        virtual
+        override
+    {
         //solhint-disable-next-line max-line-length
         require(
             _isApprovedOrOwner(_msgSender(), tokenId),
@@ -291,11 +291,11 @@ contract ERC721 is
     /**
      * @dev See {IERC721-safeTransferFrom}.
      */
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public virtual override {
+    function safeTransferFrom(address from, address to, uint256 tokenId)
+        public
+        virtual
+        override
+    {
         safeTransferFrom(from, to, tokenId, "");
     }
 
@@ -403,11 +403,10 @@ contract ERC721 is
      * @dev Same as {xref-ERC721-_safeMint-address-uint256-}[`_safeMint`], with an additional `data` parameter which is
      * forwarded in {IERC721Receiver-onERC721Received} to contract recipients.
      */
-    function _safeMint(
-        address to,
-        uint256 tokenId,
-        bytes memory _data
-    ) internal virtual {
+    function _safeMint(address to, uint256 tokenId, bytes memory _data)
+        internal
+        virtual
+    {
         _mint(to, tokenId);
         require(
             _checkOnERC721Received(address(0), to, tokenId, _data),
@@ -481,11 +480,10 @@ contract ERC721 is
      *
      * Emits a {Transfer} event.
      */
-    function _transfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) internal virtual {
+    function _transfer(address from, address to, uint256 tokenId)
+        internal
+        virtual
+    {
         require(
             ownerOf(tokenId) == from,
             "ERC721: transfer of token that is not own"
@@ -585,9 +583,8 @@ contract ERC721 is
      *
      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
      */
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) internal virtual {}
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId)
+        internal
+        virtual
+    {}
 }

@@ -120,9 +120,7 @@ interface INFTX {
 
     function withdraw(uint256 amount, address payable to) external;
 
-    function pause() external;
-
-    function unpause() external;
+    function setPaused(bool shouldPause) external;
 
     function setMintFees(
         uint256 vaultId,
