@@ -3,7 +3,7 @@ const { BigNumber } = require("ethers");
 const { check } = require("yargs");
 const { expectRevert } = require("../utils/expectRevert");
 
-const eligibleIds = require("../data/punk/punkAttr5");
+const eligibleIds = require("../data/punk/punkAttr4");
 
 const BASE = BigNumber.from(10).pow(18);
 const zeroAddress = "0x0000000000000000000000000000000000000000";
