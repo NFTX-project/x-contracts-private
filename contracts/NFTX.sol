@@ -150,17 +150,42 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
             modulus;
     }
 
-    function _calcFee(uint256 numTokens, FeeParams storage feeP)
+    function _calcFee(uint256 amount, FeeParams storage feeP, uint256 _d2Ratio)
         internal
         view
         returns (uint256, uint256)
     {
-        if (numTokens == 0) {
+        if (amount == 0) {
             return (0, 0);
         } else {
+            uint256 n = _d2Ratio == 0
+                ? amount
+                : amount.mul(_d2Ratio).div(10**36);
+            if (n == 0) {
+                n = 1;
+            }
+            uint256 nSub1 = amount >= 1 ? n.sub(1) : 0;
             return (
-                feeP.ethBase.add(feeP.ethStep.mul(numTokens.sub(1))),
-                feeP.tokenShare.mul(numTokens)
+                feeP.ethBase.add(feeP.ethStep.mul(nSub1)),
+                feeP.tokenShare.mul(n)
+            );
+        }
+    }
+
+    function _calcFeeD2(
+        uint256 amount,
+        FeeParams storage feeP,
+        uint256 _d2Ratio
+    ) internal view returns (uint256, uint256) {
+        uint256 _amount = amount.mul(_d2Ratio).div(10**18);
+        if (_amount == 0) {
+            return (0, 0);
+        } else {
+            uint256 n = _amount.div(10**18);
+            uint256 nSub1 = n >= 1 ? n.sub(1) : 0;
+            return (
+                feeP.ethBase.add(feeP.ethStep.mul(nSub1)),
+                feeP.tokenShare.mul(n)
             );
         }
     }
@@ -343,7 +368,13 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     }
 
     function _mintD2(uint256 vaultId, uint256 amount) internal {
-        // TODO:
+        Vault storage vault = _getVault(vaultId);
+
+        vault.d2Asset.transferFrom(_msgSender(), address(this), amount);
+        uint256 amountMinted = amount.mul(vault.d2Ratio).div(10**18);
+        vault.erc20.mint(_msgSender(), amountMinted);
+        emit TokensMinted(vaultId, amountMinted, _msgSender());
+        vault.d2Holdings = vault.d2Holdings.add(amount);
     }
 
     function _redeem(uint256 vaultId, uint256 numNFTs, bool isDualOp) internal {
@@ -363,11 +394,9 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
 
     function _redeemD2(uint256 vaultId, uint256 amount) internal {
         Vault storage vault = _getVault(vaultId);
-        vault.erc20.burnFrom(
-            _msgSender(),
-            amount.mul(vault.d2Ratio).div(10**18)
-        );
-        emit TokensBurned(vaultId, 10**18, _msgSender());
+        uint256 amountBurned = amount.mul(vault.d2Ratio).div(10**18);
+        vault.erc20.burnFrom(_msgSender(), amountBurned);
+        emit TokensBurned(vaultId, amountBurned, _msgSender());
         vault.d2Asset.transfer(_msgSender(), amount);
         vault.d2Holdings = vault.d2Holdings.sub(amount);
     }
@@ -430,7 +459,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
 
     // public --------------------------------------------------//
 
-    function mint(uint256 vaultId, uint256[] memory nftIds)
+    function mint(uint256 vaultId, uint256[] memory nftIds, uint256 d2Amount)
         public
         payable
         nonReentrant
@@ -438,15 +467,13 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     {
         Vault storage vault = _getVault(vaultId);
         require(!vault.isClosed, "Vault is closed");
+        uint256 amount = nftIds.length > 0 ? nftIds.length : d2Amount;
         (uint256 ethBounty, uint256 tokenBounty) = _calcBounty(
             vaultId,
-            nftIds.length,
+            amount,
             false
         );
-        (uint256 ethFee, uint256 tokenFee) = _calcFee(
-            nftIds.length,
-            vault.mintFees
-        );
+        (uint256 ethFee, uint256 tokenFee) = _calcFee(amount, vault.mintFees);
         if (ethFee > ethBounty) {
             _receiveEthToVault(vaultId, ethFee.sub(ethBounty), msg.value);
         }
@@ -457,7 +484,13 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
                 _msgSender()
             );
         }
-        _mint(vaultId, nftIds, false);
+        if (nftIds.length > 0) {
+            require(!vault.isD2Vault, "Is D2 vault");
+            _mint(vaultId, nftIds, false);
+        } else {
+            require(!vault.isD2Vault, "Is not D2 vault");
+            _mintD2(vaultId, d2Amount);
+        }
         if (ethBounty > ethFee) {
             _payEthFromVault(vaultId, ethBounty.sub(ethFee), _msgSender());
 
