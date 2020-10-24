@@ -34,7 +34,7 @@ contract XController is Timelocked {
         setController,
         setFeesArray,
         setSupplierBounty,
-        setIntegrator
+        setExtension
     } // TODO: add funcs for setting timelock times
 
     // TODO: add array for list of params and calls to make
@@ -45,6 +45,7 @@ contract XController is Timelocked {
 
     function transferAllOwnerships(address newOwner)
         public
+        virtual
         onlyOwner
         whenNotLockedL
     {
@@ -55,6 +56,7 @@ contract XController is Timelocked {
 
     function migrate(uint256 vaultId, uint256 max, address to)
         public
+        virtual
         onlyOwner
         whenNotLockedL
     {
@@ -63,6 +65,7 @@ contract XController is Timelocked {
 
     function changeTokenName(uint256 vaultId, string memory newName)
         public
+        virtual
         onlyOwner
         whenNotLockedM
     {
@@ -71,6 +74,7 @@ contract XController is Timelocked {
 
     function changeTokenSymbol(uint256 vaultId, string memory newSymbol)
         public
+        virtual
         onlyOwner
         whenNotLockedM
     {
@@ -79,13 +83,14 @@ contract XController is Timelocked {
 
     function withdraw(uint256 amount, address payable to)
         public
+        virtual
         onlyOwner
         whenNotLockedL
     {
         nftx.withdraw(amount, to);
     }
 
-    function setPaused(bool shouldPause) public onlyOwner {
+    function setPaused(bool shouldPause) public virtual onlyOwner {
         nftx.setPaused(shouldPause);
     }
 
@@ -93,16 +98,17 @@ contract XController is Timelocked {
         uint256 vaultId,
         uint256[] memory nftIds,
         bool areEligible
-    ) public onlyOwner {
+    ) public virtual onlyOwner {
         nftx.setIsEligible(vaultId, nftIds, areEligible);
     }
 
-    function setIsIntegrator(address account, bool isIntegrator)
+    function setIsExtension(address account, bool isExtension)
         public
+        virtual
         onlyOwner
         whenNotLockedM
     {
-        nftx.setIsIntegrator(account, isIntegrator);
+        nftx.setIsExtension(account, isExtension);
     }
 
     function setMintFees(
@@ -110,7 +116,7 @@ contract XController is Timelocked {
         uint256 _ethBase,
         uint256 _ethStep,
         uint256 _tokenShare
-    ) public onlyOwner whenNotLockedM {
+    ) public virtual onlyOwner whenNotLockedM {
         nftx.setMintFees(vaultId, _ethBase, _ethStep, _tokenShare);
     }
 
@@ -128,7 +134,7 @@ contract XController is Timelocked {
         uint256 _ethBase,
         uint256 _ethStep,
         uint256 _tokenShare
-    ) public onlyOwner whenNotLockedM {
+    ) public virtual onlyOwner whenNotLockedM {
         nftx.setDualFees(vaultId, _ethBase, _ethStep, _tokenShare);
     }
 
@@ -137,12 +143,13 @@ contract XController is Timelocked {
         uint256 ethMax,
         uint256 tokenMax,
         uint256 length
-    ) public onlyOwner whenNotLockedL {
+    ) public virtual onlyOwner whenNotLockedL {
         nftx.setSupplierBounty(vaultId, ethMax, tokenMax, length);
     }
 
     function transferTokenOwnership(uint256 vaultId, address to)
         public
+        virtual
         onlyOwner
         whenNotLockedL
     {

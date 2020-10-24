@@ -58,9 +58,9 @@ interface INFTX {
 
     function xUtilsAddress() external view returns (address);
 
-    function isIntegrator(address) external view returns (bool);
+    function isExtension(address) external view returns (bool);
 
-    function numIntegrators() external view returns (uint256);
+    function numExtensions() external view returns (uint256);
 
     function numVaults() external view returns (uint256);
 
@@ -95,7 +95,7 @@ interface INFTX {
         bool _boolean
     ) external;
 
-    function setIsIntegrator(address contractAddress, bool _boolean) external;
+    function setIsExtension(address contractAddress, bool _boolean) external;
 
     function directRedeem(uint256 vaultId, uint256[] calldata nftIds)
         external

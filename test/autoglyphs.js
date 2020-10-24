@@ -390,26 +390,26 @@ describe("NFTX", function () {
     console.log("✓ Profitable: setDualFees");
     console.log();
 
-    // Profitable: *.setIsIntegrator, *.isIntegrator, *getNumIntegrators
+    // Profitable: *.setIsExtension, *.isExtension, *getNumExtensions
     await xController.connect(carol).setMintFees(xVaultId, 0, 0, 0);
     await xController.connect(carol).setDualFees(xVaultId, 0, 0, 0);
     aliceNFTs = await getUserHoldings(alice._address, 20);
     await expectRevert(
-      xController.connect(alice).setIsIntegrator(alice._address, true)
+      xController.connect(alice).setIsExtension(alice._address, true)
     );
     await autoglyphs.connect(alice).approve(nftx.address, aliceNFTs[0]);
-    expect((await nftx.numIntegrators()).toString()).to.equal("0");
-    expect(await nftx.isIntegrator(alice._address)).to.equal(false);
-    await xController.connect(carol).setIsIntegrator(alice._address, true);
-    expect((await nftx.numIntegrators()).toString()).to.equal("1");
+    expect((await nftx.numExtensions()).toString()).to.equal("0");
+    expect(await nftx.isExtension(alice._address)).to.equal(false);
+    await xController.connect(carol).setIsExtension(alice._address, true);
+    expect((await nftx.numExtensions()).toString()).to.equal("1");
     await checkBalances();
-    expect(await nftx.isIntegrator(alice._address)).to.equal(true);
+    expect(await nftx.isExtension(alice._address)).to.equal(true);
     await nftx.connect(alice).mint(xVaultId, [aliceNFTs[0]], 0);
     await xToken.connect(alice).approve(nftx.address, BASE.mul(4).toString());
     await nftx.connect(alice).redeem(xVaultId, 4);
-    await xController.connect(carol).setIsIntegrator(alice._address, false);
-    expect((await nftx.numIntegrators()).toString()).to.equal("0");
-    expect(await nftx.isIntegrator(alice._address)).to.equal(false);
+    await xController.connect(carol).setIsExtension(alice._address, false);
+    expect((await nftx.numExtensions()).toString()).to.equal("0");
+    expect(await nftx.isExtension(alice._address)).to.equal(false);
     ///////////////////////////////////////////////////
     // Controllable: *.setController, *.directRedeem //
     ///////////////////////////////////////////////////
@@ -418,10 +418,10 @@ describe("NFTX", function () {
     let vaultNFTs = await getUserHoldings(nftx.address, 20);
 
     await expectRevert(
-      xController.connect(alice).setIsIntegrator(alice._address, true)
+      xController.connect(alice).setIsExtension(alice._address, true)
     );
     await expectRevert(
-      xController.connect(bob).setIsIntegrator(alice._address, true)
+      xController.connect(bob).setIsExtension(alice._address, true)
     );
     await xToken.connect(alice).approve(nftx.address, BASE);
     await expectRevert(
@@ -430,13 +430,13 @@ describe("NFTX", function () {
     await expectRevert(
       nftx.connect(alice).directRedeem(xVaultId, [vaultNFTs[0]])
     );
-    await xController.connect(carol).setIsIntegrator(alice._address, true);
+    await xController.connect(carol).setIsExtension(alice._address, true);
     await nftx.connect(alice).directRedeem(xVaultId, [vaultNFTs[0]]);
     expect(await autoglyphs.ownerOf(vaultNFTs[0])).to.equal(alice._address);
 
     console.log("✓ Controllable");
 
-    await xController.connect(carol).setIsIntegrator(alice._address, false);
+    await xController.connect(carol).setIsExtension(alice._address, false);
     await setApprovalForAll(alice, nftx.address, vaultNFTs.slice(0, 1));
     await nftx.connect(alice).mint(xVaultId, [vaultNFTs[0]], 0);
     await xController.connect(carol).lock(1);
