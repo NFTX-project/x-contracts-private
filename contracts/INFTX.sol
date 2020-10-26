@@ -109,16 +109,10 @@ interface INFTX {
         external
         payable;
 
-    function transferOwnership(address newOwner) external;
-
-    function migrate(uint256 vaultId, uint256 limit, address to) external;
-
     function changeTokenName(uint256 vaultId, string calldata newName) external;
 
     function changeTokenSymbol(uint256 vaultId, string calldata newSymbol)
         external;
-
-    function withdraw(uint256 amount, address payable to) external;
 
     function setPaused(bool shouldPause) external;
 

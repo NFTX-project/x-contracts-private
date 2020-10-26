@@ -27,7 +27,6 @@ contract XController is Timelocked {
         changeTokenName,
         changeTokenSymbol,
         setReverseLink,
-        withdraw,
         pause,
         unpause,
         setEligibilities,
@@ -43,25 +42,7 @@ contract XController is Timelocked {
         nftx = INFTX(nftxAddress);
     }
 
-    function transferAllOwnerships(address newOwner)
-        public
-        virtual
-        onlyOwner
-        whenNotLockedL
-    {
-        nftx.transferOwnership(newOwner);
-    }
-
     // NFTX.sol
-
-    function migrate(uint256 vaultId, uint256 max, address to)
-        public
-        virtual
-        onlyOwner
-        whenNotLockedL
-    {
-        nftx.migrate(vaultId, max, to);
-    }
 
     function changeTokenName(uint256 vaultId, string memory newName)
         public
@@ -79,15 +60,6 @@ contract XController is Timelocked {
         whenNotLockedM
     {
         nftx.changeTokenSymbol(vaultId, newSymbol);
-    }
-
-    function withdraw(uint256 amount, address payable to)
-        public
-        virtual
-        onlyOwner
-        whenNotLockedL
-    {
-        nftx.withdraw(amount, to);
     }
 
     function setPaused(bool shouldPause) public virtual onlyOwner {
@@ -145,14 +117,5 @@ contract XController is Timelocked {
         uint256 length
     ) public virtual onlyOwner whenNotLockedL {
         nftx.setSupplierBounty(vaultId, ethMax, tokenMax, length);
-    }
-
-    function transferTokenOwnership(uint256 vaultId, address to)
-        public
-        virtual
-        onlyOwner
-        whenNotLockedL
-    {
-        nftx.transferTokenOwnership(vaultId, to);
     }
 }

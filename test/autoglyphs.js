@@ -218,7 +218,11 @@ describe("NFTX", function () {
     await xToken.connect(alice).approve(nftx.address, FIVE);
     await nftx.connect(alice).redeem(xVaultId, 5);
 
+    await checkBalances(true);
+    console.log("a", alice._address);
+    console.log("n", nftx.address);
     for (let i = 0; i < 10; i++) {
+      console.log(i);
       expect(await autoglyphs.ownerOf(aliceNFTs[i])).to.equal(alice._address);
     }
     expect((await xToken.balanceOf(alice._address)).toString()).to.equal("0");
@@ -259,7 +263,7 @@ describe("NFTX", function () {
     // Manageable //
     ////////////////
 
-    await xController.connect(initialOwner).transferOwnership(carol._address);
+    /* await xController.connect(initialOwner).transferOwnership(carol._address);
     await expectRevert(
       xController.connect(carol).migrate(xVaultId, 100, carol._address)
     );
@@ -282,7 +286,7 @@ describe("NFTX", function () {
 
     await checkBalances();
     console.log();
-    console.log("✓ Manageable");
+    console.log("✓ Manageable"); */
     console.log();
 
     aliceNFTs = await getUserHoldings(alice._address, 20);
@@ -305,23 +309,23 @@ describe("NFTX", function () {
     bobNFTs = await getUserHoldings(bob._address, 20);
 
     await expectRevert(
-      xController.connect(carol).changeTokenName(xVaultId, "Name")
+      xController.connect(initialOwner).changeTokenName(xVaultId, "Name")
     );
     await expectRevert(
-      xController.connect(carol).changeTokenSymbol(xVaultId, "NAME")
+      xController.connect(initialOwner).changeTokenSymbol(xVaultId, "NAME")
     );
     await expectRevert(
-      xController.connect(carol).setMintFees(xVaultId, 1, 1, 0)
+      xController.connect(initialOwner).setMintFees(xVaultId, 1, 1, 0)
     );
     await expectRevert(
-      xController.connect(carol).setBurnFees(xVaultId, 1, 1, 0)
+      xController.connect(initialOwner).setBurnFees(xVaultId, 1, 1, 0)
     );
     await expectRevert(
-      xController.connect(carol).setDualFees(xVaultId, 1, 1, 0)
+      xController.connect(initialOwner).setDualFees(xVaultId, 1, 1, 0)
     );
     ////////////////////////////////////////////////////////////////////////
-    await xController.connect(carol).initiateUnlock(1);
-    await xController.connect(carol).initiateUnlock(2); // because setFeesArray
+    await xController.connect(initialOwner).initiateUnlock(1);
+    await xController.connect(initialOwner).initiateUnlock(2); // because setFeesArray
     console.log("waiting...");
     console.log();
     await new Promise((resolve) => setTimeout(() => resolve(), 3000));
@@ -335,8 +339,8 @@ describe("NFTX", function () {
     await expectRevert(
       xController.connect(alice).changeTokenSymbol(xVaultId, "NAME")
     );
-    await xController.connect(carol).changeTokenName(xVaultId, "Name");
-    await xController.connect(carol).changeTokenSymbol(xVaultId, "NAME");
+    await xController.connect(initialOwner).changeTokenName(xVaultId, "Name");
+    await xController.connect(initialOwner).changeTokenSymbol(xVaultId, "NAME");
     expect(await xToken.name()).to.equal("Name");
     expect(await xToken.symbol()).to.equal("NAME");
     await checkBalances();
@@ -347,7 +351,7 @@ describe("NFTX", function () {
     // Profitable: *.setMintFees
     await setApprovalForAll(alice, nftx.address, aliceNFTs.slice(0, 5));
 
-    await xController.connect(carol).setMintFees(xVaultId, 2, 2, 0);
+    await xController.connect(initialOwner).setMintFees(xVaultId, 2, 2, 0);
     await expectRevert(
       nftx.connect(alice).mint(xVaultId, [aliceNFTs[0]], 0, { value: 1 })
     );
@@ -369,7 +373,7 @@ describe("NFTX", function () {
     aliceNFTs = await getUserHoldings(alice._address, 20);
     await setApprovalForAll(alice, nftx.address, aliceNFTs.slice(0, 5));
 
-    await xController.connect(carol).setDualFees(xVaultId, 2, 2, 0);
+    await xController.connect(initialOwner).setDualFees(xVaultId, 2, 2, 0);
     await expectRevert(
       nftx.connect(alice).mintAndRedeem(xVaultId, [aliceNFTs[0]], { value: 1 })
     );
@@ -391,8 +395,8 @@ describe("NFTX", function () {
     console.log();
 
     // Profitable: *.setIsExtension, *.isExtension, *getNumExtensions
-    await xController.connect(carol).setMintFees(xVaultId, 0, 0, 0);
-    await xController.connect(carol).setDualFees(xVaultId, 0, 0, 0);
+    await xController.connect(initialOwner).setMintFees(xVaultId, 0, 0, 0);
+    await xController.connect(initialOwner).setDualFees(xVaultId, 0, 0, 0);
     aliceNFTs = await getUserHoldings(alice._address, 20);
     await expectRevert(
       xController.connect(alice).setIsExtension(alice._address, true)
@@ -400,14 +404,18 @@ describe("NFTX", function () {
     await autoglyphs.connect(alice).approve(nftx.address, aliceNFTs[0]);
     expect((await nftx.numExtensions()).toString()).to.equal("0");
     expect(await nftx.isExtension(alice._address)).to.equal(false);
-    await xController.connect(carol).setIsExtension(alice._address, true);
+    await xController
+      .connect(initialOwner)
+      .setIsExtension(alice._address, true);
     expect((await nftx.numExtensions()).toString()).to.equal("1");
     await checkBalances();
     expect(await nftx.isExtension(alice._address)).to.equal(true);
     await nftx.connect(alice).mint(xVaultId, [aliceNFTs[0]], 0);
     await xToken.connect(alice).approve(nftx.address, BASE.mul(4).toString());
     await nftx.connect(alice).redeem(xVaultId, 4);
-    await xController.connect(carol).setIsExtension(alice._address, false);
+    await xController
+      .connect(initialOwner)
+      .setIsExtension(alice._address, false);
     expect((await nftx.numExtensions()).toString()).to.equal("0");
     expect(await nftx.isExtension(alice._address)).to.equal(false);
     ///////////////////////////////////////////////////
@@ -430,17 +438,21 @@ describe("NFTX", function () {
     await expectRevert(
       nftx.connect(alice).directRedeem(xVaultId, [vaultNFTs[0]])
     );
-    await xController.connect(carol).setIsExtension(alice._address, true);
+    await xController
+      .connect(initialOwner)
+      .setIsExtension(alice._address, true);
     await nftx.connect(alice).directRedeem(xVaultId, [vaultNFTs[0]]);
     expect(await autoglyphs.ownerOf(vaultNFTs[0])).to.equal(alice._address);
 
     console.log("✓ Controllable");
 
-    await xController.connect(carol).setIsExtension(alice._address, false);
+    await xController
+      .connect(initialOwner)
+      .setIsExtension(alice._address, false);
     await setApprovalForAll(alice, nftx.address, vaultNFTs.slice(0, 1));
     await nftx.connect(alice).mint(xVaultId, [vaultNFTs[0]], 0);
-    await xController.connect(carol).lock(1);
-    await xController.connect(carol).lock(2); // because setFeesArray
+    await xController.connect(initialOwner).lock(1);
+    await xController.connect(initialOwner).lock(2); // because setFeesArray
     await checkBalances();
     console.log();
     console.log("✓ Timelock.Medium");
@@ -454,15 +466,15 @@ describe("NFTX", function () {
     bobNFTs = await getUserHoldings(bob._address, 20);
 
     await expectRevert(
-      xController.connect(carol).migrate(xVaultId, 100, bob._address)
+      xController.connect(initialOwner).migrate(xVaultId, 100, bob._address)
     );
     ////////////////////////////////////////////////////////////////////////
-    await xController.connect(carol).initiateUnlock(2);
+    await xController.connect(initialOwner).initiateUnlock(2);
     console.log("waiting...");
     console.log();
     await new Promise((resolve) => setTimeout(() => resolve(), 3000));
     ////////////////////////////////////////////////////////////////////////
-    await xController.connect(carol).setBurnFees(xVaultId, 2, 2, 0);
+    await xController.connect(initialOwner).setBurnFees(xVaultId, 2, 2, 0);
     await xToken.connect(alice).approve(nftx.address, BASE);
     await expectRevert(nftx.connect(alice).redeem(xVaultId, 1, { value: 1 }));
     await nftx.connect(alice).redeem(xVaultId, 1, { value: 2 });
@@ -475,11 +487,11 @@ describe("NFTX", function () {
       (await autoglyphs.balanceOf(nftx.address)).toString()
     );
     vaultNFTs = await getUserHoldings(nftx.address, 20);
-    await xController.connect(carol).migrate(xVaultId, 7, bob._address);
-    await xController.connect(carol).migrate(xVaultId, 1, bob._address);
-    await xController.connect(carol).migrate(xVaultId, 1, bob._address);
+    await xController.connect(initialOwner).migrate(xVaultId, 7, bob._address);
+    await xController.connect(initialOwner).migrate(xVaultId, 1, bob._address);
+    await xController.connect(initialOwner).migrate(xVaultId, 1, bob._address);
     await xController
-      .connect(carol)
+      .connect(initialOwner)
       .transferTokenOwnership(xVaultId, bob._address);
     expect(await xToken.owner()).to.equal(bob._address);
     expect((await autoglyphs.balanceOf(bob._address)).toString()).to.equal(
@@ -500,9 +512,9 @@ describe("NFTX", function () {
 
     bobNFTs = await getUserHoldings(bob._address, 20);
     const unit = BASE.div(100);
-    await xController.connect(carol).setBurnFees(xVaultId, 0, 0, 0);
+    await xController.connect(initialOwner).setBurnFees(xVaultId, 0, 0, 0);
     await xController
-      .connect(carol)
+      .connect(initialOwner)
       .setSupplierBounty(xVaultId, unit.mul(5).toString(), 0, 5);
     await xToken.connect(alice).approve(nftx.address, BASE.mul(9));
     await nftx.connect(alice).redeem(xVaultId, 4);
@@ -562,13 +574,15 @@ describe("NFTX", function () {
       value: unit.mul(num).toString(),
     });
     ////////////////////////////////////////////////////////////////////////
-    await xController.connect(carol).setSupplierBounty(xVaultId, 0, 0, 0);
+    await xController
+      .connect(initialOwner)
+      .setSupplierBounty(xVaultId, 0, 0, 0);
     aliceNFTs = await getUserHoldings(alice._address, 20);
     await setApprovalForAll(alice, nftx.address, aliceNFTs);
     await nftx
       .connect(alice)
       .mint(xVaultId, aliceNFTs.slice(0, aliceNFTs.length - 1), 0);
-    await xController.connect(carol).lock(2);
+    await xController.connect(initialOwner).lock(2);
 
     console.log("✓ Profitable: setBurnFees");
     console.log();
@@ -584,7 +598,7 @@ describe("NFTX", function () {
     await expectRevert(xController.connect(alice).pause());
     await expectRevert(xController.connect(alice).unpause());
     await xToken.connect(alice).approve(nftx.address, BASE);
-    await xController.connect(carol).pause();
+    await xController.connect(initialOwner).pause();
     let aliceBal = await xToken.balanceOf(alice._address);
     balance = await xToken.balanceOf(alice._address);
     await nftx.connect(alice).redeem(xVaultId, 1);
