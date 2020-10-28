@@ -12,7 +12,7 @@ const { expectRevert } = require("../utils/expectRevert");
 // })();
 
 const BASE = BigNumber.from(10).pow(18);
-const UNIT = BASE.div(10000);
+const UNIT = BASE.div(50);
 
 describe("NFTX", function () {
   this.timeout(0);
@@ -165,99 +165,154 @@ describe("NFTX", function () {
       // mint, redeem //
       //////////////////
 
-      await setup(_nftx, _nft, _signers, _vaultId);
-      let [aliceNFTs, bobNFTs] = await holdingsOf(nft, nftIds, [alice, bob]);
+      const runMintRedeem = async () => {
+        await setup(_nftx, _nft, _signers, _vaultId);
+        let [aliceNFTs, bobNFTs] = await holdingsOf(nft, nftIds, [alice, bob]);
 
-      await approveAndMint(_nftx, _nft, aliceNFTs, alice, _vaultId);
-      await approveAndMint(_nftx, _nft, bobNFTs, bob, _vaultId);
-      await approveAndRedeem(_nftx, _token, aliceNFTs.length, alice, _vaultId);
-      await approveAndRedeem(_nftx, _token, bobNFTs.length, bob, _vaultId);
+        await approveAndMint(_nftx, _nft, aliceNFTs, alice, _vaultId);
+        await approveAndMint(_nftx, _nft, bobNFTs, bob, _vaultId);
+        await approveAndRedeem(
+          _nftx,
+          _token,
+          aliceNFTs.length,
+          alice,
+          _vaultId
+        );
+        await approveAndRedeem(_nftx, _token, bobNFTs.length, bob, _vaultId);
 
-      [aliceNFTs, bobNFTs] = await holdingsOf(_nft, _nftIds, [alice, bob]);
-      console.log(aliceNFTs);
-      console.log(bobNFTs);
-      await cleanup(_nftx, _nft, _token, _signers, _vaultId);
+        [aliceNFTs, bobNFTs] = await holdingsOf(_nft, _nftIds, [alice, bob]);
+        console.log(aliceNFTs);
+        console.log(bobNFTs);
+        await cleanup(_nftx, _nft, _token, _signers, _vaultId);
+      };
 
       ///////////////////
       // mintAndRedeem //
       ///////////////////
 
-      await setup(_nftx, _nft, _signers, _vaultId);
-      [aliceNFTs, bobNFTs] = await holdingsOf(_nft, _nftIds, [alice, bob]);
-      await approveAndMint(_nftx, _nft, aliceNFTs, alice, _vaultId);
+      const runMintAndRedeem = async () => {
+        await setup(_nftx, _nft, _signers, _vaultId);
+        let [aliceNFTs, bobNFTs] = await holdingsOf(_nft, _nftIds, [
+          alice,
+          bob,
+        ]);
+        await approveAndMint(_nftx, _nft, aliceNFTs, alice, _vaultId);
 
-      await approveEach(_nft, bobNFTs, bob, _nftx.address);
-      await _nftx.connect(bob).mintAndRedeem(_vaultId, bobNFTs);
+        await approveEach(_nft, bobNFTs, bob, _nftx.address);
+        await _nftx.connect(bob).mintAndRedeem(_vaultId, bobNFTs);
 
-      [bobNFTs] = await holdingsOf(_nft, _nftIds, [bob]);
-      console.log(bobNFTs);
-      await cleanup(_nftx, _nft, _token, _signers, _vaultId);
+        [bobNFTs] = await holdingsOf(_nft, _nftIds, [bob]);
+        console.log(bobNFTs);
+        await cleanup(_nftx, _nft, _token, _signers, _vaultId);
+      };
 
       ////////////////////////
       // mintFees, burnFees //
       ////////////////////////
 
-      await setup(_nftx, _nft, _signers, _vaultId);
-      [aliceNFTs, bobNFTs] = await holdingsOf(_nft, _nftIds, [alice, bob]);
-      await _nftx.connect(owner).setMintFees(_vaultId, UNIT.mul(5), UNIT);
-      await _nftx.connect(owner).setBurnFees(_vaultId, UNIT.mul(5), UNIT);
-      
-      const n = aliceNFTs.length;
-      const amount = UNIT.mul(5).add(UNIT.mul(n - 1));
-      await expectRevert(
-        approveAndMint(
-          _nftx,
-          _nft,
-          aliceNFTs,
+      const runMintFeesBurnFees = async () => {
+        await setup(_nftx, _nft, _signers, _vaultId);
+        let [aliceNFTs, bobNFTs] = await holdingsOf(_nft, _nftIds, [
           alice,
-          _vaultId,
-          amount.sub(1)
-        )
-      );
-      await approveAndMint(
-        _nftx,
-        _nft,
-        aliceNFTs,
-        alice,
-        _vaultId,
-        amount
-      );
-      await expectRevert(
-        approveAndRedeem(_nftx, _token, n, alice, _vaultId, amount.sub(1))
-      );
-      await approveAndRedeem(_nftx, _token, n, alice, _vaultId, amount);
+          bob,
+        ]);
+        await _nftx.connect(owner).setMintFees(_vaultId, UNIT.mul(5), UNIT);
+        await _nftx.connect(owner).setBurnFees(_vaultId, UNIT.mul(5), UNIT);
 
-      await _nftx.connect(owner).setMintFees(_vaultId, 0, 0);
-      await _nftx.connect(owner).setBurnFees(_vaultId, 0, 0);
-      await cleanup(_nftx, _nft, _token, _signers, _vaultId);
+        const n = aliceNFTs.length;
+        let amount = UNIT.mul(5).add(UNIT.mul(n - 1));
+        await expectRevert(
+          approveAndMint(_nftx, _nft, aliceNFTs, alice, _vaultId, amount.sub(1))
+        );
+        await approveAndMint(_nftx, _nft, aliceNFTs, alice, _vaultId, amount);
+        await expectRevert(
+          approveAndRedeem(_nftx, _token, n, alice, _vaultId, amount.sub(1))
+        );
+        await approveAndRedeem(_nftx, _token, n, alice, _vaultId, amount);
+
+        await _nftx.connect(owner).setMintFees(_vaultId, 0, 0);
+        await _nftx.connect(owner).setBurnFees(_vaultId, 0, 0);
+        await cleanup(_nftx, _nft, _token, _signers, _vaultId);
+      };
 
       //////////////
       // dualFees //
       //////////////
 
-      await setup(_nftx, _nft, _signers, _vaultId);
-      [aliceNFTs, bobNFTs] = await holdingsOf(_nft, _nftIds, [alice, bob]);
-      await _nftx.connect(owner).setDualFees(_vaultId, UNIT.mul(5), UNIT);
-      await approveAndMint(_nftx, _nft, aliceNFTs, alice, _vaultId);
+      const runDualFees = async () => {
+        await setup(_nftx, _nft, _signers, _vaultId);
+        let [aliceNFTs, bobNFTs] = await holdingsOf(_nft, _nftIds, [
+          alice,
+          bob,
+        ]);
+        await _nftx.connect(owner).setDualFees(_vaultId, UNIT.mul(5), UNIT);
+        await approveAndMint(_nftx, _nft, aliceNFTs, alice, _vaultId);
 
-      await approveEach(_nft, bobNFTs, bob, _nftx.address);
-      const amount = UNIT.mul(5).add(UNIT.mul(bobNFTs.length - 1));
-      await expectRevert(_nftx.connect(bob).mintAndRedeem(_vaultId, bobNFTs, {value: amount.sub(1)}));
-      await _nftx.connect(bob).mintAndRedeem(_vaultId, bobNFTs, {value: amount});
-      
-      await _nftx.connect(owner).setDualFees(_vaultId, 0, 0);
-      await cleanup(_nftx, _nft, _token, _signers, _vaultId);
+        await approveEach(_nft, bobNFTs, bob, _nftx.address);
+        let amount = UNIT.mul(5).add(UNIT.mul(bobNFTs.length - 1));
+        await expectRevert(
+          _nftx
+            .connect(bob)
+            .mintAndRedeem(_vaultId, bobNFTs, { value: amount.sub(1) })
+        );
+        await _nftx
+          .connect(bob)
+          .mintAndRedeem(_vaultId, bobNFTs, { value: amount });
+
+        await _nftx.connect(owner).setDualFees(_vaultId, 0, 0);
+        await cleanup(_nftx, _nft, _token, _signers, _vaultId);
+      };
 
       ////////////////////
       // supplierBounty //
       ////////////////////
 
-      await setup(_nftx, _nft, _signers, _vaultId);
-      [aliceNFTs, bobNFTs] = await holdingsOf(_nft, _nftIds, [alice, bob]);
-      await _nftx.connect(owner).depositETH(_vaultId, {value: UNIT.mul(100)});
-      await _nftx.connect(owner).setSupplierBounty(_vaultId, UNIT.mul(10), 5);
+      const runSupplierBounty = async () => {
+        await setup(_nftx, _nft, _signers, _vaultId);
+        let [aliceNFTs, bobNFTs] = await holdingsOf(_nft, _nftIds, [
+          alice,
+          bob,
+        ]);
+        await _nftx
+          .connect(owner)
+          .depositETH(_vaultId, { value: UNIT.mul(100) });
+        await _nftx.connect(owner).setSupplierBounty(_vaultId, UNIT.mul(10), 5);
 
-      
+        let nftxOldBal = BigNumber.from(
+          await web3.eth.getBalance(_nftx.address)
+        );
+        let aliceOldBal = BigNumber.from(
+          await web3.eth.getBalance(alice._address)
+        );
+        await approveAndMint(
+          _nftx,
+          _nft,
+          aliceNFTs.slice(0, 1),
+          alice,
+          _vaultId
+        );
+        let nftxNewBal = BigNumber.from(
+          await web3.eth.getBalance(_nftx.address)
+        );
+        let aliceNewBal = BigNumber.from(
+          await web3.eth.getBalance(alice._address)
+        );
+
+        expect(nftxNewBal.toString()).to.equal(
+          nftxOldBal.sub(UNIT.mul(10)).toString()
+        );
+        expect(aliceNewBal.gt(aliceOldBal)).to.equal(true);
+      };
+
+      //////////////////
+      // Run Tests... //
+      //////////////////
+
+      // await runMintRedeem();
+      // await runMintAndRedeem();
+      // await runMintFeesBurnFees();
+      // await runDualFees();
+      await runSupplierBounty();
     };
 
     /////////////////////
