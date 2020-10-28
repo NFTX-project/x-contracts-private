@@ -101,7 +101,9 @@ interface INFTX {
         external
         payable;
 
-    function mint(uint256 vaultId, uint256[] calldata nftIds) external payable;
+    function mint(uint256 vaultId, uint256[] calldata nftIds, uint256 d2Amount)
+        external
+        payable;
 
     function redeem(uint256 vaultId, uint256 numNFTs) external payable;
 
