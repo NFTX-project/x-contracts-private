@@ -207,7 +207,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
             modulus;
     }
 
-    function _calcFee(uint256 amount, FeeParams storage feeP, uint256 _d2Ratio)
+    function _calcFee(uint256 amount, FeeParams storage feeP, bool isD2)
         internal
         view
         virtual
@@ -215,13 +215,10 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     {
         if (amount == 0) {
             return 0;
+        } else if (isD2) {
+            return feeP.ethBase.add(feeP.ethStep.mul(amount).div(10**18));
         } else {
-            uint256 n = _d2Ratio == 0
-                ? amount
-                : amount.mul(_d2Ratio).div(10**36);
-            if (n == 0) {
-                n = 1;
-            }
+            uint256 n = amount;
             uint256 nSub1 = amount >= 1 ? n.sub(1) : 0;
             return feeP.ethBase.add(feeP.ethStep.mul(nSub1));
         }
@@ -507,7 +504,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         Vault storage vault = _getVault(vaultId);
         if (!vault.isClosed) {
             uint256 ethBounty = _calcBounty(vaultId, amount, true);
-            uint256 ethFee = _calcFee(amount, vault.burnFees, vault.d2Ratio);
+            uint256 ethFee = _calcFee(amount, vault.burnFees);
             if (ethBounty.add(ethFee) > 0) {
                 _receiveEthToVault(vaultId, ethBounty.add(ethFee), msg.value);
             }
@@ -529,7 +526,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     {
         Vault storage vault = _getVault(vaultId);
         require(!vault.isClosed, "Vault is closed");
-        uint256 ethFee = _calcFee(nftIds.length, vault.dualFees, vault.d2Ratio);
+        uint256 ethFee = _calcFee(nftIds.length, vault.dualFees);
         if (ethFee > 0) {
             _receiveEthToVault(vaultId, ethFee, msg.value);
         }
@@ -712,6 +709,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         onlyPrivileged(vaultId, true);
         Vault storage vault = _getVault(vaultId);
         require(vault.isD2Vault, "Not D2 vault");
+        require(newRatio > 0, "Can't be zero");
         require(vault.d2Holdings == 0, "Vault not empty");
         vault.d2Ratio = newRatio;
         emit D2RatioSet(vaultId, newRatio, _msgSender());

@@ -43,19 +43,29 @@ describe("NFTX", function () {
       let asset;
       if (typeof assetNameOrExistingContract == "string") {
         let name = assetNameOrExistingContract;
-        asset = await Erc721.deploy(name, name.toUpperCase());
+        if (isD2) {
+          asset = await Erc20.deploy(name, name.toUpperCase());
+        } else {
+          asset = await Erc721.deploy(name, name.toUpperCase());
+        }
         await asset.deployed();
       } else {
         asset = assetNameOrExistingContract;
       }
       const response = await _nftx
         .connect(owner)
-        .createVault(xToken.address, asset.address, false);
+        .createVault(xToken.address, asset.address, isD2);
       const receipt = await response.wait(0);
       const vaultId = receipt.events[0].args[0].toString();
       await _nftx.connect(owner).finalizeVault(vaultId);
-      const nftIds = getAllIDs();
-      await checkMintNFTs(asset, nftIds, misc, isPV);
+      if (isD2) {
+        if (typeof assetNameOrExistingContract == "string") {
+          asset.mint(misc._address, BASE.mul(1000));
+        }
+      } else {
+        const nftIds = getAllIDs();
+        await checkMintNFTs(asset, nftIds, misc, isPV);
+      }
       return { asset, xToken, vaultId };
     };
 
@@ -483,6 +493,7 @@ describe("NFTX", function () {
     const cpm = await Cpm.deploy();
     await cpm.deployed();
     const Erc721 = await ethers.getContractFactory("ERC721");
+    const Erc20 = await ethers.getContractFactory("D2Token");
 
     const Nftx = await ethers.getContractFactory("NFTX");
     const nftx = await Nftx.deploy(cpm.address);
