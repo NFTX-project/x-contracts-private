@@ -413,8 +413,9 @@ describe("NFTX", function () {
         await setup(_nftx, _nft, _signers, _vaultId, isPV, _eligIds);
         let [aliceNFTs] = await holdingsOf(_nft, _eligIds, [alice], isPV);
         let nftIds = _eligIds.slice(0, 2).map((n) => n + 1)
-        await mintNFTs(_nft, nftIds, alice, isPV)
-        await approveAndMint(
+        await transferNFTs(_nftx, _nft, nftIds, misc, alice, isPV);
+        
+        await expectRevert(approveAndMint(
           _nftx,
           _nft,
           nftIds,
@@ -422,7 +423,7 @@ describe("NFTX", function () {
           _vaultId,
           0,
           isPV
-        );
+        ));
 
         await approveAndMint(
           _nftx,
@@ -441,11 +442,11 @@ describe("NFTX", function () {
       // Run Feature Tests... //
       //////////////////////////
 
-      // await runMintRedeem();
-      // await runMintAndRedeem();
-      // await runMintFeesBurnFees();
-      // await runDualFees();
-      // await runSupplierBounty();
+      await runMintRedeem();
+      await runMintAndRedeem();
+      await runMintFeesBurnFees();
+      await runDualFees();
+      await runSupplierBounty();
       if (_eligIds[1] - _eligIds[0] > 1) {
         await runIsEligible();
       }
@@ -521,8 +522,8 @@ describe("NFTX", function () {
     // Run Vault Tests... //
     ////////////////////////
 
-    // await runNftBasic();
-    // await runPunkBasic();
+    await runNftBasic();
+    await runPunkBasic();
     await runNftSpecial();
   });
 });
