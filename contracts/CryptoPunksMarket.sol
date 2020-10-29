@@ -132,8 +132,8 @@ contract CryptoPunksMarket {
     // Transfer ownership of a punk to another user without requiring payment
     function transferPunk(address to, uint256 punkIndex) public {
         // // require(allPunksAssigned);
-        require(punkIndexToAddress[punkIndex] == msg.sender);
-        require(punkIndex < 10000);
+        require(punkIndexToAddress[punkIndex] == msg.sender, 'Not owner');
+        require(punkIndex < 10000, 'Invalid id');
         if (punksOfferedForSale[punkIndex].isForSale) {
             punkNoLongerForSale(punkIndex);
         }

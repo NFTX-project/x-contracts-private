@@ -11,8 +11,11 @@ const { expectRevert } = require("../utils/expectRevert");
 //   return arr;
 // })();
 
+// TODO: add check balances method to makesure balances are correct always
+
 const BASE = BigNumber.from(10).pow(18);
 const UNIT = BASE.div(100);
+const zeroAddress = "0x0000000000000000000000000000000000000000";
 
 describe("NFTX", function () {
   this.timeout(0);
@@ -20,6 +23,10 @@ describe("NFTX", function () {
     //////////////////////
     // Helper functions //
     //////////////////////
+
+    const getAllIDs = () => {
+      return getIntArray(0,40);
+    }
 
     const getIntArray = (firstElem, firstNonElem) => {
       const arr = [];
@@ -57,17 +64,24 @@ describe("NFTX", function () {
       const receipt = await response.wait(0);
       const vaultId = receipt.events[0].args[0].toString();
       await _nftx.connect(owner).finalizeVault(vaultId);
-      const nftIds = getIntArray(0, 40);
-      await mintNFTs(nft, nftIds, misc, isPV);
+      const nftIds = getAllIDs();
+      await checkMintNFTs(nft, nftIds, misc, isPV);
       return { nft, xToken, vaultId };
     };
 
-    const mintNFTs = async ( nft, nftIds, to, isPV ) => {
+    const checkMintNFTs = async ( nft, nftIds, to, isPV ) => {
       for (let i = 0; i < nftIds.length; i++) {
         if (isPV) {
-          await nft.setInitialOwner(to._address, nftIds[i]);
+          const owner = await nft.punkIndexToAddress(nftIds[i]);
+          if (owner === zeroAddress) {
+            await nft.setInitialOwner(to._address, nftIds[i]);
+          }
         } else {
-          await nft.safeMint(to._address, nftIds[i]);
+          try {
+            await nft.ownerOf(nftIds[i]);
+          } catch(err) {
+            await nft.safeMint(to._address, nftIds[i]);
+          }
         }
       }
     }
@@ -222,7 +236,7 @@ describe("NFTX", function () {
       //////////////////
 
       const runMintRedeem = async () => {
-        console.log("\nTesting: mint, redeem...\n");
+        console.log("Testing: mint, redeem...\n");
         await setup(_nftx, _nft, _signers, _vaultId, isPV, _eligIds);
         let [aliceNFTs, bobNFTs] = await holdingsOf(
           _nft,
@@ -435,7 +449,7 @@ describe("NFTX", function () {
           isPV
         );
 
-        await cleanup(_nftx, _nft, _token, _signers, _vaultId, isPV, _eligIds);
+        await cleanup(_nftx, _nft, _token, _signers, _vaultId, isPV, getAllIDs());
       };
 
       //////////////////////////
@@ -450,6 +464,7 @@ describe("NFTX", function () {
       if (_eligIds[1] - _eligIds[0] > 1) {
         await runIsEligible();
       }
+      console.log('\n-- Vault tests complete --\n\n');
     };
 
     ///////////////////////////////////////////////////////////////
@@ -476,9 +491,9 @@ describe("NFTX", function () {
       const { nft, xToken, vaultId } = await initializeNftTokenVault(
         nftx,
         signers,
-        "Autoglyphs",
+        "NFT-A",
         false,
-        "Glyph"
+        "XToken-A"
       );
       const eligIds = getIntArray(0, 20);
       await runVaultTests(nftx, nft, xToken, signers, vaultId, eligIds, false);
@@ -504,18 +519,60 @@ describe("NFTX", function () {
     // NFT-special //
     /////////////////
 
+    let nftB;
     const runNftSpecial = async () => {
       const { nft, xToken, vaultId } = await initializeNftTokenVault(
         nftx,
         signers,
-        "Autoglyphs",
+        "NFT-B",
         false,
-        "Glyph"
+        "XToken-B1"
       );
       const eligIds = getIntArray(0, 20).map((n) => n * 2);
       nftx.connect(owner).setNegateEligibility(vaultId, false);
       nftx.connect(owner).setIsEligible(vaultId, eligIds, true);
       await runVaultTests(nftx, nft, xToken, signers, vaultId, eligIds, false);
+      nftB = nft;
+    };
+
+    ///////////////////
+    // NFT-special-2 //
+    ///////////////////
+    
+    const runNftSpecial2 = async () => {
+      if (!nftB) {
+        console.log('No nftB object...'); return;
+      }
+      const { nft, xToken, vaultId } = await initializeNftTokenVault(
+        nftx,
+        signers,
+        nftB,
+        false,
+        "XToken-B2"
+      );
+      const eligIds = getIntArray(0, 20).map((n) => n * 2 + 1);
+      nftx.connect(owner).setNegateEligibility(vaultId, false);
+      nftx.connect(owner).setIsEligible(vaultId, eligIds, true);
+      await runVaultTests(nftx, nft, xToken, signers, vaultId, eligIds, false);
+      nftB = nft;
+    };
+
+    //////////////////
+    // Punk-special //
+    //////////////////
+
+    const runPunkSpecial = async () => {
+      const { nft, xToken, vaultId } = await initializeNftTokenVault(
+        nftx,
+        signers,
+        cpm,
+        true,
+        "Punk-Special"
+      );
+      const eligIds = getIntArray(0, 20).map((n) => n * 2);
+      nftx.connect(owner).setNegateEligibility(vaultId, false);
+      nftx.connect(owner).setIsEligible(vaultId, eligIds, true);
+      await runVaultTests(nftx, nft, xToken, signers, vaultId, eligIds, true);
     };
 
     ////////////////////////
@@ -525,5 +582,7 @@ describe("NFTX", function () {
     await runNftBasic();
     await runPunkBasic();
     await runNftSpecial();
+    await runNftSpecial2();
+    await runPunkSpecial();
   });
 });
