@@ -33,7 +33,7 @@ describe("NFTX", function () {
       _nftx,
       _signers,
       nftNameOrExistingContract,
-      isPV /* isPunkVault */,
+      isPV,
       tokenName
     ) => {
       const [owner, misc, alice, bob, carol, dave, eve] = _signers;
@@ -58,15 +58,19 @@ describe("NFTX", function () {
       const vaultId = receipt.events[0].args[0].toString();
       await _nftx.connect(owner).finalizeVault(vaultId);
       const nftIds = getIntArray(0, 40);
-      for (let i = 0; i < nftIds.length; i++) {
-        if (isPV) {
-          await nft.setInitialOwner(misc._address, nftIds[i]);
-        } else {
-          await nft.safeMint(misc._address, nftIds[i]);
-        }
-      }
+      await mintNFTs(nft, nftIds, misc, isPV);
       return { nft, xToken, vaultId };
     };
+
+    const mintNFTs = async ( nft, nftIds, to, isPV ) => {
+      for (let i = 0; i < nftIds.length; i++) {
+        if (isPV) {
+          await nft.setInitialOwner(to._address, nftIds[i]);
+        } else {
+          await nft.safeMint(to._address, nftIds[i]);
+        }
+      }
+    }
 
     const transferNFTs = async (
       _nftx,
@@ -408,20 +412,19 @@ describe("NFTX", function () {
         console.log("Testing: isEligible...\n");
         await setup(_nftx, _nft, _signers, _vaultId, isPV, _eligIds);
         let [aliceNFTs] = await holdingsOf(_nft, _eligIds, [alice], isPV);
-
-        await expectRevert(
-          approveAndMint(
-            _nftx,
-            _nft,
-            _eligIds.slice(0, 2).map((n) => n + 1),
-            alice,
-            _vaultId,
-            0,
-            isPV
-          )
+        let nftIds = _eligIds.slice(0, 2).map((n) => n + 1)
+        await mintNFTs(_nft, nftIds, alice, isPV)
+        await approveAndMint(
+          _nftx,
+          _nft,
+          nftIds,
+          alice,
+          _vaultId,
+          0,
+          isPV
         );
 
-        approveAndMint(
+        await approveAndMint(
           _nftx,
           _nft,
           _eligIds.slice(0, 2),
@@ -438,11 +441,11 @@ describe("NFTX", function () {
       // Run Feature Tests... //
       //////////////////////////
 
-      await runMintRedeem();
-      await runMintAndRedeem();
-      await runMintFeesBurnFees();
-      await runDualFees();
-      await runSupplierBounty();
+      // await runMintRedeem();
+      // await runMintAndRedeem();
+      // await runMintFeesBurnFees();
+      // await runDualFees();
+      // await runSupplierBounty();
       if (_eligIds[1] - _eligIds[0] > 1) {
         await runIsEligible();
       }
