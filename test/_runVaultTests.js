@@ -24,8 +24,7 @@ const runVaultTests = async (
   vaultId,
   allNftIds,
   eligIds,
-  isPV,
-  isD2
+  isPV
 ) => {
   const [owner, misc, alice, bob, carol, dave, eve] = signers;
 
@@ -35,13 +34,14 @@ const runVaultTests = async (
 
   const runMintRedeem = async () => {
     console.log("Testing: mint, redeem...\n");
-    await setup(nftx, nft, signers, vaultId, isPV, eligIds);
+    await setup(nftx, nft, signers, isPV, eligIds);
     let [aliceNFTs, bobNFTs] = await holdingsOf(
       nft,
       eligIds,
       [alice, bob],
       isPV
     );
+
     await approveAndMint(nftx, nft, aliceNFTs, alice, vaultId, 0, isPV);
     await approveAndMint(nftx, nft, bobNFTs, bob, vaultId, 0, isPV);
     await checkBalances(nftx, nft, token, signers.slice(2), isPV);
@@ -61,7 +61,7 @@ const runVaultTests = async (
 
   const runMintAndRedeem = async () => {
     console.log("Testing: mintAndRedeem...\n");
-    await setup(nftx, nft, signers, vaultId, isPV, eligIds);
+    await setup(nftx, nft, signers, isPV, eligIds);
     let [aliceNFTs, bobNFTs] = await holdingsOf(
       nft,
       eligIds,
@@ -85,7 +85,7 @@ const runVaultTests = async (
 
   const runMintFeesBurnFees = async () => {
     console.log("Testing: mintFees, burnFees...\n");
-    await setup(nftx, nft, signers, vaultId, isPV, eligIds);
+    await setup(nftx, nft, signers, isPV, eligIds);
     let [aliceNFTs, bobNFTs] = await holdingsOf(
       nft,
       eligIds,
@@ -118,7 +118,7 @@ const runVaultTests = async (
 
   const runDualFees = async () => {
     console.log("Testing: dualFees...\n");
-    await setup(nftx, nft, signers, vaultId, isPV, eligIds);
+    await setup(nftx, nft, signers, isPV, eligIds);
     let [aliceNFTs, bobNFTs] = await holdingsOf(
       nft,
       eligIds,
@@ -147,7 +147,7 @@ const runVaultTests = async (
 
   const runSupplierBounty = async () => {
     console.log("Testing: supplierBounty...\n");
-    await setup(nftx, nft, signers, vaultId, isPV, eligIds);
+    await setup(nftx, nft, signers, isPV, eligIds);
     let [aliceNFTs, bobNFTs] = await holdingsOf(
       nft,
       eligIds,
@@ -189,7 +189,7 @@ const runVaultTests = async (
 
   const runIsEligible = async () => {
     console.log("Testing: isEligible...\n");
-    await setup(nftx, nft, signers, vaultId, isPV, eligIds);
+    await setup(nftx, nft, signers, isPV, eligIds);
     let [aliceNFTs] = await holdingsOf(nft, eligIds, [alice], isPV);
     let nftIds = eligIds.slice(0, 2).map((n) => n + 1);
     await transferNFTs(nftx, nft, nftIds, misc, alice, isPV);

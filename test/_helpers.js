@@ -87,12 +87,20 @@ const transferNFTs = async (nftx, nft, nftIds, sender, recipient, isPV) => {
   }
 };
 
-const setup = async (nftx, nft, signers, vaultId, isPV, eligIds) => {
+const setup = async (nftx, nft, signers, isPV, eligIds) => {
   const [owner, misc, alice, bob, carol, dave, eve] = signers;
   await transferNFTs(nftx, nft, eligIds.slice(0, 8), misc, alice, isPV);
   await transferNFTs(nftx, nft, eligIds.slice(8, 16), misc, bob, isPV);
   await transferNFTs(nftx, nft, eligIds.slice(16, 19), misc, carol, isPV);
   await transferNFTs(nftx, nft, eligIds.slice(19, 20), misc, dave, isPV);
+};
+
+const setupD2 = async (nftx, asset, signers) => {
+  const [owner, misc, alice, bob, carol, dave, eve] = signers;
+  await asset.connect(misc).transfer(alice._address, BASE.mul(8));
+  await asset.connect(misc).transfer(bob._address, BASE.mul(8));
+  await asset.connect(misc).transfer(carol._address, BASE.mul(3));
+  await asset.connect(misc).transfer(dave._address, BASE.mul(1));
 };
 
 const cleanup = async (nftx, nft, token, signers, vaultId, isPV, eligIds) => {
@@ -129,23 +137,31 @@ const cleanup = async (nftx, nft, token, signers, vaultId, isPV, eligIds) => {
   }
 };
 
-const holdingsOf = async (nft, nftIds, users, isPV, isD2) => {
+const holdingsOf = async (nft, nftIds, accounts, isPV, isD2) => {
   const lists = [];
-  for (let i = 0; i < users.length; i++) {
-    const user = users[i];
+  for (let i = 0; i < accounts.length; i++) {
+    const account = accounts[i];
     const list = [];
     for (let _i = 0; _i < nftIds.length; _i++) {
       const id = nftIds[_i];
       const nftOwner = isPV
         ? await nft.punkIndexToAddress(id)
         : await nft.ownerOf(id);
-      if (nftOwner === user._address) {
+      if (nftOwner === account._address) {
         list.push(id);
       }
     }
     lists.push(list);
   }
   return lists;
+};
+
+const balancesOf = async (token, accounts) => {
+  const balances = [];
+  for (let i = 0; i < accounts.length; i++) {
+    balances.push(await token.balanceOf(accounts[i]._address));
+  }
+  return balances;
 };
 
 const checkBalances = async (nftx, nft, xToken, users, nftIds, isPV) => {
@@ -157,9 +173,19 @@ const checkBalances = async (nftx, nft, xToken, users, nftIds, isPV) => {
   }
   const nftAmount = await nft.balanceOf(nftx.address);
   if (!nftAmount.mul(BASE).eq(tokenAmount)) {
-    console.log(`
-      ERROR: Balances do not match up
-    `);
+    throw "Balances do not match up";
+  }
+};
+
+const checkBalancesD2 = async (nftx, asset, xToken, accounts) => {
+  let tokenAmount = BigNumber.from(0);
+  const balances = await balancesOf(xToken, accounts);
+  balances.forEach((balance) => {
+    tokenAmount = tokenAmount.add(balance);
+  });
+  const contractBal = await asset.balanceOf(nftx.address);
+  if (tokenAmount.toString() !== contractBal.toString()) {
+    throw "Balances do not match up (D2)";
   }
 };
 
@@ -187,17 +213,41 @@ const approveAndMint = async (
   await nftx.connect(signer).mint(vaultId, nftIds, 0, { value: value });
 };
 
+const approveAndMintD2 = async (
+  nftx,
+  asset,
+  amount,
+  signer,
+  vaultId,
+  value
+) => {
+  await asset.connect(signer).approve(nftx.address, amount);
+  await nftx.connect(signer).mint(vaultId, [], amount), { value: value };
+};
+
 const approveAndRedeem = async (
   nftx,
-  token,
+  xToken,
   amount,
   signer,
   vaultId,
   value = 0
 ) => {
-  await token
+  await xToken
     .connect(signer)
     .approve(nftx.address, BASE.mul(amount).toString());
+  await nftx.connect(signer).redeem(vaultId, amount, { value: value });
+};
+
+const approveAndRedeemD2 = async (
+  nftx,
+  xToken,
+  amount,
+  signer,
+  vaultId,
+  value
+) => {
+  await xToken.connect(signer).approve(nftx.address, amount);
   await nftx.connect(signer).redeem(vaultId, amount, { value: value });
 };
 
@@ -206,9 +256,14 @@ exports.initializeAssetTokenVault = initializeAssetTokenVault;
 exports.checkMintNFTs = checkMintNFTs;
 exports.transferNFTs = transferNFTs;
 exports.setup = setup;
+exports.setupD2 = setupD2;
 exports.cleanup = cleanup;
 exports.holdingsOf = holdingsOf;
+exports.balancesOf = balancesOf;
 exports.checkBalances = checkBalances;
+exports.checkBalancesD2 = checkBalancesD2;
 exports.approveEach = approveEach;
 exports.approveAndMint = approveAndMint;
+exports.approveAndMintD2 = approveAndMintD2;
 exports.approveAndRedeem = approveAndRedeem;
+exports.approveAndRedeemD2 = approveAndRedeemD2;

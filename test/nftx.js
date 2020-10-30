@@ -1,4 +1,5 @@
 const { runVaultTests } = require("./_runVaultTests");
+const { runVaultTestsD2 } = require("./_runVaultTestsD2");
 const { getIntArray, initializeAssetTokenVault } = require("./_helpers");
 
 describe("NFTX", function () {
@@ -187,18 +188,18 @@ describe("NFTX", function () {
         false,
         true
       );
-      // TODO:
+      await runVaultTestsD2(nftx, asset, xToken, signers, vaultId);
     };
 
     ////////////////////////////////////////////////////////////////////
     // Run Vault Tests... //////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////
 
-    await runNftBasic();
-    await runPunkBasic();
-    await runNftSpecial();
-    await runNftSpecial2();
-    await runPunkSpecial();
-    // await runD2Vault();
+    // await runNftBasic();
+    // await runPunkBasic();
+    // await runNftSpecial();
+    // await runNftSpecial2();
+    // await runPunkSpecial();
+    await runD2Vault();
   });
 });
