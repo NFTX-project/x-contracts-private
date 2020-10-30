@@ -244,45 +244,6 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         return ethBounty;
     }
 
-    /* function _calcBountyD2(uint256 vaultId, uint256 amount, bool isBurn)
-        public
-        view
-        virtual
-        returns (uint256)
-    {
-        Vault storage vault = _getVault(vaultId);
-        if (vault.supplierBounty.length == 0) {
-            return 0;
-        }
-        uint256 intervals = 10;
-        uint256 intervalLength = vault.supplierBounty.length.div(intervals);
-        uint256 remainingAmount = amount;
-        uint256 ethStep = vault.supplierBounty.ethMax.div(10);
-        uint256 ethBounty = 0;
-        uint256 newSize = isBurn
-            ? vaultSize(vaultId).sub(amount)
-            : vaultSize(vaultId).add(amount);
-        if (isBurn && newSize < vault.supplierBounty.length) {
-            uint256 n = intervals;
-            while (n.mul(ethStep) > vaultSize(vaultId)) {
-                n = n.sub(1);
-            }
-            for (uint256 i = n; i >= 0; i = i.sub(1)) {
-                uint256 depth = intervals.sub(n);
-                uint256 potentialDif = vaultSize(vaultId).sub(n.mul(ethStep));
-                uint256 dif = amount < potentialDif ? amount : potentialDif;
-                uint256 _ethBounty = depth.mul(ethStep).mul(dif).div(
-                    intervalLength
-                );
-                ethBounty = ethBounty.add(_ethBounty);
-                remainingAmount = remainingAmount.sub(dif);
-                if (remainingAmount == 0) {
-                    break;
-                }
-            }
-        }
-    } */
-
     function _calcBountyD2(uint256 vaultId, uint256 amount, bool isBurn)
         public
         view
