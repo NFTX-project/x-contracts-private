@@ -137,6 +137,21 @@ const cleanup = async (nftx, nft, token, signers, vaultId, isPV, eligIds) => {
   }
 };
 
+const cleanupD2 = async (nftx, asset, xToken, signers, vaultId) => {
+  const [owner, misc, alice, bob, carol, dave, eve] = signers;
+  for (let i = 2; i < 7; i++) {
+    const signer = signers[i];
+    const xBal = await xToken.balanceOf(signer._address);
+    if (xBal.gt(0)) {
+      await approveAndRedeemD2(nftx, xToken, bal, signer, vaultId, 0);
+    }
+    const assetBal = await asset.balanceOf(signer._address);
+    if (assetBal.gt(0)) {
+      await asset.connect(signer).transfer(misc._address, assetBal);
+    }
+  }
+};
+
 const holdingsOf = async (nft, nftIds, accounts, isPV, isD2) => {
   const lists = [];
   for (let i = 0; i < accounts.length; i++) {
@@ -258,6 +273,7 @@ exports.transferNFTs = transferNFTs;
 exports.setup = setup;
 exports.setupD2 = setupD2;
 exports.cleanup = cleanup;
+exports.cleanupD2 = cleanupD2;
 exports.holdingsOf = holdingsOf;
 exports.balancesOf = balancesOf;
 exports.checkBalances = checkBalances;

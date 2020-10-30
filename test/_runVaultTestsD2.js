@@ -5,6 +5,7 @@ const {
   checkBalancesD2,
   approveAndRedeemD2,
   approveAndRedeem,
+  cleanupD2,
 } = require("./_helpers");
 
 const runVaultTestsD2 = async (nftx, asset, xToken, signers, vaultId) => {
@@ -26,6 +27,7 @@ const runVaultTestsD2 = async (nftx, asset, xToken, signers, vaultId) => {
     await approveAndRedeemD2(nftx, xToken, bobBal, bob, vaultId, 0);
 
     await checkBalancesD2(nftx, asset, xToken, [alice, bob]);
+    await cleanupD2(nftx, asset, xToken, signers, vaultId);
   };
 
   //////////////////////////
