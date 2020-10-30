@@ -288,7 +288,47 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         view
         virtual
         returns (uint256)
-    {}
+    {
+        Vault storage vault = _getVault(vaultId);
+        if (vault.supplierBounty.length == 0) {
+            return 0;
+        }
+        uint256 remainingAmount = amount;
+        uint256 prevSize = vaultSize(vaultId);
+        uint256 newSize = vaultSize(vaultId).sub(amount);
+        if (vaultSize(vaultId) > vault.supplierBounty.length) {
+            uint256 dif = vaultSize(vaultId).sub(vault.supplierBounty.length);
+            remainingAmount = remainingAmount.sub(dif);
+        }
+        uint256 prevTriangle = _calcBountyD2Helper(vaultId, prevSize)
+            .mul(vault.supplierBounty.length.sub(prevSize))
+            .div(2);
+        uint256 newTriangle = _calcBountyD2Helper(vaultId, newSize)
+            .mul(vault.supplierBounty.length.sub(newSize))
+            .div(2);
+        if (isBurn && newSize < vault.supplierBounty.length) {
+            return newTriangle.sub(prevTriangle);
+        } else if (!isBurn && prevSize < vault.supplierBounty.length) {
+            return prevTriangle.sub(newTriangle);
+        }
+    }
+
+    function _calcBountyD2Helper(uint256 vaultId, uint256 size)
+        internal
+        view
+        returns (uint256)
+    {
+        Vault storage vault = _getVault(vaultId);
+        if (size >= vault.supplierBounty.length) {
+            return 0;
+        }
+        return
+            vault.supplierBounty.ethMax.sub(
+                vault.supplierBounty.ethMax.mul(size).div(
+                    vault.supplierBounty.length
+                )
+            );
+    }
 
     function _calcBountyHelper(uint256 vaultId, uint256 _vaultSize)
         internal
@@ -518,7 +558,9 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     {
         Vault storage vault = _getVault(vaultId);
         uint256 amount = vault.isD2Vault ? d2Amount : nftIds.length;
-        uint256 ethBounty = _calcBounty(vaultId, amount, false);
+        uint256 ethBounty = vault.isD2Vault
+            ? _calcBountyD2(vaultId, d2Amount, false)
+            : _calcBounty(vaultId, amount, false);
         uint256 ethFee = _calcFee(amount, vault.mintFees, vault.isD2Vault);
         if (ethFee > ethBounty) {
             _receiveEthToVault(vaultId, ethFee.sub(ethBounty), msg.value);
@@ -544,7 +586,9 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     {
         Vault storage vault = _getVault(vaultId);
         if (!vault.isClosed) {
-            uint256 ethBounty = _calcBounty(vaultId, amount, true);
+            uint256 ethBounty = vault.isD2Vault
+                ? _calcBountyD2(vaultId, amount, true)
+                : _calcBounty(vaultId, amount, true);
             uint256 ethFee = _calcFee(amount, vault.burnFees, vault.isD2Vault);
             if (ethBounty.add(ethFee) > 0) {
                 _receiveEthToVault(vaultId, ethBounty.add(ethFee), msg.value);
