@@ -84,7 +84,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         uint256[] _weightings,
         address by
     );
-    event D2RatioSet(uint256 vaultId, uint256 newRatio, address by);
+
     event D2AssetDeposited(uint256 vaultId, uint256 amount, address from);
     event D2AssetRedeemed(uint256 vaultId, uint256 amount, address to);
 
@@ -126,7 +126,6 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         bool isD2Vault;
         IERC20 d2Asset;
         uint256 d2Holdings;
-        uint256 d2Ratio;
         uint256[] d2UnderlyingVaults;
         uint256[] d2UnderlyingWeights;
     }
@@ -244,6 +243,52 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         }
         return ethBounty;
     }
+
+    /* function _calcBountyD2(uint256 vaultId, uint256 amount, bool isBurn)
+        public
+        view
+        virtual
+        returns (uint256)
+    {
+        Vault storage vault = _getVault(vaultId);
+        if (vault.supplierBounty.length == 0) {
+            return 0;
+        }
+        uint256 intervals = 10;
+        uint256 intervalLength = vault.supplierBounty.length.div(intervals);
+        uint256 remainingAmount = amount;
+        uint256 ethStep = vault.supplierBounty.ethMax.div(10);
+        uint256 ethBounty = 0;
+        uint256 newSize = isBurn
+            ? vaultSize(vaultId).sub(amount)
+            : vaultSize(vaultId).add(amount);
+        if (isBurn && newSize < vault.supplierBounty.length) {
+            uint256 n = intervals;
+            while (n.mul(ethStep) > vaultSize(vaultId)) {
+                n = n.sub(1);
+            }
+            for (uint256 i = n; i >= 0; i = i.sub(1)) {
+                uint256 depth = intervals.sub(n);
+                uint256 potentialDif = vaultSize(vaultId).sub(n.mul(ethStep));
+                uint256 dif = amount < potentialDif ? amount : potentialDif;
+                uint256 _ethBounty = depth.mul(ethStep).mul(dif).div(
+                    intervalLength
+                );
+                ethBounty = ethBounty.add(_ethBounty);
+                remainingAmount = remainingAmount.sub(dif);
+                if (remainingAmount == 0) {
+                    break;
+                }
+            }
+        }
+    } */
+
+    function _calcBountyD2(uint256 vaultId, uint256 amount, bool isBurn)
+        public
+        view
+        virtual
+        returns (uint256)
+    {}
 
     function _calcBountyHelper(uint256 vaultId, uint256 _vaultSize)
         internal
@@ -376,9 +421,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         Vault storage vault = _getVault(vaultId);
         vault.d2Asset.transferFrom(_msgSender(), address(this), amount);
         emit D2AssetDeposited(vaultId, amount, _msgSender());
-        uint256 amountMinted = amount.mul(vault.d2Ratio).div(10**18);
-        vault.erc20.mint(_msgSender(), amountMinted);
-        emit TokensMinted(vaultId, amountMinted, _msgSender());
+        vault.erc20.mint(_msgSender(), amount);
+        emit TokensMinted(vaultId, amount, _msgSender());
         vault.d2Holdings = vault.d2Holdings.add(amount);
     }
 
@@ -402,9 +446,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
 
     function _redeemD2(uint256 vaultId, uint256 amount) internal virtual {
         Vault storage vault = _getVault(vaultId);
-        uint256 amountBurned = amount.mul(vault.d2Ratio).div(10**18);
-        vault.erc20.burnFrom(_msgSender(), amountBurned);
-        emit TokensBurned(vaultId, amountBurned, _msgSender());
+        vault.erc20.burnFrom(_msgSender(), amount);
+        emit TokensBurned(vaultId, amount, _msgSender());
         vault.d2Asset.transfer(_msgSender(), amount);
         emit D2AssetRedeemed(vaultId, amount, _msgSender());
         vault.d2Holdings = vault.d2Holdings.sub(amount);
@@ -474,19 +517,17 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         whenNotPaused
     {
         Vault storage vault = _getVault(vaultId);
-        require(!vault.isClosed, "Vault is closed");
-        uint256 amount = nftIds.length > 0 ? nftIds.length : d2Amount;
+        uint256 amount = vault.isD2Vault ? d2Amount : nftIds.length;
         uint256 ethBounty = _calcBounty(vaultId, amount, false);
-        uint256 ethFee = _calcFee(amount, vault.mintFees, vault.d2Ratio);
+        uint256 ethFee = _calcFee(amount, vault.mintFees, vault.isD2Vault);
         if (ethFee > ethBounty) {
             _receiveEthToVault(vaultId, ethFee.sub(ethBounty), msg.value);
         }
-        if (nftIds.length > 0) {
-            require(!vault.isD2Vault, "Is D2 vault");
-            _mint(vaultId, nftIds, false);
-        } else {
-            require(!vault.isD2Vault, "Is not D2 vault");
+        if (vault.isD2Vault) {
             _mintD2(vaultId, d2Amount);
+
+        } else {
+            _mint(vaultId, nftIds, false);
         }
         if (ethBounty > ethFee) {
             _payEthFromVault(vaultId, ethBounty.sub(ethFee), _msgSender());
@@ -504,7 +545,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         Vault storage vault = _getVault(vaultId);
         if (!vault.isClosed) {
             uint256 ethBounty = _calcBounty(vaultId, amount, true);
-            uint256 ethFee = _calcFee(amount, vault.burnFees);
+            uint256 ethFee = _calcFee(amount, vault.burnFees, vault.isD2Vault);
             if (ethBounty.add(ethFee) > 0) {
                 _receiveEthToVault(vaultId, ethBounty.add(ethFee), msg.value);
             }
@@ -526,7 +567,11 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     {
         Vault storage vault = _getVault(vaultId);
         require(!vault.isClosed, "Vault is closed");
-        uint256 ethFee = _calcFee(nftIds.length, vault.dualFees);
+        uint256 ethFee = _calcFee(
+            nftIds.length,
+            vault.dualFees,
+            vault.isD2Vault
+        );
         if (ethFee > 0) {
             _receiveEthToVault(vaultId, ethFee, msg.value);
         }
@@ -703,15 +748,5 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         vault.d2UnderlyingVaults = _vaultIds;
         vault.d2UnderlyingWeights = _weightings;
         emit D2WeightingsSet(vaultId, _vaultIds, _weightings, _msgSender());
-    }
-
-    function setD2Ratio(uint256 vaultId, uint256 newRatio) public virtual {
-        onlyPrivileged(vaultId, true);
-        Vault storage vault = _getVault(vaultId);
-        require(vault.isD2Vault, "Not D2 vault");
-        require(newRatio > 0, "Can't be zero");
-        require(vault.d2Holdings == 0, "Vault not empty");
-        vault.d2Ratio = newRatio;
-        emit D2RatioSet(vaultId, newRatio, _msgSender());
     }
 }
