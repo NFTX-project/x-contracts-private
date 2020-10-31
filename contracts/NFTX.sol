@@ -190,7 +190,9 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
 
     function vaultSize(uint256 vaultId) public view virtual returns (uint256) {
         Vault storage vault = _getVault(vaultId);
-        return vault.holdings.length().add(vault.reserves.length());
+        return vault.isD2Vault 
+            ? vault.d2Holdings 
+            : vault.holdings.length().add(vault.reserves.length());
     }
 
     uint256 private randNonce = 0;
@@ -259,21 +261,16 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
             return 0;
         }
         uint256 prevSize = vaultSize(vaultId);
+        uint256 prevDepth = prevSize > length ? 0 : length.sub(prevSize);
         uint256 prevReward = _calcBountyD2Helper(vaultId, prevSize);
         uint256 newSize = isBurn
             ? vaultSize(vaultId).sub(amount)
             : vaultSize(vaultId).add(amount);
+        uint256 newDepth = newSize > length ? 0 : length.sub(newSize);
         uint256 newReward = _calcBountyD2Helper(vaultId, newSize);
-        uint256 prevTriangle = prevSize.mul(prevReward).div(2);
-        uint256 newTriangle = newSize.mul(newReward).div(2);
-        console.log("amount");
-        console.log(amount);
-        console.log("retVal");
-        console.log(
-            isBurn
-                ? newTriangle.sub(prevTriangle)
-                : prevTriangle.sub(newTriangle)
-        );
+        uint256 prevTriangle = prevDepth.mul(prevReward).div(2).div(10**18);
+        uint256 newTriangle = newDepth.mul(newReward).div(2).div(10**18);
+
         return
             isBurn
                 ? newTriangle.sub(prevTriangle)
@@ -577,6 +574,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         whenNotPaused
     {
         Vault storage vault = _getVault(vaultId);
+        require(!vault.isD2Vault, "Is D2 vault");
         require(!vault.isClosed, "Vault is closed");
         uint256 ethFee = _calcFee(
             nftIds.length,
@@ -694,6 +692,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         onlyManager(vaultId)
     {
         Vault storage vault = _getVault(vaultId);
+        require(!vault.isFinalized, "Already finalized");
         vault.isFinalized = true;
         emit VaultFinalized(vaultId, _msgSender());
     }

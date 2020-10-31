@@ -52,13 +52,12 @@ const runVaultTestsD2 = async (nftx, asset, xToken, signers, vaultId) => {
     await expectRevert(
       approveAndMintD2(nftx, asset, aliceBal, alice, vaultId, amount.sub(1))
     );
-    await checkBalancesD2(nftx, asset, xToken, [alice]);
     await approveAndMintD2(nftx, asset, aliceBal, alice, vaultId, amount);
+    await checkBalancesD2(nftx, asset, xToken, [alice]);
     await expectRevert(
       approveAndRedeemD2(nftx, xToken, aliceBal, alice, vaultId, amount.sub(1))
     );
     await approveAndRedeemD2(nftx, xToken, aliceBal, alice, vaultId, amount);
-
     await nftx.connect(owner).setMintFees(vaultId, 0, 0);
     await nftx.connect(owner).setBurnFees(vaultId, 0, 0);
     await checkBalancesD2(nftx, asset, xToken, [alice]);
@@ -80,14 +79,30 @@ const runVaultTestsD2 = async (nftx, asset, xToken, signers, vaultId) => {
 
     let nftxBal1 = BigNumber.from(await web3.eth.getBalance(nftx.address));
     let aliceBal1 = BigNumber.from(await web3.eth.getBalance(alice._address));
-    console.log("here-a");
     await approveAndMintD2(nftx, asset, aliceBal, alice, vaultId, 0);
-    console.log("here-b");
+    await checkBalancesD2(nftx, asset, xToken, [alice]);
     let nftxBal2 = BigNumber.from(await web3.eth.getBalance(nftx.address));
     let aliceBal2 = BigNumber.from(await web3.eth.getBalance(alice._address));
-    expect(nftxBal2.toString()).to.equal(
-      nftxBal1.sub(UNIT.mul(10 + 8 + 6 + 4 + 2)).toString()
+    expect(nftxBal1.sub(nftxBal2).toString()).to.equal(
+      UNIT.mul(10).mul(5).div(2).toString()
     );
+    expect(aliceBal2.gt(aliceBal1)).to.equal(true);
+    await approveAndRedeemD2(
+      nftx, 
+      xToken, 
+      aliceBal, 
+      alice, 
+      vaultId, 
+      UNIT.mul(10).mul(5).div(2)
+    );
+    let nftxBal3 = BigNumber.from(await web3.eth.getBalance(nftx.address));
+    let aliceBal3 = BigNumber.from(await web3.eth.getBalance(alice._address));
+    expect(nftxBal3.toString()).to.equal(nftxBal1.toString());
+    expect(aliceBal3.lt(aliceBal2)).to.equal(true);
+    await checkBalancesD2(nftx, asset, xToken, [alice]);
+
+    await nftx.connect(owner).setSupplierBounty(vaultId, 0, 0);
+    await cleanupD2(nftx, asset, xToken, signers, vaultId);
   };
 
   //////////////////////////
@@ -97,7 +112,8 @@ const runVaultTestsD2 = async (nftx, asset, xToken, signers, vaultId) => {
   await runMintRedeem();
   await runMintFeesBurnFees();
   await runSupplierBounty();
-  console.log("-- DONE D2 --");
+
+  console.log("\n-- Vault tests complete (D2) --\n\n");
 };
 
 exports.runVaultTestsD2 = runVaultTestsD2;

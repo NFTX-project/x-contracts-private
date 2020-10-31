@@ -5,10 +5,11 @@ const { getIntArray, initializeAssetTokenVault } = require("./_helpers");
 describe("NFTX", function () {
   this.timeout(0);
   it("Should run as expected", async function () {
+    console.log('');
     ///////////////////////////////////////////////////////////////
     // Initialize NFTX ////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////
-
+    
     const Cpm = await ethers.getContractFactory("CryptoPunksMarket");
     const cpm = await Cpm.deploy();
     await cpm.deployed();
@@ -194,12 +195,12 @@ describe("NFTX", function () {
     ////////////////////////////////////////////////////////////////////
     // Run Vault Tests... //////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////
-
-    // await runNftBasic();
-    // await runPunkBasic();
-    // await runNftSpecial();
-    // await runNftSpecial2();
-    // await runPunkSpecial();
+    
+    await runNftBasic();
+    await runPunkBasic();
+    await runNftSpecial();
+    await runNftSpecial2();
+    await runPunkSpecial();
     await runD2Vault();
   });
 });
