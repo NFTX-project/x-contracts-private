@@ -101,6 +101,7 @@ const runVaultTests = async (
       approveAndMint(nftx, nft, aliceNFTs, alice, vaultId, amount.sub(1), isPV)
     );
     await approveAndMint(nftx, nft, aliceNFTs, alice, vaultId, amount, isPV);
+    await checkBalances(nftx, nft, token, signers.slice(2), isPV);
     await expectRevert(
       approveAndRedeem(nftx, token, n, alice, vaultId, amount.sub(1))
     );
@@ -148,12 +149,7 @@ const runVaultTests = async (
   const runSupplierBounty = async () => {
     console.log("Testing: supplierBounty...\n");
     await setup(nftx, nft, signers, isPV, eligIds);
-    let [aliceNFTs, bobNFTs] = await holdingsOf(
-      nft,
-      eligIds,
-      [alice, bob],
-      isPV
-    );
+    let [aliceNFTs] = await holdingsOf(nft, eligIds, [alice], isPV);
     await nftx.connect(owner).depositETH(vaultId, { value: UNIT.mul(100) });
     await nftx.connect(owner).setSupplierBounty(vaultId, UNIT.mul(10), 5);
 

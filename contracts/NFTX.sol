@@ -215,7 +215,10 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         if (amount == 0) {
             return 0;
         } else if (isD2) {
-            return feeP.ethBase.add(feeP.ethStep.mul(amount).div(10**18));
+            return
+                feeP.ethBase.add(
+                    feeP.ethStep.mul(amount.sub(10**18)).div(10**18)
+                );
         } else {
             uint256 n = amount;
             uint256 nSub1 = amount >= 1 ? n.sub(1) : 0;
@@ -251,27 +254,30 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         returns (uint256)
     {
         Vault storage vault = _getVault(vaultId);
-        if (vault.supplierBounty.length == 0) {
+        uint256 length = vault.supplierBounty.length;
+        if (length == 0) {
             return 0;
         }
-        uint256 remainingAmount = amount;
         uint256 prevSize = vaultSize(vaultId);
-        uint256 newSize = vaultSize(vaultId).sub(amount);
-        if (vaultSize(vaultId) > vault.supplierBounty.length) {
-            uint256 dif = vaultSize(vaultId).sub(vault.supplierBounty.length);
-            remainingAmount = remainingAmount.sub(dif);
-        }
-        uint256 prevTriangle = _calcBountyD2Helper(vaultId, prevSize)
-            .mul(vault.supplierBounty.length.sub(prevSize))
-            .div(2);
-        uint256 newTriangle = _calcBountyD2Helper(vaultId, newSize)
-            .mul(vault.supplierBounty.length.sub(newSize))
-            .div(2);
-        if (isBurn && newSize < vault.supplierBounty.length) {
-            return newTriangle.sub(prevTriangle);
-        } else if (!isBurn && prevSize < vault.supplierBounty.length) {
-            return prevTriangle.sub(newTriangle);
-        }
+        uint256 prevReward = _calcBountyD2Helper(vaultId, prevSize);
+        uint256 newSize = isBurn
+            ? vaultSize(vaultId).sub(amount)
+            : vaultSize(vaultId).add(amount);
+        uint256 newReward = _calcBountyD2Helper(vaultId, newSize);
+        uint256 prevTriangle = prevSize.mul(prevReward).div(2);
+        uint256 newTriangle = newSize.mul(newReward).div(2);
+        console.log("amount");
+        console.log(amount);
+        console.log("retVal");
+        console.log(
+            isBurn
+                ? newTriangle.sub(prevTriangle)
+                : prevTriangle.sub(newTriangle)
+        );
+        return
+            isBurn
+                ? newTriangle.sub(prevTriangle)
+                : prevTriangle.sub(newTriangle);
     }
 
     function _calcBountyD2Helper(uint256 vaultId, uint256 size)

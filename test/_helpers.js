@@ -237,7 +237,7 @@ const approveAndMintD2 = async (
   value
 ) => {
   await asset.connect(signer).approve(nftx.address, amount);
-  await nftx.connect(signer).mint(vaultId, [], amount), { value: value };
+  await nftx.connect(signer).mint(vaultId, [], amount, { value: value });
 };
 
 const approveAndRedeem = async (
