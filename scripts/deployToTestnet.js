@@ -1,4 +1,6 @@
-import zombidIds from "../data/zombies";
+// import zombidIds from "../data/zombies";
+
+const { upgrades } = require("@nomiclabs/buidler");
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -10,36 +12,18 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const CryptoXsMarket = await ethers.getContractFactory("CryptoXsMarket");
-  const XToken = await ethers.getContractFactory("XToken");
-  const XVault = await ethers.getContractFactory("XVault");
-
-  const cpm = await CryptoXsMarket.deploy();
+  const Cpm = await ethers.getContractFactory("CryptoPunksMarket");
+  const cpm = await Cpm.deploy();
   await cpm.deployed();
 
-  const xToken = await XToken.deploy("XToken", "PUNK");
-  await xToken.deployed();
-
-  const xVault = await XVault.deploy(xToken.address, cpm.address);
-  await xVault.deployed();
-
-  await xToken.transferOwnership(xVault.address);
-  await xVault.transferOwnership("0x2435eDc484701613A1f22C18EB8fAdCaD6C5F288");
-
-  // await xVault.setReverseLink();
-
-  /* await xVault.initiateUnlock(2);
-  await xVault.setEligibilities(
-    zombieIds(),
-    true
-  );
- */
-
-  // await xVault.increaseSecurityLevel();
+  const Nftx = await ethers.getContractFactory("NFTX");
+  const nftx = await upgrades.deployProxy(Nftx, [cpm.address], {
+    initializer: "initialize",
+  });
+  await nftx.deployed();
 
   console.log("CPM address:", cpm.address);
-  console.log("XToken address:", xToken.address);
-  console.log("XVault address:", xVault.address);
+  console.log("XToken address:", nftx.address);
 }
 
 main()

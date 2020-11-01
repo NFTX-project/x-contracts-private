@@ -20,55 +20,6 @@ interface INFTX {
     event ReservesIncreased(uint256 vaultId, uint256 nftId);
     event ReservesDecreased(uint256 vaultId, uint256 nftId);
 
-    struct FeeParams {
-        uint256 ethBase;
-        uint256 ethStep;
-        uint256 tokenShare;
-    }
-
-    struct BountyParams {
-        uint256 ethMax;
-        uint256 tokenMax;
-        uint256 length;
-    }
-
-    struct Vault {
-        address erc20Address;
-        address nftAddress;
-        address manager;
-        IXToken erc20;
-        IERC721 nft;
-        EnumerableSet.UintSet holdings;
-        EnumerableSet.UintSet reserves;
-        string description;
-        mapping(uint256 => bool) isEligible;
-        mapping(uint256 => bool) shouldReserve;
-        bool negateEligibility;
-        bool isFinalized;
-        bool isClosed;
-        FeeParams mintFees;
-        FeeParams burnFees;
-        FeeParams dualFees;
-        BountyParams supplierBounty;
-        uint256 ethBalance;
-        uint256 tokenBalance;
-    }
-
-    function cpmAddress() external view returns (address);
-
-    function xUtilsAddress() external view returns (address);
-
-    function isExtension(address) external view returns (bool);
-
-    function numExtensions() external view returns (uint256);
-
-    function numVaults() external view returns (uint256);
-
-    function isEligible(uint256 vaultId, uint256 nftId)
-        external
-        view
-        returns (bool);
-
     function vaultSize(uint256 vaultId) external view returns (uint256);
 
     function createVault(address _erc20Address, address _nftAddress)

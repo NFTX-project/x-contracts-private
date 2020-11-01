@@ -1,6 +1,8 @@
 require("dotenv").config();
 usePlugin("@nomiclabs/buidler-waffle");
 usePlugin("@nomiclabs/buidler-web3");
+usePlugin("@nomiclabs/buidler-ethers");
+usePlugin("@openzeppelin/buidler-upgrades");
 
 module.exports = {
   networks: {

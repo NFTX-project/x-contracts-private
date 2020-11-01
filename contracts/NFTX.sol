@@ -6,14 +6,13 @@ import "./Pausable.sol";
 import "./IXToken.sol";
 import "./ICryptoPunksMarket.sol";
 import "./IERC721.sol";
-import "./EnumerableSet.sol";
 import "./ReentrancyGuard.sol";
 import "./ERC721Holder.sol";
+import "./IXStore.sol";
 import "./utils/console.sol";
 
 contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     using SafeMath for uint256;
-    using EnumerableSet for EnumerableSet.UintSet;
 
     event NFTsDeposited(uint256 vaultId, uint256[] nftIds, address from);
     event NFTsRedeemed(uint256 vaultId, uint256[] nftIds, address to);
@@ -88,67 +87,30 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     event D2AssetDeposited(uint256 vaultId, uint256 amount, address from);
     event D2AssetRedeemed(uint256 vaultId, uint256 amount, address to);
 
-    struct FeeParams {
-        uint256 ethBase;
-        uint256 ethStep;
-    }
-
-    struct BountyParams {
-        uint256 ethMax;
-        uint256 length;
-    }
-
-    struct D2Weighting {
-        uint256 vaultId;
-        uint256 weighting;
-    }
-
-    struct Vault {
-        address erc20Address;
-        address assetAddress;
-        address manager;
-        IXToken erc20;
-        IERC721 nft;
-        EnumerableSet.UintSet holdings;
-        EnumerableSet.UintSet reserves;
-        string description;
-        mapping(uint256 => bool) isEligible;
-        mapping(uint256 => bool) shouldReserve;
-        bool negateEligibility;
-        bool isFinalized;
-        bool isClosed;
-        FeeParams mintFees;
-        FeeParams burnFees;
-        FeeParams dualFees;
-        BountyParams supplierBounty;
-        uint256 ethBalance;
-        uint256 tokenBalance;
-        bool isD2Vault;
-        IERC20 d2Asset;
-        uint256 d2Holdings;
-        uint256[] d2UnderlyingVaults;
-        uint256[] d2UnderlyingWeights;
-    }
-
-    Vault[] internal vaults;
     address public cpmAddress;
     ICryptoPunksMarket internal cpm;
-    mapping(address => bool) public isExtension;
-    uint256 public numExtensions;
 
-    constructor(address _cpmAddress) public {
+    address public storeAddress;
+    IXStore internal store;
+
+    function initialize(address _cpmAddress, address _storeAddress)
+        public
+        onlyOwner
+    {
+        require(cpmAddress == address(0), "CPM already set");
         cpmAddress = _cpmAddress;
         cpm = ICryptoPunksMarket(cpmAddress);
+        storeAddress = _storeAddress;
+        store = IXStore(storeAddress);
     }
 
     modifier onlyExtension() {
-        require(isExtension[_msgSender()], "Not extension");
+        require(store.isExtension[_msgSender()], "Not extension");
         _;
     }
 
     modifier onlyManager(uint256 vaultId) {
-        Vault storage vault = _getVault(vaultId);
-        require(_msgSender() == vault.manager, "Not manager");
+        require(_msgSender() == store.managerOf(vaultId), "Not manager");
         _;
     }
 
@@ -156,8 +118,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         internal
         view
     {
-        Vault storage vault = _getVault(vaultId);
-        if (vault.isFinalized) {
+        if (store.isFinalizedOf(vaultId)) {
             if (includeCouncil) {
                 require(
                     _msgSender() == owner() || _msgSender() == council,
@@ -167,12 +128,12 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
                 require(_msgSender() == owner(), "Not owner");
             }
         } else {
-            require(_msgSender() == vault.manager, "Not manager");
+            require(_msgSender() == store.managerOf(vaultId), "Not manager");
         }
     }
 
     function numVaults() public view virtual returns (uint256) {
-        return vaults.length;
+        return store.vaultsLength();
     }
 
     function isEligible(uint256 vaultId, uint256 nftId)
@@ -181,50 +142,48 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         virtual
         returns (bool)
     {
-        Vault storage vault = _getVault(vaultId);
         return
-            vault.negateEligibility
-                ? !vault.isEligible[nftId]
-                : vault.isEligible[nftId];
+            store.negateEligibilityOf(vaultId)
+                ? !store.isEligibleOf(vaultId, nftId)
+                : store.isEligibleOf(vaultId, nftId);
     }
 
     function vaultSize(uint256 vaultId) public view virtual returns (uint256) {
-        Vault storage vault = _getVault(vaultId);
-        return vault.isD2Vault 
-            ? vault.d2Holdings 
-            : vault.holdings.length().add(vault.reserves.length());
+        return
+            store.isD2VaultOf(vaultId)
+                ? store.d2HoldingsOf(vaultId)
+                : store.holdingsLengthOf(vaultId).add(
+                    store.reservesLengthOf(vaultId)
+                );
     }
-
-    uint256 private randNonce = 0;
 
     function _getPseudoRand(uint256 modulus)
         internal
         virtual
         returns (uint256)
     {
-        randNonce = randNonce.add(1);
+        store.setRandNonce(store.randNonce().add(1));
         return
-            uint256(keccak256(abi.encodePacked(now, msg.sender, randNonce))) %
+            uint256(
+                keccak256(abi.encodePacked(now, msg.sender, store.randNonce()))
+            ) %
             modulus;
     }
 
-    function _calcFee(uint256 amount, FeeParams storage feeP, bool isD2)
-        internal
-        view
-        virtual
-        returns (uint256)
-    {
+    function _calcFee(
+        uint256 amount,
+        uint256 ethBase,
+        uint256 ethStep,
+        bool isD2
+    ) internal view virtual returns (uint256) {
         if (amount == 0) {
             return 0;
         } else if (isD2) {
-            return
-                feeP.ethBase.add(
-                    feeP.ethStep.mul(amount.sub(10**18)).div(10**18)
-                );
+            return ethBase.add(ethStep.mul(amount.sub(10**18)).div(10**18));
         } else {
             uint256 n = amount;
             uint256 nSub1 = amount >= 1 ? n.sub(1) : 0;
-            return feeP.ethBase.add(feeP.ethStep.mul(nSub1));
+            return ethBase.add(ethStep.mul(nSub1));
         }
     }
 
@@ -234,8 +193,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         virtual
         returns (uint256)
     {
-        Vault storage vault = _getVault(vaultId);
-        if (vault.supplierBounty.length == 0) {
+        (uint256 ethMax, uint256 length) = store.supplierBountyOf(vaultId);
+        if (length == 0) {
             return 0;
         }
         uint256 ethBounty = 0;
@@ -489,16 +448,6 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         emit NFTsRedeemed(vaultId, nftIds, _msgSender());
     }
 
-    function _getVault(uint256 vaultId)
-        internal
-        view
-        virtual
-        returns (Vault storage)
-    {
-        require(vaultId < vaults.length, "Invalid vaultId");
-        return vaults[vaultId];
-    }
-
     function directRedeem(uint256 vaultId, uint256[] memory nftIds)
         public
         payable
@@ -713,8 +662,6 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         vault.mintFees = FeeParams(_ethBase, _ethStep);
         emit MintFeesSet(vaultId, _ethBase, _ethStep, _msgSender());
     }
-
-    uint256 public lastSetBurnFeesSafeCall = 0;
 
     function setBurnFees(uint256 vaultId, uint256 _ethBase, uint256 _ethStep)
         public

@@ -2,20 +2,24 @@ const { runVaultTests } = require("./_runVaultTests");
 const { runVaultTestsD2 } = require("./_runVaultTestsD2");
 const { getIntArray, initializeAssetTokenVault } = require("./_helpers");
 
+const { upgrades } = require("@nomiclabs/buidler");
+
 describe("NFTX", function () {
   this.timeout(0);
   it("Should run as expected", async function () {
-    console.log('');
+    console.log("");
     ///////////////////////////////////////////////////////////////
-    // Initialize NFTX ////////////////////////////////////////////
+    // Initialize NFTX (Upgradeable) //////////////////////////////
     ///////////////////////////////////////////////////////////////
-    
+
     const Cpm = await ethers.getContractFactory("CryptoPunksMarket");
     const cpm = await Cpm.deploy();
     await cpm.deployed();
 
     const Nftx = await ethers.getContractFactory("NFTX");
-    const nftx = await Nftx.deploy(cpm.address);
+    const nftx = await upgrades.deployProxy(Nftx, [cpm.address], {
+      initializer: "initialize",
+    });
     await nftx.deployed();
 
     const signers = await ethers.getSigners();
@@ -195,12 +199,12 @@ describe("NFTX", function () {
     ////////////////////////////////////////////////////////////////////
     // Run Vault Tests... //////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////
-    
+
     await runNftBasic();
-    await runPunkBasic();
-    await runNftSpecial();
-    await runNftSpecial2();
-    await runPunkSpecial();
-    await runD2Vault();
+    // await runPunkBasic();
+    // await runNftSpecial();
+    // await runNftSpecial2();
+    // await runPunkSpecial();
+    // await runD2Vault();
   });
 });
