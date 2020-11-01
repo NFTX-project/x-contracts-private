@@ -46,7 +46,7 @@ interface INFTX {
         bool _boolean
     ) external;
 
-    function setIsExtension(address contractAddress, bool _boolean) external;
+    function setExtension(address contractAddress, bool _boolean) external;
 
     function directRedeem(uint256 vaultId, uint256[] calldata nftIds)
         external

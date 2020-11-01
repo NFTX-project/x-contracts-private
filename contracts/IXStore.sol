@@ -24,7 +24,7 @@ interface IXStore {
 
     struct Vault {
         address erc20Address;
-        address nftAddress;
+        address assetAddress;
         address manager;
         IXToken erc20;
         IERC721 nft;
@@ -46,108 +46,101 @@ interface IXStore {
 
     function cpmAddress() external view returns (address);
 
-    function xUtilsAddress() external view returns (address);
-
     function isExtension(address) external view returns (bool);
 
     function numExtensions() external view returns (uint256);
 
     function numVaults() external view returns (uint256);
 
-    function isEligible(uint256 vaultId, uint256 nftId)
-        external
-        view
-        returns (bool);
-
     function vaultsLength() external view returns (uint256);
 
-    function xTokenAddressOf(uint256 vaultId) external view returns (address);
+    function xTokenAddress(uint256 vaultId) external view returns (address);
 
-    function nftAddressOf(uint256 vaultId) external view returns (address);
+    function assetAddress(uint256 vaultId) external view returns (address);
 
-    function managerOf(uint256 vaultId) external view returns (address);
+    function manager(uint256 vaultId) external view returns (address);
 
-    function xTokenOf(uint256 vaultId) external view returns (IXToken);
+    function xToken(uint256 vaultId) external view returns (IXToken);
 
-    function nftOf(uint256 vaultId) external view returns (IERC721);
+    function nft(uint256 vaultId) external view returns (IERC721);
 
-    function holdingsLengthOf(uint256 vaultId) external view returns (uint256);
+    function holdingsLength(uint256 vaultId) external view returns (uint256);
 
-    function holdingsOf(uint256 vaultId, uint256 elem)
+    function holdingsContains(uint256 vaultId, uint256 elem)
         external
         view
         returns (bool);
 
-    function holdingsAtOf(uint256 vaultId, uint256 index)
+    function holdingsAt(uint256 vaultId, uint256 index)
         external
         view
         returns (uint256);
 
-    function reservesLengthOf(uint256 vaultId) external view returns (uint256);
+    function reservesLength(uint256 vaultId) external view returns (uint256);
 
-    function reservesContainsOf(uint256 vaultId, uint256 elem)
+    function reservesContains(uint256 vaultId, uint256 elem)
         external
         view
         returns (bool);
 
-    function reservesAtOf(uint256 vaultId, uint256 index)
+    function reservesAt(uint256 vaultId, uint256 index)
         external
         view
         returns (uint256);
 
-    function isEligibleOf(uint256 vaultId, uint256 id)
+    function isEligible(uint256 vaultId, uint256 id)
         external
         view
         returns (bool);
 
-    function shouldReserveOf(uint256 vaultId, uint256 id)
+    function shouldReserve(uint256 vaultId, uint256 id)
         external
         view
         returns (bool);
 
-    function negateEligibilityOf(uint256 vaultId) external view returns (bool);
+    function negateEligibility(uint256 vaultId) external view returns (bool);
 
-    function isFinalizedOf(uint256 vaultId) external view returns (bool);
+    function isFinalized(uint256 vaultId) external view returns (bool);
 
-    function isClosedOf(uint256 vaultId) external view returns (bool);
+    function isClosed(uint256 vaultId) external view returns (bool);
 
-    function mintFeesOf(uint256 vaultId)
+    function mintFees(uint256 vaultId)
         external
         view
         returns (uint256, uint256);
 
-    function burnFeesOf(uint256 vaultId)
+    function burnFees(uint256 vaultId)
         external
         view
         returns (uint256, uint256);
 
-    function dualFeesOf(uint256 vaultId)
+    function dualFees(uint256 vaultId)
         external
         view
         returns (uint256, uint256);
 
-    function supplierBountyOf(uint256 vaultId)
+    function supplierBounty(uint256 vaultId)
         external
         view
         returns (uint256, uint256);
 
-    function ethBalanceOf(uint256 vaultId) external view returns (uint256);
+    function ethBalance(uint256 vaultId) external view returns (uint256);
 
-    function tokenBalanceOf(uint256 vaultId) external view returns (uint256);
+    function tokenBalance(uint256 vaultId) external view returns (uint256);
 
-    function isD2VaultOf(uint256 vaultId) external view returns (bool);
+    function isD2Vault(uint256 vaultId) external view returns (bool);
 
-    function d2AssetAddressOf(uint256 vaultId) external view returns (address);
+    function d2AssetAddress(uint256 vaultId) external view returns (address);
 
-    function d2AssetOf(uint256 vaultId) external view returns (IERC20);
+    function d2Asset(uint256 vaultId) external view returns (IERC20);
 
-    function d2HoldingsOf(uint256 vaultId) external view returns (uint256);
+    function d2Holdings(uint256 vaultId) external view returns (uint256);
 
-    function setXTokenAddress(uint256 vaultId, address xTokenAddress) external;
+    function setXTokenAddress(uint256 vaultId, address _xTokenAddress) external;
 
-    function setNftAddress(uint256 vaultId, address nftAddress) external;
+    function setAssetAddress(uint256 vaultId, address _assetAddress) external;
 
-    function setManager(uint256 vaultId, address manager) external;
+    function setManager(uint256 vaultId, address _manager) external;
 
     function setXToken(uint256 vaultId) external;
 
@@ -163,14 +156,14 @@ interface IXStore {
 
     function setIsEligible(uint256 vaultId, uint256 id, bool _bool) external;
 
-    function setShouldReserve(uint256 vaultId, uint256 id, bool shouldReserve)
+    function setShouldReserve(uint256 vaultId, uint256 id, bool _shouldReserve)
         external;
 
     function setNegateEligibility(uint256 vaultId, bool negateElig) external;
 
-    function setIsFinalized(uint256 vaultId, bool isFinalized) external;
+    function setIsFinalized(uint256 vaultId, bool _isFinalized) external;
 
-    function setIsClosed(uint256 vaultId, bool isClosed) external;
+    function setIsClosed(uint256 vaultId, bool _isClosed) external;
 
     function setMintFees(uint256 vaultId, uint256 ethBase, uint256 ethStep)
         external;
@@ -189,8 +182,6 @@ interface IXStore {
     function setTokenBalance(uint256 vaultId, uint256 tokenBalance) external;
 
     function setIsD2Vault(uint256 vaultId, bool isD2Vault) external;
-
-    function setD2AssetAddress(uint256 vaultId, address d2AssetAddr) external;
 
     function setD2Asset(uint256 vaultId) external;
 

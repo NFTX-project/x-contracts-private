@@ -24,7 +24,7 @@ contract XStore is Ownable {
 
     struct Vault {
         address xTokenAddress;
-        address nftAddress;
+        address assetAddress;
         address manager;
         IXToken xToken;
         IERC721 nft;
@@ -50,7 +50,6 @@ contract XStore is Ownable {
     Vault[] internal vaults;
 
     mapping(address => bool) public isExtension;
-    uint256 public numExtensions;
     uint256 public randNonce;
     uint256 public lastSetBurnFeesSafeCall;
 
@@ -68,37 +67,37 @@ contract XStore is Ownable {
         return vaults.length;
     }
 
-    function xTokenAddressOf(uint256 vaultId) public view returns (address) {
+    function xTokenAddress(uint256 vaultId) public view returns (address) {
         Vault storage vault = _getVault(vaultId);
         return vault.xTokenAddress;
     }
 
-    function nftAddressOf(uint256 vaultId) public view returns (address) {
+    function assetAddress(uint256 vaultId) public view returns (address) {
         Vault storage vault = _getVault(vaultId);
-        return vault.nftAddress;
+        return vault.assetAddress;
     }
 
-    function managerOf(uint256 vaultId) public view returns (address) {
+    function manager(uint256 vaultId) public view returns (address) {
         Vault storage vault = _getVault(vaultId);
         return vault.manager;
     }
 
-    function xTokenOf(uint256 vaultId) public view returns (IXToken) {
+    function xToken(uint256 vaultId) public view returns (IXToken) {
         Vault storage vault = _getVault(vaultId);
         return vault.xToken;
     }
 
-    function nftOf(uint256 vaultId) public view returns (IERC721) {
+    function nft(uint256 vaultId) public view returns (IERC721) {
         Vault storage vault = _getVault(vaultId);
         return vault.nft;
     }
 
-    function holdingsLengthOf(uint256 vaultId) public view returns (uint256) {
+    function holdingsLength(uint256 vaultId) public view returns (uint256) {
         Vault storage vault = _getVault(vaultId);
         return vault.holdings.length();
     }
 
-    function holdingsOf(uint256 vaultId, uint256 elem)
+    function holdingsContains(uint256 vaultId, uint256 elem)
         public
         view
         returns (bool)
@@ -107,7 +106,7 @@ contract XStore is Ownable {
         return vault.holdings.contains(elem);
     }
 
-    function holdingsAtOf(uint256 vaultId, uint256 index)
+    function holdingsAt(uint256 vaultId, uint256 index)
         public
         view
         returns (uint256)
@@ -116,12 +115,12 @@ contract XStore is Ownable {
         return vault.holdings.at(index);
     }
 
-    function reservesLengthOf(uint256 vaultId) public view returns (uint256) {
+    function reservesLength(uint256 vaultId) public view returns (uint256) {
         Vault storage vault = _getVault(vaultId);
         return vault.holdings.length();
     }
 
-    function reservesContainsOf(uint256 vaultId, uint256 elem)
+    function reservesContains(uint256 vaultId, uint256 elem)
         public
         view
         returns (bool)
@@ -130,7 +129,7 @@ contract XStore is Ownable {
         return vault.holdings.contains(elem);
     }
 
-    function reservesAtOf(uint256 vaultId, uint256 index)
+    function reservesAt(uint256 vaultId, uint256 index)
         public
         view
         returns (uint256)
@@ -139,7 +138,7 @@ contract XStore is Ownable {
         return vault.holdings.at(index);
     }
 
-    function isEligibleOf(uint256 vaultId, uint256 id)
+    function isEligible(uint256 vaultId, uint256 id)
         public
         view
         returns (bool)
@@ -148,7 +147,7 @@ contract XStore is Ownable {
         return vault.isEligible[id];
     }
 
-    function shouldReserveOf(uint256 vaultId, uint256 id)
+    function shouldReserve(uint256 vaultId, uint256 id)
         public
         view
         returns (bool)
@@ -157,22 +156,22 @@ contract XStore is Ownable {
         return vault.shouldReserve[id];
     }
 
-    function negateEligibilityOf(uint256 vaultId) public view returns (bool) {
+    function negateEligibility(uint256 vaultId) public view returns (bool) {
         Vault storage vault = _getVault(vaultId);
         return vault.negateEligibility;
     }
 
-    function isFinalizedOf(uint256 vaultId) public view returns (bool) {
+    function isFinalized(uint256 vaultId) public view returns (bool) {
         Vault storage vault = _getVault(vaultId);
         return vault.isFinalized;
     }
 
-    function isClosedOf(uint256 vaultId) public view returns (bool) {
+    function isClosed(uint256 vaultId) public view returns (bool) {
         Vault storage vault = _getVault(vaultId);
         return vault.isClosed;
     }
 
-    function mintFeesOf(uint256 vaultId)
+    function mintFees(uint256 vaultId)
         public
         view
         returns (uint256, uint256)
@@ -181,7 +180,7 @@ contract XStore is Ownable {
         return (vault.mintFees.ethBase, vault.mintFees.ethStep);
     }
 
-    function burnFeesOf(uint256 vaultId)
+    function burnFees(uint256 vaultId)
         public
         view
         returns (uint256, uint256)
@@ -190,7 +189,7 @@ contract XStore is Ownable {
         return (vault.burnFees.ethBase, vault.burnFees.ethStep);
     }
 
-    function dualFeesOf(uint256 vaultId)
+    function dualFees(uint256 vaultId)
         public
         view
         returns (uint256, uint256)
@@ -199,7 +198,7 @@ contract XStore is Ownable {
         return (vault.dualFees.ethBase, vault.dualFees.ethStep);
     }
 
-    function supplierBountyOf(uint256 vaultId)
+    function supplierBounty(uint256 vaultId)
         public
         view
         returns (uint256, uint256)
@@ -208,55 +207,55 @@ contract XStore is Ownable {
         return (vault.supplierBounty.ethMax, vault.supplierBounty.length);
     }
 
-    function ethBalanceOf(uint256 vaultId) public view returns (uint256) {
+    function ethBalance(uint256 vaultId) public view returns (uint256) {
         Vault storage vault = _getVault(vaultId);
         return vault.ethBalance;
     }
 
-    function tokenBalanceOf(uint256 vaultId) public view returns (uint256) {
+    function tokenBalance(uint256 vaultId) public view returns (uint256) {
         Vault storage vault = _getVault(vaultId);
         return vault.tokenBalance;
     }
 
-    function isD2VaultOf(uint256 vaultId) public view returns (bool) {
+    function isD2Vault(uint256 vaultId) public view returns (bool) {
         Vault storage vault = _getVault(vaultId);
         return vault.isD2Vault;
     }
 
-    function d2AssetAddressOf(uint256 vaultId) public view returns (address) {
+    function d2AssetAddress(uint256 vaultId) public view returns (address) {
         Vault storage vault = _getVault(vaultId);
         return vault.d2AssetAddress;
     }
 
-    function d2AssetOf(uint256 vaultId) public view returns (IERC20) {
+    function d2Asset(uint256 vaultId) public view returns (IERC20) {
         Vault storage vault = _getVault(vaultId);
         return vault.d2Asset;
     }
 
-    function d2HoldingsOf(uint256 vaultId) public view returns (uint256) {
+    function d2Holdings(uint256 vaultId) public view returns (uint256) {
         Vault storage vault = _getVault(vaultId);
         return vault.d2Holdings;
     }
 
-    function setXTokenAddress(uint256 vaultId, address xTokenAddress)
+    function setXTokenAddress(uint256 vaultId, address _xTokenAddress)
         public
         onlyOwner
     {
         Vault storage vault = _getVault(vaultId);
-        vault.xTokenAddress = xTokenAddress;
+        vault.xTokenAddress = _xTokenAddress;
     }
 
-    function setNftAddress(uint256 vaultId, address nftAddress)
+    function setAssetAddress(uint256 vaultId, address _assetAddress)
         public
         onlyOwner
     {
         Vault storage vault = _getVault(vaultId);
-        vault.nftAddress = nftAddress;
+        vault.assetAddress = _assetAddress;
     }
 
-    function setManager(uint256 vaultId, address manager) public onlyOwner {
+    function setManager(uint256 vaultId, address _manager) public onlyOwner {
         Vault storage vault = _getVault(vaultId);
-        vault.manager = manager;
+        vault.manager = _manager;
     }
 
     function setXToken(uint256 vaultId) public onlyOwner {
@@ -266,7 +265,7 @@ contract XStore is Ownable {
 
     function setNft(uint256 vaultId) public onlyOwner {
         Vault storage vault = _getVault(vaultId);
-        vault.nft = IERC721(vault.nftAddress);
+        vault.nft = IERC721(vault.assetAddress);
     }
 
     function holdingsAdd(uint256 vaultId, uint256 elem) public onlyOwner {
@@ -297,12 +296,12 @@ contract XStore is Ownable {
         vault.isEligible[id] = _bool;
     }
 
-    function setShouldReserve(uint256 vaultId, uint256 id, bool shouldReserve)
+    function setShouldReserve(uint256 vaultId, uint256 id, bool _shouldReserve)
         public
         onlyOwner
     {
         Vault storage vault = _getVault(vaultId);
-        vault.shouldReserve[id] = shouldReserve;
+        vault.shouldReserve[id] = _shouldReserve;
     }
 
     function setNegateEligibility(uint256 vaultId, bool negateElig)
@@ -313,17 +312,17 @@ contract XStore is Ownable {
         vault.negateEligibility = negateElig;
     }
 
-    function setIsFinalized(uint256 vaultId, bool isFinalized)
+    function setIsFinalized(uint256 vaultId, bool _isFinalized)
         public
         onlyOwner
     {
         Vault storage vault = _getVault(vaultId);
-        vault.isFinalized = isFinalized;
+        vault.isFinalized = _isFinalized;
     }
 
-    function setIsClosed(uint256 vaultId, bool isClosed) public onlyOwner {
+    function setIsClosed(uint256 vaultId, bool _isClosed) public onlyOwner {
         Vault storage vault = _getVault(vaultId);
-        vault.isClosed = isClosed;
+        vault.isClosed = _isClosed;
     }
 
     function setMintFees(uint256 vaultId, uint256 ethBase, uint256 ethStep)
@@ -379,17 +378,9 @@ contract XStore is Ownable {
         vault.isD2Vault = isD2Vault;
     }
 
-    function setD2AssetAddress(uint256 vaultId, address d2AssetAddr)
-        public
-        onlyOwner
-    {
-        Vault storage vault = _getVault(vaultId);
-        vault.d2AssetAddress = d2AssetAddr;
-    }
-
     function setD2Asset(uint256 vaultId) public onlyOwner {
         Vault storage vault = _getVault(vaultId);
-        vault.d2Asset = IERC20(vault.d2AssetAddress);
+        vault.d2Asset = IERC20(vault.assetAddress);
     }
 
     function setD2Holdings(uint256 vaultId, uint256 d2Holdings)
@@ -416,6 +407,12 @@ contract XStore is Ownable {
 
     function setLastSetBurnFeesSafeCall(uint256 newNum) public onlyOwner {
         lastSetBurnFeesSafeCall = newNum;
+    }
+
+    function addNewVault() public onlyOwner returns (uint256) {
+        Vault memory newVault;
+        vaults.push(newVault);
+        return vaults.length.sub(1);
     }
 
 }
