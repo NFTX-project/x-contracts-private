@@ -50,7 +50,7 @@ const initializeAssetTokenVault = async (
   await nftx.connect(owner).finalizeVault(vaultId);
   if (isD2) {
     if (typeof assetNameOrExistingContract == "string") {
-      asset.mint(misc._address, BASE.mul(1000));
+      await asset.mint(misc._address, BASE.mul(1000));
     }
   } else {
     await checkMintNFTs(asset, idsToMint, misc, isPV);

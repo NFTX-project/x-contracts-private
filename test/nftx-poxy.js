@@ -2,25 +2,34 @@ const { runVaultTests } = require("./_runVaultTests");
 const { runVaultTestsD2 } = require("./_runVaultTestsD2");
 const { getIntArray, initializeAssetTokenVault } = require("./_helpers");
 
-const { upgrades } = require("@nomiclabs/buidler");
+const { ethers, upgrades } = require("@nomiclabs/buidler");
+// const { ethers } = require("ethers");
 
 describe("NFTX", function () {
+  // return;
   this.timeout(0);
   it("Should run as expected", async function () {
     console.log("");
     ///////////////////////////////////////////////////////////////
-    // Initialize NFTX (Upgradeable) //////////////////////////////
+    // Initialize NFTX ////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////
 
     const Cpm = await ethers.getContractFactory("CryptoPunksMarket");
     const cpm = await Cpm.deploy();
     await cpm.deployed();
 
+    const XStore = await ethers.getContractFactory("XStore");
+    const xStore = await XStore.deploy();
+    await xStore.deployed();
+
     const Nftx = await ethers.getContractFactory("NFTX");
-    const nftx = await upgrades.deployProxy(Nftx, [cpm.address], {
-      initializer: "initialize",
-    });
+    const nftx = await upgrades.deployProxy(
+      Nftx,
+      [cpm.address, xStore.address],
+      { initializer: "initialize" }
+    );
     await nftx.deployed();
+    await xStore.transferOwnership(nftx.address);
 
     const signers = await ethers.getSigners();
     const [owner, misc, alice, bob, carol, dave, eve] = signers;
@@ -201,10 +210,10 @@ describe("NFTX", function () {
     ////////////////////////////////////////////////////////////////////
 
     await runNftBasic();
-    // await runPunkBasic();
-    // await runNftSpecial();
-    // await runNftSpecial2();
-    // await runPunkSpecial();
-    // await runD2Vault();
+    await runPunkBasic();
+    await runNftSpecial();
+    await runNftSpecial2();
+    await runPunkSpecial();
+    await runD2Vault();
   });
 });

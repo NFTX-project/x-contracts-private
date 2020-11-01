@@ -25,7 +25,6 @@ const runVaultTestsD2 = async (nftx, asset, xToken, signers, vaultId) => {
     console.log("Testing (D2): mint, redeem...\n");
     await setupD2(nftx, asset, signers);
     const [aliceBal, bobBal] = await balancesOf(asset, [alice, bob]);
-
     await approveAndMintD2(nftx, asset, aliceBal, alice, vaultId, 0);
     await approveAndMintD2(nftx, asset, bobBal, bob, vaultId, 0);
     await checkBalancesD2(nftx, asset, xToken, [alice, bob]);
@@ -88,11 +87,11 @@ const runVaultTestsD2 = async (nftx, asset, xToken, signers, vaultId) => {
     );
     expect(aliceBal2.gt(aliceBal1)).to.equal(true);
     await approveAndRedeemD2(
-      nftx, 
-      xToken, 
-      aliceBal, 
-      alice, 
-      vaultId, 
+      nftx,
+      xToken,
+      aliceBal,
+      alice,
+      vaultId,
       UNIT.mul(10).mul(5).div(2)
     );
     let nftxBal3 = BigNumber.from(await web3.eth.getBalance(nftx.address));

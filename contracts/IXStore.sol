@@ -13,24 +13,21 @@ interface IXStore {
     struct FeeParams {
         uint256 ethBase;
         uint256 ethStep;
-        uint256 tokenShare;
     }
 
     struct BountyParams {
         uint256 ethMax;
-        uint256 tokenMax;
         uint256 length;
     }
 
     struct Vault {
-        address erc20Address;
+        address xTokenAddress;
         address assetAddress;
         address manager;
-        IXToken erc20;
+        IXToken xToken;
         IERC721 nft;
         EnumerableSet.UintSet holdings;
         EnumerableSet.UintSet reserves;
-        string description;
         mapping(uint256 => bool) isEligible;
         mapping(uint256 => bool) shouldReserve;
         bool negateEligibility;
@@ -42,15 +39,17 @@ interface IXStore {
         BountyParams supplierBounty;
         uint256 ethBalance;
         uint256 tokenBalance;
+        bool isD2Vault;
+        address d2AssetAddress;
+        IERC20 d2Asset;
+        uint256 d2Holdings;
     }
 
-    function cpmAddress() external view returns (address);
+    function isExtension(address addr) external view returns (bool);
 
-    function isExtension(address) external view returns (bool);
+    function randNonce() external view returns (uint256);
 
-    function numExtensions() external view returns (uint256);
-
-    function numVaults() external view returns (uint256);
+    function lastSetBurnFeesSafeCall() external view returns (uint256);
 
     function vaultsLength() external view returns (uint256);
 
@@ -104,20 +103,11 @@ interface IXStore {
 
     function isClosed(uint256 vaultId) external view returns (bool);
 
-    function mintFees(uint256 vaultId)
-        external
-        view
-        returns (uint256, uint256);
+    function mintFees(uint256 vaultId) external view returns (uint256, uint256);
 
-    function burnFees(uint256 vaultId)
-        external
-        view
-        returns (uint256, uint256);
+    function burnFees(uint256 vaultId) external view returns (uint256, uint256);
 
-    function dualFees(uint256 vaultId)
-        external
-        view
-        returns (uint256, uint256);
+    function dualFees(uint256 vaultId) external view returns (uint256, uint256);
 
     function supplierBounty(uint256 vaultId)
         external
@@ -177,22 +167,23 @@ interface IXStore {
     function setSupplierBounty(uint256 vaultId, uint256 ethMax, uint256 length)
         external;
 
-    function setEthBalance(uint256 vaultId, uint256 ethBalance) external;
+    function setEthBalance(uint256 vaultId, uint256 _ethBalance) external;
 
-    function setTokenBalance(uint256 vaultId, uint256 tokenBalance) external;
+    function setTokenBalance(uint256 vaultId, uint256 _tokenBalance) external;
 
-    function setIsD2Vault(uint256 vaultId, bool isD2Vault) external;
+    function setIsD2Vault(uint256 vaultId, bool _isD2Vault) external;
 
     function setD2Asset(uint256 vaultId) external;
 
-    function setD2Holdings(uint256 vaultId, uint256 d2Holdings) external;
+    function setD2Holdings(uint256 vaultId, uint256 _d2Holdings) external;
+
+    ////////////////////////////////////////////////////////////
 
     function setIsExtension(address addr, bool _isExtension) external;
-
-    function setNumExtensions(uint256 _numExtensions) external;
 
     function setRandNonce(uint256 _randNonce) external;
 
     function setLastSetBurnFeesSafeCall(uint256 newNum) external;
 
+    function addNewVault() external returns (uint256);
 }

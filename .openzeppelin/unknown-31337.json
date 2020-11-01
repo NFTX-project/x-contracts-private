@@ -1,0 +1,88 @@
+{
+  "manifestVersion": "3.1",
+  "impls": {
+    "5d47688bc87c9df2599fa0855220b3521d435a8af58f9d3c8aab9cbebe1bbe07": {
+      "address": "0x0078371BDeDE8aAc7DeBfFf451B74c5EDB385Af7",
+      "txHash": "0x173aea63c0355a1eaca589c4e26164f0388ab417139302abd21c1f25c05f9da8",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Ownable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "contracts/Ownable.sol:20"
+          },
+          {
+            "contract": "HasCouncil",
+            "label": "council",
+            "type": "t_address",
+            "src": "contracts/HasCouncil.sol:8"
+          },
+          {
+            "contract": "Pausable",
+            "label": "pausedUntil",
+            "type": "t_uint256",
+            "src": "contracts/Pausable.sol:10"
+          },
+          {
+            "contract": "Pausable",
+            "label": "remainingActions",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/Pausable.sol:15"
+          },
+          {
+            "contract": "ReentrancyGuard",
+            "label": "_status",
+            "type": "t_uint256",
+            "src": "contracts/ReentrancyGuard.sol:36"
+          },
+          {
+            "contract": "NFTX",
+            "label": "cpmAddress",
+            "type": "t_address",
+            "src": "contracts/NFTX.sol:19"
+          },
+          {
+            "contract": "NFTX",
+            "label": "cpm",
+            "type": "t_contract(ICryptoPunksMarket)3977",
+            "src": "contracts/NFTX.sol:20"
+          },
+          {
+            "contract": "NFTX",
+            "label": "storeAddress",
+            "type": "t_address",
+            "src": "contracts/NFTX.sol:22"
+          },
+          {
+            "contract": "NFTX",
+            "label": "store",
+            "type": "t_contract(IXStore)4967",
+            "src": "contracts/NFTX.sol:23"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_contract(ICryptoPunksMarket)3977": {
+            "label": "contract ICryptoPunksMarket"
+          },
+          "t_contract(IXStore)4967": {
+            "label": "contract IXStore"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          }
+        }
+      }
+    }
+  },
+  "admin": {
+    "address": "0xf4e77E5Da47AC3125140c470c71cBca77B5c638c",
+    "txHash": "0xbea59b6e5dbb2efe8dfe3b669c6dd48d2364f9865507dc95622bab6bf0e63b5e"
+  }
+}

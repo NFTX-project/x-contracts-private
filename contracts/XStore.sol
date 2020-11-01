@@ -53,12 +53,11 @@ contract XStore is Ownable {
     uint256 public randNonce;
     uint256 public lastSetBurnFeesSafeCall;
 
-    function _getVault(uint256 vaultId)
-        internal
-        view
-        virtual
-        returns (Vault storage)
-    {
+    constructor() public {
+        initOwnable();
+    }
+
+    function _getVault(uint256 vaultId) internal view returns (Vault storage) {
         require(vaultId < vaults.length, "Invalid vaultId");
         return vaults[vaultId];
     }
@@ -171,29 +170,17 @@ contract XStore is Ownable {
         return vault.isClosed;
     }
 
-    function mintFees(uint256 vaultId)
-        public
-        view
-        returns (uint256, uint256)
-    {
+    function mintFees(uint256 vaultId) public view returns (uint256, uint256) {
         Vault storage vault = _getVault(vaultId);
         return (vault.mintFees.ethBase, vault.mintFees.ethStep);
     }
 
-    function burnFees(uint256 vaultId)
-        public
-        view
-        returns (uint256, uint256)
-    {
+    function burnFees(uint256 vaultId) public view returns (uint256, uint256) {
         Vault storage vault = _getVault(vaultId);
         return (vault.burnFees.ethBase, vault.burnFees.ethStep);
     }
 
-    function dualFees(uint256 vaultId)
-        public
-        view
-        returns (uint256, uint256)
-    {
+    function dualFees(uint256 vaultId) public view returns (uint256, uint256) {
         Vault storage vault = _getVault(vaultId);
         return (vault.dualFees.ethBase, vault.dualFees.ethStep);
     }
@@ -357,25 +344,25 @@ contract XStore is Ownable {
         vault.supplierBounty = BountyParams(ethMax, length);
     }
 
-    function setEthBalance(uint256 vaultId, uint256 ethBalance)
+    function setEthBalance(uint256 vaultId, uint256 _ethBalance)
         public
         onlyOwner
     {
         Vault storage vault = _getVault(vaultId);
-        vault.ethBalance = ethBalance;
+        vault.ethBalance = _ethBalance;
     }
 
-    function setTokenBalance(uint256 vaultId, uint256 tokenBalance)
+    function setTokenBalance(uint256 vaultId, uint256 _tokenBalance)
         public
         onlyOwner
     {
         Vault storage vault = _getVault(vaultId);
-        vault.tokenBalance = tokenBalance;
+        vault.tokenBalance = _tokenBalance;
     }
 
-    function setIsD2Vault(uint256 vaultId, bool isD2Vault) public onlyOwner {
+    function setIsD2Vault(uint256 vaultId, bool _isD2Vault) public onlyOwner {
         Vault storage vault = _getVault(vaultId);
-        vault.isD2Vault = isD2Vault;
+        vault.isD2Vault = _isD2Vault;
     }
 
     function setD2Asset(uint256 vaultId) public onlyOwner {
@@ -383,22 +370,18 @@ contract XStore is Ownable {
         vault.d2Asset = IERC20(vault.assetAddress);
     }
 
-    function setD2Holdings(uint256 vaultId, uint256 d2Holdings)
+    function setD2Holdings(uint256 vaultId, uint256 _d2Holdings)
         public
         onlyOwner
     {
         Vault storage vault = _getVault(vaultId);
-        vault.d2Holdings = d2Holdings;
+        vault.d2Holdings = _d2Holdings;
     }
 
     ////////////////////////////////////////////////////////////
 
     function setIsExtension(address addr, bool _isExtension) public onlyOwner {
         isExtension[addr] = _isExtension;
-    }
-
-    function setNumExtensions(uint256 _numExtensions) public onlyOwner {
-        numExtensions = _numExtensions;
     }
 
     function setRandNonce(uint256 _randNonce) public onlyOwner {

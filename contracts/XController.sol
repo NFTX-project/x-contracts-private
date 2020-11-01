@@ -74,13 +74,13 @@ contract XController is Timelocked {
         nftx.setIsEligible(vaultId, nftIds, areEligible);
     }
 
-    function setIsExtension(address account, bool isExtension)
+    function setExtension(address account, bool isExtension)
         public
         virtual
         onlyOwner
         whenNotLockedM
     {
-        nftx.setIsExtension(account, isExtension);
+        nftx.setExtension(account, isExtension);
     }
 
     function setMintFees(

@@ -14,78 +14,7 @@ import "./utils/console.sol";
 contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     using SafeMath for uint256;
 
-    event NFTsDeposited(uint256 vaultId, uint256[] nftIds, address from);
-    event NFTsRedeemed(uint256 vaultId, uint256[] nftIds, address to);
-    event TokensMinted(uint256 vaultId, uint256 amount, address to);
-    event TokensBurned(uint256 vaultId, uint256 amount, address from);
-    event DualOp(uint256 vaultId, uint256[] input, address by);
-    event DirectRedemption(uint256 vaultId, uint256[] nftIds, address by);
-    event VaultCreated(uint256 vaultId, address by);
-    event EligibilitySet(
-        uint256 vaultId,
-        uint256[] nftIds,
-        bool _boolean,
-        address by
-    );
-    event NegateEligibilitySet(uint256 vaultId, bool shouldNegate, address by);
-    event ReservesIncreased(uint256 vaultId, uint256 nftId);
-    event ReservesDecreased(uint256 vaultId, uint256 nftId);
-    event EthDeposited(uint256 vaultId, uint256 amount, address by);
-    event ExtensionSet(address contractAddress, bool _boolean, address by);
-    event EthSentFromVault(uint256 vaultId, uint256 amount, address to);
-    event TokenSentFromVault(uint256 vaultId, uint256 amount, address to);
-    event EthReceivedByVault(uint256 vaultId, uint256 amount, address from);
-    event TokenReceivedByVault(uint256 vaultId, uint256 amount, address from);
-    event TokenNameChanged(uint256 vaultId, string newName, address by);
-    event TokenSymbolChanged(uint256 vaultId, string newSymbol, address by);
-    event ManagerSet(uint256 vaultId, address newManager, address by);
-    event VaultFinalized(uint256 vaultId, address by);
-    event VaultClosed(uint256 vaultId, address by);
-    event MintFeesSet(
-        uint256 vaultId,
-        uint256 _ethBase,
-        uint256 _ethStep,
-        address by
-    );
-    event BurnFeesSet(
-        uint256 vaultId,
-        uint256 _ethBase,
-        uint256 _ethStep,
-        address by
-    );
-    event DualFeesSet(
-        uint256 vaultId,
-        uint256 _ethBase,
-        uint256 _ethStep,
-        address by
-    );
-    event SupplierBountySet(
-        uint256 vaultId,
-        uint256 ethMax,
-        uint256 length,
-        address by
-    );
-    event ShouldReserveSet(
-        uint256 vaultId,
-        uint256[] nftIds,
-        bool _boolean,
-        address by
-    );
-    event IsReservedSet(
-        uint256 vaultId,
-        uint256[] nftIds,
-        bool _boolean,
-        address by
-    );
-    event D2WeightingsSet(
-        uint256 vaultId,
-        uint256[] _vaultIds,
-        uint256[] _weightings,
-        address by
-    );
-
-    event D2AssetDeposited(uint256 vaultId, uint256 amount, address from);
-    event D2AssetRedeemed(uint256 vaultId, uint256 amount, address to);
+    event NewVault(uint256 vaultId);
 
     address public cpmAddress;
     ICryptoPunksMarket internal cpm;
@@ -93,11 +22,12 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     address public storeAddress;
     IXStore internal store;
 
-    function initialize(address _cpmAddress, address _storeAddress)
-        public
-        onlyOwner
-    {
+    function initialize(address _cpmAddress, address _storeAddress) public {
         require(cpmAddress == address(0), "CPM already set");
+
+        initOwnable();
+        initReentrancyGuard();
+
         cpmAddress = _cpmAddress;
         cpm = ICryptoPunksMarket(cpmAddress);
         storeAddress = _storeAddress;
@@ -105,12 +35,12 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     }
 
     modifier onlyExtension() {
-        require(store.isExtension[_msgSender()], "Not extension");
+        require(store.isExtension(_msgSender()), "Not extension");
         _;
     }
 
     modifier onlyManager(uint256 vaultId) {
-        require(_msgSender() == store.managerOf(vaultId), "Not manager");
+        require(_msgSender() == store.manager(vaultId), "Not manager");
         _;
     }
 
@@ -118,7 +48,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         internal
         view
     {
-        if (store.isFinalizedOf(vaultId)) {
+        if (store.isFinalized(vaultId)) {
             if (includeCouncil) {
                 require(
                     _msgSender() == owner() || _msgSender() == council,
@@ -128,7 +58,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
                 require(_msgSender() == owner(), "Not owner");
             }
         } else {
-            require(_msgSender() == store.managerOf(vaultId), "Not manager");
+            require(_msgSender() == store.manager(vaultId), "Not manager");
         }
     }
 
@@ -143,17 +73,17 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         returns (bool)
     {
         return
-            store.negateEligibilityOf(vaultId)
-                ? !store.isEligibleOf(vaultId, nftId)
-                : store.isEligibleOf(vaultId, nftId);
+            store.negateEligibility(vaultId)
+                ? !store.isEligible(vaultId, nftId)
+                : store.isEligible(vaultId, nftId);
     }
 
     function vaultSize(uint256 vaultId) public view virtual returns (uint256) {
         return
-            store.isD2VaultOf(vaultId)
-                ? store.d2HoldingsOf(vaultId)
-                : store.holdingsLengthOf(vaultId).add(
-                    store.reservesLengthOf(vaultId)
+            store.isD2Vault(vaultId)
+                ? store.d2Holdings(vaultId)
+                : store.holdingsLength(vaultId).add(
+                    store.reservesLength(vaultId)
                 );
     }
 
@@ -175,7 +105,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         uint256 ethBase,
         uint256 ethStep,
         bool isD2
-    ) internal view virtual returns (uint256) {
+    ) internal pure virtual returns (uint256) {
         if (amount == 0) {
             return 0;
         } else if (isD2) {
@@ -193,10 +123,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         virtual
         returns (uint256)
     {
-        (uint256 ethMax, uint256 length) = store.supplierBountyOf(vaultId);
-        if (length == 0) {
-            return 0;
-        }
+        (, uint256 length) = store.supplierBounty(vaultId);
+        if (length == 0) return 0;
         uint256 ethBounty = 0;
         for (uint256 i = 0; i < numTokens; i = i.add(1)) {
             uint256 _vaultSize = isBurn
@@ -215,17 +143,15 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         returns (uint256)
     {
         (uint256 ethMax, uint256 length) = store.supplierBounty(vaultId);
-        if (length == 0) {
-            return 0;
-        }
+        if (length == 0) return 0;
         uint256 prevSize = vaultSize(vaultId);
         uint256 prevDepth = prevSize > length ? 0 : length.sub(prevSize);
-        uint256 prevReward = _calcBountyD2Helper(vaultId, prevSize);
+        uint256 prevReward = _calcBountyD2Helper(ethMax, length, prevSize);
         uint256 newSize = isBurn
             ? vaultSize(vaultId).sub(amount)
             : vaultSize(vaultId).add(amount);
         uint256 newDepth = newSize > length ? 0 : length.sub(newSize);
-        uint256 newReward = _calcBountyD2Helper(vaultId, newSize);
+        uint256 newReward = _calcBountyD2Helper(ethMax, length, newSize);
         uint256 prevTriangle = prevDepth.mul(prevReward).div(2).div(10**18);
         uint256 newTriangle = newDepth.mul(newReward).div(2).div(10**18);
 
@@ -235,15 +161,12 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
                 : prevTriangle.sub(newTriangle);
     }
 
-    function _calcBountyD2Helper(uint256 vaultId, uint256 size)
+    function _calcBountyD2Helper(uint256 ethMax, uint256 length, uint256 size)
         internal
-        view
+        pure
         returns (uint256)
     {
-        if (size >= store.supplierBounty(vaultId).length) {
-            return 0;
-        }
-        (uint256 ethMax, uint256 length) = store.supplierBounty(vaultId);
+        if (size >= length) return 0;
         return ethMax.sub(ethMax.mul(size).div(length));
     }
 
@@ -254,9 +177,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         returns (uint256)
     {
         (uint256 ethMax, uint256 length) = store.supplierBounty(vaultId);
-        if (_vaultSize >= length) {
-            return 0;
-        }
+        if (_vaultSize >= length) return 0;
         uint256 depth = length.sub(_vaultSize);
         return ethMax.div(length).mul(depth);
     }
@@ -274,22 +195,18 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
             if (_assetAddress != cpmAddress) {
                 store.setNft(vaultId);
             }
-            store.setNegateEligibility(true);
+            store.setNegateEligibility(vaultId, true);
         } else {
             store.setD2Asset(vaultId);
             store.setIsD2Vault(vaultId, true);
         }
-        store.setManager(_msgSender());
-        emit VaultCreated(vaultId, _msgSender());
+        store.setManager(vaultId, _msgSender());
+        emit NewVault(vaultId);
         return vaultId;
     }
 
     function depositETH(uint256 vaultId) public payable virtual {
-        store.setEthBalance(
-            vaultId,
-            store.ethBalance(vaultId).add(msg.value)
-        );
-        emit EthDeposited(vaultId, msg.value, _msgSender());
+        store.setEthBalance(vaultId, store.ethBalance(vaultId).add(msg.value));
     }
 
     function setExtension(address contractAddress, bool _boolean)
@@ -297,7 +214,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         virtual
         onlyOwner
     {
-        require(_boolean !=  store.isExtension(contractAddress), "Already set");
+        require(_boolean != store.isExtension(contractAddress), "Already set");
         store.setIsExtension(contractAddress, _boolean);
     }
 
@@ -311,7 +228,6 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         if (amountToSend > 0) {
             store.setEthBalance(vaultId, ethBalance.sub(amountToSend));
             to.transfer(amountToSend);
-            emit EthSentFromVault(vaultId, amount, to);
         }
     }
 
@@ -321,8 +237,10 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         uint256 amountSent
     ) internal virtual {
         require(amountSent >= amountRequested, "Value too low");
-        store.setEthBalance(vaultId, store.ethBalance(vaultId).add(amountRequested));
-        emit EthReceivedByVault(vaultId, amountRequested, _msgSender());
+        store.setEthBalance(
+            vaultId,
+            store.ethBalance(vaultId).add(amountRequested)
+        );
     }
 
     function _mint(uint256 vaultId, uint256[] memory nftIds, bool isDualOp)
@@ -335,37 +253,39 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
             if (store.assetAddress(vaultId) == cpmAddress) {
                 cpm.buyPunk(nftId);
             } else {
-                IERC721 memory nft = store.nft(vaultId);
                 require(
-                    nft.ownerOf(nftId) != address(this),
+                    store.nft(vaultId).ownerOf(nftId) != address(this),
                     "Already owner"
                 );
-                nft.safeTransferFrom(_msgSender(), address(this), nftId);
+                store.nft(vaultId).safeTransferFrom(
+                    _msgSender(),
+                    address(this),
+                    nftId
+                );
                 require(
-                    nft.ownerOf(nftId) == address(this),
+                    store.nft(vaultId).ownerOf(nftId) == address(this),
                     "Not received"
                 );
             }
             if (store.shouldReserve(vaultId, nftId)) {
                 store.reservesAdd(vaultId, nftId);
-                emit ReservesIncreased(vaultId, nftId);
             } else {
                 store.holdingsAdd(vaultId, nftId);
             }
         }
-        emit NFTsDeposited(vaultId, nftIds, _msgSender());
         if (!isDualOp) {
             uint256 amount = nftIds.length.mul(10**18);
             store.xToken(vaultId).mint(_msgSender(), amount);
-            emit TokensMinted(vaultId, amount, _msgSender());
         }
     }
 
     function _mintD2(uint256 vaultId, uint256 amount) internal virtual {
-        store.d2Asset(vaultId).transferFrom(_msgSender(), address(this), amount);
-        emit D2AssetDeposited(vaultId, amount, _msgSender());
+        store.d2Asset(vaultId).transferFrom(
+            _msgSender(),
+            address(this),
+            amount
+        );
         store.xToken(vaultId).mint(_msgSender(), amount);
-        emit TokensMinted(vaultId, amount, _msgSender());
         store.setD2Holdings(vaultId, store.d2Holdings(vaultId).add(amount));
     }
 
@@ -379,7 +299,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
                 uint256 rand = _getPseudoRand(store.holdingsLength(vaultId));
                 nftIds[0] = store.holdingsAt(vaultId, rand);
             } else {
-                uint256 rand = _getPseudoRand(store.reservesLength());
+                uint256 rand = _getPseudoRand(store.reservesLength(vaultId));
                 nftIds[i] = store.reservesAt(vaultId, rand);
             }
             _redeemHelper(vaultId, nftIds, isDualOp);
@@ -388,9 +308,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
 
     function _redeemD2(uint256 vaultId, uint256 amount) internal virtual {
         store.xToken(vaultId).burnFrom(_msgSender(), amount);
-        emit TokensBurned(vaultId, amount, _msgSender());
         store.d2Asset(vaultId).transfer(_msgSender(), amount);
-        emit D2AssetRedeemed(vaultId, amount, _msgSender());
         store.setD2Holdings(vaultId, store.d2Holdings(vaultId).sub(amount));
     }
 
@@ -400,8 +318,10 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         bool isDualOp
     ) internal virtual {
         if (!isDualOp) {
-            store.xToken(vaultId).burnFrom(_msgSender(), nftIds.length.mul(10**18));
-            emit TokensBurned(vaultId, 10**18, _msgSender());
+            store.xToken(vaultId).burnFrom(
+                _msgSender(),
+                nftIds.length.mul(10**18)
+            );
         }
         for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
             uint256 nftId = nftIds[i];
@@ -414,15 +334,17 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
                 store.holdingsRemove(vaultId, nftId);
             } else {
                 store.reservesRemove(vaultId, nftId);
-                emit ReservesDecreased(vaultId, nftId);
             }
             if (store.assetAddress(vaultId) == cpmAddress) {
                 cpm.transferPunk(_msgSender(), nftId);
             } else {
-                store.nft(vaultId).safeTransferFrom(address(this), _msgSender(), nftId);
+                store.nft(vaultId).safeTransferFrom(
+                    address(this),
+                    _msgSender(),
+                    nftId
+                );
             }
         }
-        emit NFTsRedeemed(vaultId, nftIds, _msgSender());
     }
 
     function directRedeem(uint256 vaultId, uint256[] memory nftIds)
@@ -432,11 +354,10 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         nonReentrant
         onlyExtension
     {
-        require(vaultId < store.vaultsLength, "Invalid vaultId");
+        require(vaultId < store.vaultsLength(), "Invalid vaultId");
         uint256 ethBounty = _calcBounty(vaultId, nftIds.length, true);
         _receiveEthToVault(vaultId, ethBounty, msg.value);
         _redeemHelper(vaultId, nftIds, false);
-        emit DirectRedemption(vaultId, nftIds, _msgSender());
     }
 
     function mint(uint256 vaultId, uint256[] memory nftIds, uint256 d2Amount)
@@ -451,7 +372,12 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
             ? _calcBountyD2(vaultId, d2Amount, false)
             : _calcBounty(vaultId, amount, false);
         (uint256 ethBase, uint256 ethStep) = store.mintFees(vaultId);
-        uint256 ethFee = _calcFee(amount, ethBase, ethStep, store.isD2Vault(vaultId));
+        uint256 ethFee = _calcFee(
+            amount,
+            ethBase,
+            ethStep,
+            store.isD2Vault(vaultId)
+        );
         if (ethFee > ethBounty) {
             _receiveEthToVault(vaultId, ethFee.sub(ethBounty), msg.value);
         }
@@ -479,16 +405,16 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
                 : _calcBounty(vaultId, amount, true);
             (uint256 ethBase, uint256 ethStep) = store.burnFees(vaultId);
             uint256 ethFee = _calcFee(
-                amount, 
-                ethBase, 
-                ethStep, 
+                amount,
+                ethBase,
+                ethStep,
                 store.isD2Vault(vaultId)
             );
             if (ethBounty.add(ethFee) > 0) {
                 _receiveEthToVault(vaultId, ethBounty.add(ethFee), msg.value);
             }
         }
-        if (!vault.isD2Vault) {
+        if (!store.isD2Vault(vaultId)) {
             _redeem(vaultId, amount, false);
         } else {
             _redeemD2(vaultId, amount);
@@ -503,20 +429,20 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         nonReentrant
         whenNotPaused
     {
-        Vault storage vault = _getVault(vaultId);
-        require(!vault.isD2Vault, "Is D2 vault");
-        require(!vault.isClosed, "Vault is closed");
+        require(!store.isD2Vault(vaultId), "Is D2 vault");
+        require(!store.isClosed(vaultId), "Vault is closed");
+        (uint256 ethBase, uint256 ethStep) = store.dualFees(vaultId);
         uint256 ethFee = _calcFee(
             nftIds.length,
-            vault.dualFees,
-            vault.isD2Vault
+            ethBase,
+            ethStep,
+            store.isD2Vault(vaultId)
         );
         if (ethFee > 0) {
             _receiveEthToVault(vaultId, ethFee, msg.value);
         }
         _mint(vaultId, nftIds, true);
         _redeem(vaultId, nftIds.length, true);
-        emit DualOp(vaultId, nftIds, _msgSender());
     }
 
     function setIsEligible(
@@ -525,11 +451,9 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         bool _boolean
     ) public virtual {
         onlyPrivileged(vaultId, true);
-        Vault storage vault = _getVault(vaultId);
         for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
-            vault.isEligible[nftIds[i]] = _boolean;
+            store.setIsEligible(vaultId, nftIds[i], _boolean);
         }
-        emit EligibilitySet(vaultId, nftIds, _boolean, _msgSender());
     }
 
     function setNegateEligibility(uint256 vaultId, bool shouldNegate)
@@ -537,16 +461,15 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         virtual
     {
         onlyPrivileged(vaultId, true);
-        Vault storage vault = _getVault(vaultId);
         require(
-            vault.holdings.length().add(vault.reserves.length()).add(
-                vault.d2Holdings
-            ) ==
+            store
+                .holdingsLength(vaultId)
+                .add(store.reservesLength(vaultId))
+                .add(store.d2Holdings(vaultId)) ==
                 0,
             "Vault not empty"
         );
-        vault.negateEligibility = shouldNegate;
-        emit NegateEligibilitySet(vaultId, shouldNegate, _msgSender());
+        store.setNegateEligibility(vaultId, shouldNegate);
     }
 
     function setShouldReserve(
@@ -555,11 +478,9 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         bool _boolean
     ) public virtual {
         onlyPrivileged(vaultId, true);
-        Vault storage vault = _getVault(vaultId);
         for (uint256 i = 0; i < nftIds.length; i.add(1)) {
-            vault.shouldReserve[nftIds[i]] = _boolean;
+            store.setShouldReserve(vaultId, nftIds[i], _boolean);
         }
-        emit ShouldReserveSet(vaultId, nftIds, _boolean, _msgSender());
     }
 
     function setIsReserved(
@@ -568,22 +489,24 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         bool _boolean
     ) public virtual {
         onlyPrivileged(vaultId, true);
-        Vault storage vault = _getVault(vaultId);
         for (uint256 i = 0; i < nftIds.length; i.add(1)) {
             uint256 nftId = nftIds[i];
             if (_boolean) {
-                require(vault.holdings.contains(nftId), "Invalid nftId");
-                vault.holdings.remove(nftId);
-                vault.reserves.add(nftId);
-                emit ReservesIncreased(vaultId, nftId);
+                require(
+                    store.holdingsContains(vaultId, nftId),
+                    "Invalid nftId"
+                );
+                store.holdingsRemove(vaultId, nftId);
+                store.reservesAdd(vaultId, nftId);
             } else {
-                require(vault.reserves.contains(nftId), "Invalid nftId");
-                vault.reserves.remove(nftId);
-                vault.holdings.add(nftId);
-                emit ReservesDecreased(vaultId, nftId);
+                require(
+                    store.reservesContains(vaultId, nftId),
+                    "Invalid nftId"
+                );
+                store.reservesRemove(vaultId, nftId);
+                store.holdingsAdd(vaultId, nftId);
             }
         }
-        emit IsReservedSet(vaultId, nftIds, _boolean, _msgSender());
     }
 
     function changeTokenName(uint256 vaultId, string memory newName)
@@ -591,9 +514,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         virtual
     {
         onlyPrivileged(vaultId, true);
-        Vault storage vault = _getVault(vaultId);
-        vault.erc20.changeName(newName);
-        emit TokenNameChanged(vaultId, newName, _msgSender());
+        store.xToken(vaultId).changeName(newName);
     }
 
     function changeTokenSymbol(uint256 vaultId, string memory newSymbol)
@@ -601,9 +522,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         virtual
     {
         onlyPrivileged(vaultId, true);
-        Vault storage vault = _getVault(vaultId);
-        vault.erc20.changeSymbol(newSymbol);
-        emit TokenSymbolChanged(vaultId, newSymbol, _msgSender());
+        store.xToken(vaultId).changeSymbol(newSymbol);
     }
 
     function setManager(uint256 vaultId, address newManager)
@@ -611,9 +530,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         virtual
         onlyManager(vaultId)
     {
-        Vault storage vault = _getVault(vaultId);
-        vault.manager = newManager;
-        emit ManagerSet(vaultId, newManager, _msgSender());
+        store.setManager(vaultId, newManager);
     }
 
     function finalizeVault(uint256 vaultId)
@@ -621,17 +538,13 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         virtual
         onlyManager(vaultId)
     {
-        Vault storage vault = _getVault(vaultId);
-        require(!vault.isFinalized, "Already finalized");
-        vault.isFinalized = true;
-        emit VaultFinalized(vaultId, _msgSender());
+        require(!store.isFinalized(vaultId), "Already finalized");
+        store.setIsFinalized(vaultId, true);
     }
 
     function closeVault(uint256 vaultId) public virtual {
         onlyPrivileged(vaultId, false);
-        Vault storage vault = _getVault(vaultId);
-        vault.isClosed = true;
-        emit VaultClosed(vaultId, _msgSender());
+        store.setIsClosed(vaultId, true);
     }
 
     function setMintFees(uint256 vaultId, uint256 _ethBase, uint256 _ethStep)
@@ -639,9 +552,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         virtual
     {
         onlyPrivileged(vaultId, true);
-        Vault storage vault = _getVault(vaultId);
-        vault.mintFees = FeeParams(_ethBase, _ethStep);
-        emit MintFeesSet(vaultId, _ethBase, _ethStep, _msgSender());
+        store.setMintFees(vaultId, _ethBase, _ethStep);
     }
 
     function setBurnFees(uint256 vaultId, uint256 _ethBase, uint256 _ethStep)
@@ -649,9 +560,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         virtual
     {
         onlyPrivileged(vaultId, true);
-        Vault storage vault = _getVault(vaultId);
-        vault.burnFees = FeeParams(_ethBase, _ethStep);
-        emit BurnFeesSet(vaultId, _ethBase, _ethStep, _msgSender());
+        store.setBurnFees(vaultId, _ethBase, _ethStep);
     }
 
     function setDualFees(uint256 vaultId, uint256 _ethBase, uint256 _ethStep)
@@ -659,9 +568,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         virtual
     {
         onlyPrivileged(vaultId, true);
-        Vault storage vault = _getVault(vaultId);
-        vault.dualFees = FeeParams(_ethBase, _ethStep);
-        emit DualFeesSet(vaultId, _ethBase, _ethStep, _msgSender());
+        store.setDualFees(vaultId, _ethBase, _ethStep);
     }
 
     function setSupplierBounty(uint256 vaultId, uint256 ethMax, uint256 length)
@@ -669,22 +576,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         virtual
     {
         onlyPrivileged(vaultId, true);
-        Vault storage vault = _getVault(vaultId);
-        vault.supplierBounty = BountyParams(ethMax, length);
-        emit SupplierBountySet(vaultId, ethMax, length, _msgSender());
+        store.setSupplierBounty(vaultId, ethMax, length);
     }
 
-    function setD2Weightings(
-        uint256 vaultId,
-        uint256[] memory _vaultIds,
-        uint256[] memory _weightings
-    ) public virtual {
-        onlyPrivileged(vaultId, true);
-        Vault storage vault = _getVault(vaultId);
-        require(vault.isD2Vault, "Not D2 vault");
-        require(_vaultIds.length == _weightings.length, "Wrong array lengths");
-        vault.d2UnderlyingVaults = _vaultIds;
-        vault.d2UnderlyingWeights = _weightings;
-        emit D2WeightingsSet(vaultId, _vaultIds, _weightings, _msgSender());
-    }
 }

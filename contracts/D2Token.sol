@@ -14,6 +14,7 @@ contract D2Token is Context, Ownable, ERC20Burnable {
         public
         ERC20(name, symbol)
     {
+        initOwnable();
         _mint(msg.sender, 0);
     }
 

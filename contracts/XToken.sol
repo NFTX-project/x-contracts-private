@@ -15,6 +15,7 @@ contract XToken is Context, Ownable, ERC20Burnable {
         ERC20(name, symbol)
     {
         _mint(msg.sender, 0);
+        initOwnable();
     }
 
     function mint(address to, uint256 amount) public onlyOwner {
