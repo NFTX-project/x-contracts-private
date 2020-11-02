@@ -39,9 +39,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         _;
     }
 
-    modifier onlyManager(uint256 vaultId) {
+    function onlyManager(uint256 vaultId) internal view {
         require(_msgSender() == store.manager(vaultId), "Not manager");
-        _;
     }
 
     function onlyPrivileged(uint256 vaultId, bool includeCouncil)
@@ -58,12 +57,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
                 require(_msgSender() == owner(), "Not owner");
             }
         } else {
-            require(_msgSender() == store.manager(vaultId), "Not manager");
+            onlyManager(vaultId);
         }
-    }
-
-    function numVaults() public view virtual returns (uint256) {
-        return store.vaultsLength();
     }
 
     function isEligible(uint256 vaultId, uint256 nftId)
@@ -525,19 +520,13 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         store.xToken(vaultId).changeSymbol(newSymbol);
     }
 
-    function setManager(uint256 vaultId, address newManager)
-        public
-        virtual
-        onlyManager(vaultId)
-    {
+    function setManager(uint256 vaultId, address newManager) public virtual {
+        onlyManager(vaultId);
         store.setManager(vaultId, newManager);
     }
 
-    function finalizeVault(uint256 vaultId)
-        public
-        virtual
-        onlyManager(vaultId)
-    {
+    function finalizeVault(uint256 vaultId) public virtual {
+        onlyManager(vaultId);
         require(!store.isFinalized(vaultId), "Already finalized");
         store.setIsFinalized(vaultId, true);
     }

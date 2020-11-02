@@ -1,9 +1,7 @@
 const { runVaultTests } = require("./_runVaultTests");
-const { runVaultTestsD2 } = require("./_runVaultTestsD2");
 const { getIntArray, initializeAssetTokenVault } = require("./_helpers");
 
 const { ethers, upgrades } = require("@nomiclabs/buidler");
-// const { ethers } = require("ethers");
 
 describe("NFTX", function () {
   // return;
@@ -202,18 +200,39 @@ describe("NFTX", function () {
         false,
         true
       );
-      await runVaultTestsD2(nftx, asset, xToken, signers, vaultId);
+      await runVaultTests(
+        nftx,
+        asset,
+        xToken,
+        signers,
+        vaultId,
+        [],
+        [],
+        false,
+        true
+      );
+    };
+
+    //////////////////////////////////
+    // Contract upgrade + migration //
+    //////////////////////////////////
+
+    const runContractUpgradeMigration = async () => {
+      console.log("Testing: Contract upgrade...\n");
+      const NFTXv2 = await ethers.getContractFactory("NFTXv2");
+      const nftxV2 = await upgrades.upgradeProxy(nftx.address, NFTXv2);
     };
 
     ////////////////////////////////////////////////////////////////////
     // Run Vault Tests... //////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////
 
-    await runNftBasic();
-    await runPunkBasic();
-    await runNftSpecial();
-    await runNftSpecial2();
-    await runPunkSpecial();
-    await runD2Vault();
+    // await runNftBasic();
+    // await runPunkBasic();
+    // await runNftSpecial();
+    // await runNftSpecial2();
+    // await runPunkSpecial();
+    // await runD2Vault();
+    await runContractUpgradeMigration();
   });
 });

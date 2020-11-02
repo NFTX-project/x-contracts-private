@@ -14,17 +14,24 @@ const {
   approveEach,
   approveAndMint,
   approveAndRedeem,
+  setupD2,
+  balancesOf,
+  approveAndMintD2,
+  checkBalancesD2,
+  approveAndRedeemD2,
+  cleanupD2,
 } = require("./_helpers");
 
 const runVaultTests = async (
   nftx,
-  nft,
-  token,
+  asset,
+  xToken,
   signers,
   vaultId,
   allNftIds,
   eligIds,
-  isPV
+  isPV,
+  isD2
 ) => {
   const [owner, misc, alice, bob, carol, dave, eve] = signers;
 
@@ -34,25 +41,39 @@ const runVaultTests = async (
 
   const runMintRedeem = async () => {
     console.log("Testing: mint, redeem...\n");
-    await setup(nftx, nft, signers, isPV, eligIds);
+    await setup(nftx, asset, signers, isPV, eligIds);
     let [aliceNFTs, bobNFTs] = await holdingsOf(
-      nft,
+      asset,
       eligIds,
       [alice, bob],
       isPV
     );
 
-    await approveAndMint(nftx, nft, aliceNFTs, alice, vaultId, 0, isPV);
-    await approveAndMint(nftx, nft, bobNFTs, bob, vaultId, 0, isPV);
-    await checkBalances(nftx, nft, token, signers.slice(2), isPV);
-    await approveAndRedeem(nftx, token, aliceNFTs.length, alice, vaultId);
-    await approveAndRedeem(nftx, token, bobNFTs.length, bob, vaultId);
+    await approveAndMint(nftx, asset, aliceNFTs, alice, vaultId, 0, isPV);
+    await approveAndMint(nftx, asset, bobNFTs, bob, vaultId, 0, isPV);
+    await checkBalances(nftx, asset, xToken, signers.slice(2), isPV);
+    await approveAndRedeem(nftx, xToken, aliceNFTs.length, alice, vaultId);
+    await approveAndRedeem(nftx, xToken, bobNFTs.length, bob, vaultId);
 
-    [aliceNFTs, bobNFTs] = await holdingsOf(nft, eligIds, [alice, bob], isPV);
+    [aliceNFTs, bobNFTs] = await holdingsOf(asset, eligIds, [alice, bob], isPV);
     console.log(aliceNFTs);
     console.log(bobNFTs, "\n");
-    await checkBalances(nftx, nft, token, signers.slice(2), isPV);
-    await cleanup(nftx, nft, token, signers, vaultId, isPV, eligIds);
+    await checkBalances(nftx, asset, xToken, signers.slice(2), isPV);
+    await cleanup(nftx, asset, xToken, signers, vaultId, isPV, eligIds);
+  };
+
+  const runMintRedeemD2 = async () => {
+    console.log("Testing (D2): mint, redeem...\n");
+    await setupD2(nftx, asset, signers);
+    const [aliceBal, bobBal] = await balancesOf(asset, [alice, bob]);
+    await approveAndMintD2(nftx, asset, aliceBal, alice, vaultId, 0);
+    await approveAndMintD2(nftx, asset, bobBal, bob, vaultId, 0);
+    await checkBalancesD2(nftx, asset, xToken, [alice, bob]);
+    await approveAndRedeemD2(nftx, xToken, aliceBal, alice, vaultId, 0);
+    await approveAndRedeemD2(nftx, xToken, bobBal, bob, vaultId, 0);
+
+    await checkBalancesD2(nftx, asset, xToken, [alice, bob]);
+    await cleanupD2(nftx, asset, xToken, signers, vaultId);
   };
 
   ///////////////////
@@ -61,22 +82,22 @@ const runVaultTests = async (
 
   const runMintAndRedeem = async () => {
     console.log("Testing: mintAndRedeem...\n");
-    await setup(nftx, nft, signers, isPV, eligIds);
+    await setup(nftx, asset, signers, isPV, eligIds);
     let [aliceNFTs, bobNFTs] = await holdingsOf(
-      nft,
+      asset,
       eligIds,
       [alice, bob],
       isPV
     );
-    await approveAndMint(nftx, nft, aliceNFTs, alice, vaultId, 0, isPV);
+    await approveAndMint(nftx, asset, aliceNFTs, alice, vaultId, 0, isPV);
 
-    await approveEach(nft, bobNFTs, bob, nftx.address, isPV);
+    await approveEach(asset, bobNFTs, bob, nftx.address, isPV);
     await nftx.connect(bob).mintAndRedeem(vaultId, bobNFTs);
-    await checkBalances(nftx, nft, token, signers.slice(2), isPV);
+    await checkBalances(nftx, asset, xToken, signers.slice(2), isPV);
 
-    [bobNFTs] = await holdingsOf(nft, eligIds, [bob], isPV);
+    [bobNFTs] = await holdingsOf(asset, eligIds, [bob], isPV);
     console.log(bobNFTs, "\n");
-    await cleanup(nftx, nft, token, signers, vaultId, isPV, eligIds);
+    await cleanup(nftx, asset, xToken, signers, vaultId, isPV, eligIds);
   };
 
   ////////////////////////
@@ -85,9 +106,9 @@ const runVaultTests = async (
 
   const runMintFeesBurnFees = async () => {
     console.log("Testing: mintFees, burnFees...\n");
-    await setup(nftx, nft, signers, isPV, eligIds);
+    await setup(nftx, asset, signers, isPV, eligIds);
     let [aliceNFTs, bobNFTs] = await holdingsOf(
-      nft,
+      asset,
       eligIds,
       [alice, bob],
       isPV
@@ -98,19 +119,51 @@ const runVaultTests = async (
     const n = aliceNFTs.length;
     let amount = UNIT.mul(5).add(UNIT.mul(n - 1));
     await expectRevert(
-      approveAndMint(nftx, nft, aliceNFTs, alice, vaultId, amount.sub(1), isPV)
+      approveAndMint(
+        nftx,
+        asset,
+        aliceNFTs,
+        alice,
+        vaultId,
+        amount.sub(1),
+        isPV
+      )
     );
-    await approveAndMint(nftx, nft, aliceNFTs, alice, vaultId, amount, isPV);
-    await checkBalances(nftx, nft, token, signers.slice(2), isPV);
+    await approveAndMint(nftx, asset, aliceNFTs, alice, vaultId, amount, isPV);
+    await checkBalances(nftx, asset, xToken, signers.slice(2), isPV);
     await expectRevert(
-      approveAndRedeem(nftx, token, n, alice, vaultId, amount.sub(1))
+      approveAndRedeem(nftx, xToken, n, alice, vaultId, amount.sub(1))
     );
-    await approveAndRedeem(nftx, token, n, alice, vaultId, amount);
-    await checkBalances(nftx, nft, token, signers.slice(2), isPV);
+    await approveAndRedeem(nftx, xToken, n, alice, vaultId, amount);
+    await checkBalances(nftx, asset, xToken, signers.slice(2), isPV);
 
     await nftx.connect(owner).setMintFees(vaultId, 0, 0);
     await nftx.connect(owner).setBurnFees(vaultId, 0, 0);
-    await cleanup(nftx, nft, token, signers, vaultId, isPV, eligIds);
+    await cleanup(nftx, asset, xToken, signers, vaultId, isPV, eligIds);
+  };
+
+  const runMintFeesBurnFeesD2 = async () => {
+    console.log("Testing (D2): mintFees, burnFees...\n");
+    await setupD2(nftx, asset, signers);
+    const [aliceBal] = await balancesOf(asset, [alice]);
+    await nftx.connect(owner).setMintFees(vaultId, UNIT.mul(5), UNIT);
+    await nftx.connect(owner).setBurnFees(vaultId, UNIT.mul(5), UNIT);
+
+    const n = aliceBal.div(BASE);
+    const amount = UNIT.mul(5).add(UNIT.mul(n - 1));
+    await expectRevert(
+      approveAndMintD2(nftx, asset, aliceBal, alice, vaultId, amount.sub(1))
+    );
+    await approveAndMintD2(nftx, asset, aliceBal, alice, vaultId, amount);
+    await checkBalancesD2(nftx, asset, xToken, [alice]);
+    await expectRevert(
+      approveAndRedeemD2(nftx, xToken, aliceBal, alice, vaultId, amount.sub(1))
+    );
+    await approveAndRedeemD2(nftx, xToken, aliceBal, alice, vaultId, amount);
+    await nftx.connect(owner).setMintFees(vaultId, 0, 0);
+    await nftx.connect(owner).setBurnFees(vaultId, 0, 0);
+    await checkBalancesD2(nftx, asset, xToken, [alice]);
+    await cleanupD2(nftx, asset, xToken, signers, vaultId);
   };
 
   //////////////
@@ -119,17 +172,17 @@ const runVaultTests = async (
 
   const runDualFees = async () => {
     console.log("Testing: dualFees...\n");
-    await setup(nftx, nft, signers, isPV, eligIds);
+    await setup(nftx, asset, signers, isPV, eligIds);
     let [aliceNFTs, bobNFTs] = await holdingsOf(
-      nft,
+      asset,
       eligIds,
       [alice, bob],
       isPV
     );
     await nftx.connect(owner).setDualFees(vaultId, UNIT.mul(5), UNIT);
-    await approveAndMint(nftx, nft, aliceNFTs, alice, vaultId, 0, isPV);
+    await approveAndMint(nftx, asset, aliceNFTs, alice, vaultId, 0, isPV);
 
-    await approveEach(nft, bobNFTs, bob, nftx.address, isPV);
+    await approveEach(asset, bobNFTs, bob, nftx.address, isPV);
     let amount = UNIT.mul(5).add(UNIT.mul(bobNFTs.length - 1));
     await expectRevert(
       nftx
@@ -139,7 +192,7 @@ const runVaultTests = async (
     await nftx.connect(bob).mintAndRedeem(vaultId, bobNFTs, { value: amount });
 
     await nftx.connect(owner).setDualFees(vaultId, 0, 0);
-    await cleanup(nftx, nft, token, signers, vaultId, isPV, eligIds);
+    await cleanup(nftx, asset, xToken, signers, vaultId, isPV, eligIds);
   };
 
   ////////////////////
@@ -148,14 +201,14 @@ const runVaultTests = async (
 
   const runSupplierBounty = async () => {
     console.log("Testing: supplierBounty...\n");
-    await setup(nftx, nft, signers, isPV, eligIds);
-    let [aliceNFTs] = await holdingsOf(nft, eligIds, [alice], isPV);
+    await setup(nftx, asset, signers, isPV, eligIds);
+    let [aliceNFTs] = await holdingsOf(asset, eligIds, [alice], isPV);
     await nftx.connect(owner).depositETH(vaultId, { value: UNIT.mul(100) });
     await nftx.connect(owner).setSupplierBounty(vaultId, UNIT.mul(10), 5);
 
     let nftxBal1 = BigNumber.from(await web3.eth.getBalance(nftx.address));
     let aliceBal1 = BigNumber.from(await web3.eth.getBalance(alice._address));
-    await approveAndMint(nftx, nft, aliceNFTs, alice, vaultId, 0, isPV);
+    await approveAndMint(nftx, asset, aliceNFTs, alice, vaultId, 0, isPV);
     let nftxBal2 = BigNumber.from(await web3.eth.getBalance(nftx.address));
     let aliceBal2 = BigNumber.from(await web3.eth.getBalance(alice._address));
     expect(nftxBal2.toString()).to.equal(
@@ -164,7 +217,7 @@ const runVaultTests = async (
     expect(aliceBal2.gt(aliceBal1)).to.equal(true);
     await approveAndRedeem(
       nftx,
-      token,
+      xToken,
       aliceNFTs.length,
       alice,
       vaultId,
@@ -176,7 +229,44 @@ const runVaultTests = async (
     expect(aliceBal3.lt(aliceBal2)).to.equal(true);
 
     await nftx.connect(owner).setSupplierBounty(vaultId, 0, 0);
-    await cleanup(nftx, nft, token, signers, vaultId, isPV, eligIds);
+    await cleanup(nftx, asset, xToken, signers, vaultId, isPV, eligIds);
+  };
+
+  const runSupplierBountyD2 = async () => {
+    console.log("Testing (D2): supplierBounty...\n");
+    await setupD2(nftx, asset, signers);
+    const [aliceBal] = await balancesOf(asset, [alice]);
+    await nftx.connect(owner).depositETH(vaultId, { value: UNIT.mul(100) });
+    await nftx
+      .connect(owner)
+      .setSupplierBounty(vaultId, UNIT.mul(10), BASE.mul(5));
+
+    let nftxBal1 = BigNumber.from(await web3.eth.getBalance(nftx.address));
+    let aliceBal1 = BigNumber.from(await web3.eth.getBalance(alice._address));
+    await approveAndMintD2(nftx, asset, aliceBal, alice, vaultId, 0);
+    await checkBalancesD2(nftx, asset, xToken, [alice]);
+    let nftxBal2 = BigNumber.from(await web3.eth.getBalance(nftx.address));
+    let aliceBal2 = BigNumber.from(await web3.eth.getBalance(alice._address));
+    expect(nftxBal1.sub(nftxBal2).toString()).to.equal(
+      UNIT.mul(10).mul(5).div(2).toString()
+    );
+    expect(aliceBal2.gt(aliceBal1)).to.equal(true);
+    await approveAndRedeemD2(
+      nftx,
+      xToken,
+      aliceBal,
+      alice,
+      vaultId,
+      UNIT.mul(10).mul(5).div(2)
+    );
+    let nftxBal3 = BigNumber.from(await web3.eth.getBalance(nftx.address));
+    let aliceBal3 = BigNumber.from(await web3.eth.getBalance(alice._address));
+    expect(nftxBal3.toString()).to.equal(nftxBal1.toString());
+    expect(aliceBal3.lt(aliceBal2)).to.equal(true);
+    await checkBalancesD2(nftx, asset, xToken, [alice]);
+
+    await nftx.connect(owner).setSupplierBounty(vaultId, 0, 0);
+    await cleanupD2(nftx, asset, xToken, signers, vaultId);
   };
 
   ////////////////
@@ -185,18 +275,18 @@ const runVaultTests = async (
 
   const runIsEligible = async () => {
     console.log("Testing: isEligible...\n");
-    await setup(nftx, nft, signers, isPV, eligIds);
-    let [aliceNFTs] = await holdingsOf(nft, eligIds, [alice], isPV);
+    await setup(nftx, asset, signers, isPV, eligIds);
+    let [aliceNFTs] = await holdingsOf(asset, eligIds, [alice], isPV);
     let nftIds = eligIds.slice(0, 2).map((n) => n + 1);
-    await transferNFTs(nftx, nft, nftIds, misc, alice, isPV);
+    await transferNFTs(nftx, asset, nftIds, misc, alice, isPV);
 
     await expectRevert(
-      approveAndMint(nftx, nft, nftIds, alice, vaultId, 0, isPV)
+      approveAndMint(nftx, asset, nftIds, alice, vaultId, 0, isPV)
     );
 
     await approveAndMint(
       nftx,
-      nft,
+      asset,
       eligIds.slice(0, 2),
       alice,
       vaultId,
@@ -204,19 +294,25 @@ const runVaultTests = async (
       isPV
     );
 
-    await cleanup(nftx, nft, token, signers, vaultId, isPV, allNftIds);
+    await cleanup(nftx, asset, xToken, signers, vaultId, isPV, allNftIds);
   };
 
   //////////////////////////
   // Run Feature Tests... //
   //////////////////////////
 
-  await runMintRedeem();
-  await runMintAndRedeem();
-  await runMintFeesBurnFees();
-  await runDualFees();
-  await runSupplierBounty();
-  eligIds[1] - eligIds[0] > 1 && (await runIsEligible());
+  if (isD2) {
+    await runMintRedeemD2();
+    await runMintFeesBurnFeesD2();
+    await runSupplierBountyD2();
+  } else {
+    await runMintRedeem();
+    await runMintAndRedeem();
+    await runMintFeesBurnFees();
+    await runDualFees();
+    await runSupplierBounty();
+    eligIds[1] - eligIds[0] > 1 && (await runIsEligible());
+  }
 
   console.log("\n-- Vault tests complete --\n\n");
 };

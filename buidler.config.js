@@ -3,6 +3,7 @@ usePlugin("@nomiclabs/buidler-waffle");
 usePlugin("@nomiclabs/buidler-web3");
 usePlugin("@nomiclabs/buidler-ethers");
 usePlugin("@openzeppelin/buidler-upgrades");
+usePlugin("buidler-contract-sizer");
 
 module.exports = {
   networks: {
@@ -21,5 +22,9 @@ module.exports = {
       enabled: true,
       runs: 200,
     },
+  },
+  contractSizer: {
+    alphaSort: true,
+    runOnCompile: true,
   },
 };
