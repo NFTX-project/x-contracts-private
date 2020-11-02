@@ -1,5 +1,15 @@
+const { expectRevert } = require("../utils/expectRevert");
 const { runVaultTests } = require("./_runVaultTests");
-const { getIntArray, initializeAssetTokenVault } = require("./_helpers");
+const { 
+  getIntArray, 
+  initializeAssetTokenVault, 
+  setup, 
+  holdingsOf, 
+  approveAndMint,
+  checkBalances,
+  approveAndRedeem,
+  cleanup
+} = require("./_helpers");
 
 const { ethers, upgrades } = require("@nomiclabs/buidler");
 
@@ -21,7 +31,7 @@ describe("NFTX", function () {
     await xStore.deployed();
 
     const Nftx = await ethers.getContractFactory("NFTX");
-    const nftx = await upgrades.deployProxy(
+    let nftx = await upgrades.deployProxy(
       Nftx,
       [cpm.address, xStore.address],
       { initializer: "initialize" }
@@ -42,8 +52,8 @@ describe("NFTX", function () {
       const { asset, xToken, vaultId } = await initializeAssetTokenVault(
         nftx,
         signers,
-        "NFT-A",
-        "XToken-A",
+        "NFT",
+        "XToken",
         allNftIds,
         false,
         false
@@ -99,8 +109,8 @@ describe("NFTX", function () {
       const { asset, xToken, vaultId } = await initializeAssetTokenVault(
         nftx,
         signers,
-        "NFT-B",
-        "XToken-B1",
+        "NFT",
+        "XToken",
         allNftIds,
         false,
         false
@@ -135,7 +145,7 @@ describe("NFTX", function () {
         nftx,
         signers,
         _asset,
-        "XToken-B2",
+        "XToken",
         allNftIds,
         false,
         false
@@ -213,26 +223,55 @@ describe("NFTX", function () {
       );
     };
 
-    //////////////////////////////////
-    // Contract upgrade + migration //
-    //////////////////////////////////
+    //////////////////////
+    // Contract upgrade //
+    //////////////////////
 
-    const runContractUpgradeMigration = async () => {
+    const runContractUpgrade = async () => {
       console.log("Testing: Contract upgrade...\n");
       const NFTXv2 = await ethers.getContractFactory("NFTXv2");
-      const nftxV2 = await upgrades.upgradeProxy(nftx.address, NFTXv2);
+      const { asset, xToken, vaultId } = await initializeAssetTokenVault(
+        nftx,
+        signers,
+        "NFT",
+        "XToken",
+        allNftIds,
+        false,
+        false
+      );
+      const eligIds = getIntArray(0, 20);
+      await setup(nftx, asset, signers, false, eligIds);
+      const [aliceNFTs] = await holdingsOf(
+        asset,
+        eligIds,
+        [alice],
+        false
+      );
+      await approveAndMint(nftx, asset, aliceNFTs, alice, vaultId, 0, false);
+      await checkBalances(nftx, asset, xToken, [alice], false);
+      nftx = await upgrades.upgradeProxy(nftx.address, NFTXv2);
+      const nftId = aliceNFTs[0];
+      await nftx.transferERC721(vaultId, nftId, bob._address);
+      await expectRevert(
+        approveAndRedeem(nftx, xToken, aliceNFTs.length, alice, vaultId)
+      );
+      await asset.connect(bob).transferFrom(bob._address, nftx.address, nftId);
+      await approveAndRedeem(nftx, xToken, aliceNFTs.length, alice, vaultId);
+
+      await checkBalances(nftx, asset, xToken, [alice], false);
+      await cleanup(nftx, asset, xToken, signers, vaultId, false, eligIds);
     };
 
     ////////////////////////////////////////////////////////////////////
     // Run Vault Tests... //////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////
 
-    // await runNftBasic();
-    // await runPunkBasic();
-    // await runNftSpecial();
-    // await runNftSpecial2();
-    // await runPunkSpecial();
-    // await runD2Vault();
-    await runContractUpgradeMigration();
+    await runNftBasic();
+    await runPunkBasic();
+    await runNftSpecial();
+    await runNftSpecial2();
+    await runPunkSpecial();
+    await runD2Vault();
+    await runContractUpgrade();
   });
 });

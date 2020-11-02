@@ -80,9 +80,9 @@
         }
       }
     },
-    "be9ed815d75842d3fc387642021824fc8b29aaa4afc879d2290ee33cbed82627": {
-      "address": "0x038B86d9d8FAFdd0a02ebd1A476432877b0107C8",
-      "txHash": "0x3b4ca9e1bf2f6642d91906e30b6b40c298441f42048dc747dcecc893d9d8fccd",
+    "3fe45506e8231da31f5dc2c6a6611f36703a0832f68302774bd84c951b56c584": {
+      "address": "0x57965788BD1a93639CE738a58176e1A3d6F4d04f",
+      "txHash": "0xb85b8cbe262cccc1c5c9c0a63712df95e9d733e44eed21e70eded56c626c341e",
       "layout": {
         "storage": [
           {
