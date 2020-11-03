@@ -248,35 +248,15 @@ describe("NFTX", function () {
       const [aliceNFTs] = await holdingsOf(asset, eligIds, [alice], false);
       await approveAndMint(nftx, asset, aliceNFTs, alice, vaultId, 0, false);
       await checkBalances(nftx, asset, xToken, [alice], false);
-
-      // nftx = await upgrades.upgradeProxy(nftx.address, NFTXv2);
+      
       const NFTXv2 = await ethers.getContractFactory("NFTXv2");
-      console.log("Preparing upgrade...");
+      // nftx = await upgrades.upgradeProxy(nftx.address, NFTXv2);
       const nftxV2Address = await upgrades.prepareUpgrade(nftx.address, NFTXv2);
-      console.log("NftxV2 at:", nftxV2Address);
       await upgrades.admin.changeProxyAdmin(nftx.address, proxyAdmin._address);
-
       const ProxyFactory = await getProxyFactory(bre, owner);
       const proxy = ProxyFactory.attach(nftx.address);
-      console.log("here");
-
-      // Connect to the network
-      // let provider = ethers.getDefaultProvider();
-
-      // We connect to the Contract using a Provider, so we will only
-      // have read-only access to the Contract
-      /* let proxy = new ethers.Contract(
-        nftx.address,
-        ProxyFactory.interface,
-        provider
-      );
-      console.log("here"); */
       await proxy.connect(proxyAdmin).upgradeTo(nftxV2Address);
-
-      console.log("here");
-
       nftx = NFTXv2.attach(nftx.address);
-      console.log("here");
 
       const nftId = aliceNFTs[0];
       await nftx.transferERC721(vaultId, nftId, bob._address);
@@ -288,8 +268,6 @@ describe("NFTX", function () {
 
       await checkBalances(nftx, asset, xToken, [alice], false);
       await cleanup(nftx, asset, xToken, signers, vaultId, false, eligIds);
-
-      console.log("DONE");
     };
 
     ////////////////////////////////////////////////////////////////////

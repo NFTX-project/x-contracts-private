@@ -4,9 +4,11 @@ pragma solidity 0.6.8;
 
 import "./Timelocked.sol";
 import "./INFTX.sol";
+import "./ITransparentUpgradeableProxy.sol";
 
 contract XController is Timelocked {
     INFTX private nftx;
+    ITransparentUpgradeableProxy private proxy;
 
     /* struct FunctionCall {
         uint256 time;
@@ -69,6 +71,9 @@ contract XController is Timelocked {
 
         } 
     }
+
+    // TODO: a function for just increasing supplierbounty *length*
+    //       - this can be used without timelock trustlessly
 
     function transferOwnership(address newOwner) public override {
         uint256 fcId = numFuncCalls;
