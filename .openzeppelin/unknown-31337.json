@@ -3,7 +3,7 @@
   "impls": {
     "ff4b1bbb0c0135843fd08d3aa13217ffcd38822f249cc37288c918161f709e57": {
       "address": "0x0078371BDeDE8aAc7DeBfFf451B74c5EDB385Af7",
-      "txHash": "0xe131740b9e8df6b581391e5ca413efb0d91ba398fce5ffa232bee5209ee266f2",
+      "txHash": "0x1dc39cd65cf7754cf9af5763a2e3ad5ef2f1d1a44ccef57b9984e1d2de3c6641",
       "layout": {
         "storage": [
           {
@@ -51,7 +51,7 @@
           {
             "contract": "NFTX",
             "label": "cpm",
-            "type": "t_contract(ICryptoPunksMarket)3977",
+            "type": "t_contract(ICryptoPunksMarket)4057",
             "src": "contracts/NFTX.sol:20"
           },
           {
@@ -63,7 +63,7 @@
           {
             "contract": "NFTX",
             "label": "store",
-            "type": "t_contract(IXStore)4957",
+            "type": "t_contract(IXStore)5067",
             "src": "contracts/NFTX.sol:23"
           }
         ],
@@ -71,10 +71,10 @@
           "t_address": {
             "label": "address"
           },
-          "t_contract(ICryptoPunksMarket)3977": {
+          "t_contract(ICryptoPunksMarket)4057": {
             "label": "contract ICryptoPunksMarket"
           },
-          "t_contract(IXStore)4957": {
+          "t_contract(IXStore)5067": {
             "label": "contract IXStore"
           },
           "t_uint256": {
@@ -167,6 +167,188 @@
           },
           "t_uint256": {
             "label": "uint256"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "ad2d14a22ec6606be09787bca435dbcf6ace083adec6a73f8069544294024fb7": {
+      "address": "0x038B86d9d8FAFdd0a02ebd1A476432877b0107C8",
+      "txHash": "0x9d6462a2ac82ae4399e557f2e359d12de19e3923785ea0384a1601d09fd4ba7e",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "initialized",
+            "type": "t_bool",
+            "src": "contracts/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "initializing",
+            "type": "t_bool",
+            "src": "contracts/Initializable.sol:26"
+          },
+          {
+            "contract": "Initializable",
+            "label": "______gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "contracts/Initializable.sol:66"
+          },
+          {
+            "contract": "Ownable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "contracts/Ownable.sol:21"
+          },
+          {
+            "contract": "ProxyController",
+            "label": "nftxProxy",
+            "type": "t_contract(ITransparentUpgradeableProxy)4515",
+            "src": "contracts/ProxyController.sol:12"
+          },
+          {
+            "contract": "ProxyController",
+            "label": "thisProxy",
+            "type": "t_contract(ITransparentUpgradeableProxy)4515",
+            "src": "contracts/ProxyController.sol:13"
+          },
+          {
+            "contract": "ProxyController",
+            "label": "numFuncCalls",
+            "type": "t_uint256",
+            "src": "contracts/ProxyController.sol:25"
+          },
+          {
+            "contract": "ProxyController",
+            "label": "time",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "contracts/ProxyController.sol:27"
+          },
+          {
+            "contract": "ProxyController",
+            "label": "funcIndex",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "contracts/ProxyController.sol:28"
+          },
+          {
+            "contract": "ProxyController",
+            "label": "addressParam",
+            "type": "t_mapping(t_uint256,t_address_payable)",
+            "src": "contracts/ProxyController.sol:29"
+          }
+        ],
+        "types": {
+          "t_contract(ITransparentUpgradeableProxy)4515": {
+            "label": "contract ITransparentUpgradeableProxy"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_mapping(t_uint256,t_address_payable)": {
+            "label": "mapping(uint256 => address payable)"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "ff68572ae5c2f036e2c16e03bb2ffbfa913fcab8cc2f2127ffb155665d35fcb3": {
+      "address": "0x500D1d6A4c7D8Ae28240b47c8FCde034D827fD5e",
+      "txHash": "0xc66595906c58be47b7c28bde03853c4c33fa60ecc656256a2d6151a4648f4376",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "initialized",
+            "type": "t_bool",
+            "src": "contracts/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "initializing",
+            "type": "t_bool",
+            "src": "contracts/Initializable.sol:26"
+          },
+          {
+            "contract": "Initializable",
+            "label": "______gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "contracts/Initializable.sol:66"
+          },
+          {
+            "contract": "Ownable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "contracts/Ownable.sol:21"
+          },
+          {
+            "contract": "ProxyController",
+            "label": "nftxProxy",
+            "type": "t_contract(ITransparentUpgradeableProxy)4515",
+            "src": "contracts/ProxyController.sol:12"
+          },
+          {
+            "contract": "ProxyController",
+            "label": "thisProxy",
+            "type": "t_contract(ITransparentUpgradeableProxy)4515",
+            "src": "contracts/ProxyController.sol:13"
+          },
+          {
+            "contract": "ProxyController",
+            "label": "numFuncCalls",
+            "type": "t_uint256",
+            "src": "contracts/ProxyController.sol:25"
+          },
+          {
+            "contract": "ProxyController",
+            "label": "time",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "contracts/ProxyController.sol:27"
+          },
+          {
+            "contract": "ProxyController",
+            "label": "funcIndex",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "contracts/ProxyController.sol:28"
+          },
+          {
+            "contract": "ProxyController",
+            "label": "addressParam",
+            "type": "t_mapping(t_uint256,t_address_payable)",
+            "src": "contracts/ProxyController.sol:29"
+          }
+        ],
+        "types": {
+          "t_contract(ITransparentUpgradeableProxy)4515": {
+            "label": "contract ITransparentUpgradeableProxy"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_mapping(t_uint256,t_address_payable)": {
+            "label": "mapping(uint256 => address payable)"
+          },
+          "t_address": {
+            "label": "address"
           },
           "t_bool": {
             "label": "bool"

@@ -248,7 +248,7 @@ describe("NFTX", function () {
       const [aliceNFTs] = await holdingsOf(asset, eligIds, [alice], false);
       await approveAndMint(nftx, asset, aliceNFTs, alice, vaultId, 0, false);
       await checkBalances(nftx, asset, xToken, [alice], false);
-      
+
       const NFTXv2 = await ethers.getContractFactory("NFTXv2");
       // nftx = await upgrades.upgradeProxy(nftx.address, NFTXv2);
       const nftxV2Address = await upgrades.prepareUpgrade(nftx.address, NFTXv2);
@@ -274,12 +274,12 @@ describe("NFTX", function () {
     // Run Vault Tests... //////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////
 
-    // await runNftBasic();
-    // await runPunkBasic();
-    // await runNftSpecial();
-    // await runNftSpecial2();
-    // await runPunkSpecial();
-    // await runD2Vault();
+    await runNftBasic();
+    await runPunkBasic();
+    await runNftSpecial();
+    await runNftSpecial2();
+    await runPunkSpecial();
+    await runD2Vault();
     await runContractUpgrade();
 
     ////////////////////////////////////////////////////////////////////
@@ -290,16 +290,33 @@ describe("NFTX", function () {
     let xController = await upgrades.deployProxy(XController, [nftx.address], {
       initializer: "initialize",
     });
-    await xController.deployed(); */
+    await xController.deployed();
 
-    const ProxyController = await ethers.getContractFactory(
-      "ProxyController"
+    const UpgradeController = await ethers.getContractFactory(
+      "UpgradeController"
     );
-    const proxyController = await upgrades.deployProxy(
-      ProxyController, 
-      [nftx.address], 
-      { initializer: "initialize" },
+    let upgradeController = await upgrades.deployProxy(
+      UpgradeController,
+      [nftx.address],
+      { initializer: "initialize" }
     );
+
+    const UpgradeControllerV2 = await ethers.getContractFactory(
+      "UpgradeControllerV2"
+    );
+    const upgradeControllerV2Address = await upgrades.prepareUpgrade(
+      upgradeController.address,
+      UpgradeControllerV2
+    );
+    await upgrades.admin.changeProxyAdmin(
+      upgradeController.address,
+      upgradeController.address
+    );
+
+    await upgradeController.callUpgradeTo(upgradeControllerV2Address);
+    upgradeController = UpgradeControllerV2.attach(upgradeController.address);
+    await upgradeController.callBitchez();
+    console.log("\nAT THE END\n");*/
 
     ////////////////////////////////////////////////////////////////////
   });

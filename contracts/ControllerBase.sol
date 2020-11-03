@@ -2,13 +2,13 @@
 
 pragma solidity 0.6.8;
 
-import "./Timelocked.sol";
 import "./ITransparentUpgradeableProxy.sol";
+import "./Ownable.sol";
+import "./SafeMath.sol";
+import "./Initializable.sol";
 
-contract ProxyController is Timelocked {
-
-    ITransparentUpgradeableProxy private nftxProxy;
-    ITransparentUpgradeableProxy private controllerProxy;
+abstract contract ControllerBase is Ownable {
+    using SafeMath for uint256;
 
     /* struct FunctionCall {
         uint256 time;
@@ -48,20 +48,6 @@ contract ProxyController is Timelocked {
         setExtension
     } */
 
-    function executeFuncCall(uint256 fcId) public {
-        if (funcIndex[fcId] == 0) {
-            Ownable.transferOwnership(addressParam[fcId]);
-        } else if (funcIndex[fcId] == 1) {
-            nftxProxy.changeAdmin(addressParam[fcId]);
-        } else if (funcIndex[fcId] == 2) {
-            nftxProxy.upgradeTo(addressParam[fcId]);
-        } else if (funcIndex[fcId] == 3) {
-            controllerProxy.changeAdmin(addressParam[fcId]);
-        } else if (funcIndex[fcId] == 4) {
-            controllerProxy.upgradeTo(addressParam[fcId]);
-        } 
-    }
-
     function transferOwnership(address newOwner) public override {
         uint256 fcId = numFuncCalls;
         numFuncCalls = numFuncCalls.add(1);
@@ -70,11 +56,14 @@ contract ProxyController is Timelocked {
         addressParam[fcId] = payable(newOwner);
     }
 
-    function initialize(address nftxAddress) public {
-        nftxProxy = ITransparentUpgradeableProxy(nftxAddress);
-        controllerProxy = ITransparentUpgradeableProxy(
-            address(this)
-        );
+    function initialize() public initializer {
+        initOwnable();
     }
 
-   }
+    function executeFuncCall(uint256 fcId) public virtual {
+        // TODO: add time check
+        if (funcIndex[fcId] == 0) {
+            Ownable.transferOwnership(addressParam[fcId]);
+        } 
+    }
+}

@@ -37,7 +37,7 @@ contract ReentrancyGuard is Initializable {
 
     uint256 private _status;
 
-    function initReentrancyGuard() internal initializer {
+    function initReentrancyGuard() internal {
         _status = _NOT_ENTERED;
     }
 

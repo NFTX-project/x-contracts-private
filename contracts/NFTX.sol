@@ -9,6 +9,7 @@ import "./IERC721.sol";
 import "./ReentrancyGuard.sol";
 import "./ERC721Holder.sol";
 import "./IXStore.sol";
+import "./Initializable.sol";
 import "./utils/console.sol";
 
 contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
@@ -22,7 +23,10 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     address public storeAddress;
     IXStore internal store;
 
-    function initialize(address _cpmAddress, address _storeAddress) public {
+    function initialize(address _cpmAddress, address _storeAddress)
+        public
+        initializer
+    {
         initOwnable();
         initReentrancyGuard();
 

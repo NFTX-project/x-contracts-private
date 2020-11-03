@@ -20,6 +20,8 @@ interface INFTX {
     event ReservesIncreased(uint256 vaultId, uint256 nftId);
     event ReservesDecreased(uint256 vaultId, uint256 nftId);
 
+    function transferOwnership(address newOwner) external;
+
     function vaultSize(uint256 vaultId) external view returns (uint256);
 
     function createVault(address _erc20Address, address _nftAddress)
@@ -96,6 +98,4 @@ interface INFTX {
         uint256 tokenMax,
         uint256 length
     ) external;
-
-    function transferTokenOwnership(uint256 vaultId, address to) external;
 }

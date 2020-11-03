@@ -2,12 +2,12 @@
 
 pragma solidity 0.6.8;
 
-import "./Timelocked.sol";
+import "./ControllerBase.sol";
 import "./INFTX.sol";
-import "./ITransparentUpgradeableProxy.sol";
 import "./IXStore.sol";
+import "./Initializable.sol";
 
-contract XController is Timelocked {
+contract XController is ControllerBase {
     INFTX private nftx;
     IXStore store;
 
@@ -24,17 +24,12 @@ contract XController is Timelocked {
         uint256[] arr;
     } */
 
-    uint256 numFuncCalls;
+    /* uint256 numFuncCalls;
 
     mapping(uint256 => uint256) public time;
     mapping(uint256 => uint256) public funcIndex;
-    mapping(uint256 => address payable) public addressParam;
+    mapping(uint256 => address payable) public addressParam; */
     mapping(uint256 => uint256) public uIntParam;
-
-    /*
-        0 = transferNftxOwnership,
-
-    */
 
     /* enum Func {
         transferAllOwnerships,
@@ -53,44 +48,20 @@ contract XController is Timelocked {
         setExtension
     } */
 
-    function executeFuncCall(uint256 fcId) public {
+    function executeFuncCall(uint256 fcId) public override {
+        // TODO: add time check
         if (funcIndex[fcId] == 0) {
             Ownable.transferOwnership(addressParam[fcId]);
         } else if (funcIndex[fcId] == 1) {
-            nftxProxy.changeAdmin(addressParam[fcId]);
-        } else if (funcIndex[fcId] == 2) {
-            nftxProxy.upgradeTo(addressParam[fcId]);
-        } else if (funcIndex[fcId] == 3) {
-            controllerProxy.changeAdmin(addressParam[fcId]);
-        } else if (funcIndex[fcId] == 4) {
-            controllerProxy.upgradeTo(addressParam[fcId]);
-        } else if (funcIndex[fcId] == 5) {
-            store.xToken(uIntParam[fcId]).transferOwnership(
-                addressParam[fcId]
-            );
-        } else if (funcIndex[fcId] == 6) {
-            
-        } else if (funcIndex[fcId] == 7) {
-
-        } else if (funcIndex[fcId] == 8) {
-            
-        } else if (funcIndex[fcId] == 9) {
-
-        } 
+            nftx.transferOwnership(addressParam[fcId]);
+        }
     }
 
     // TODO: a function for just increasing supplierbounty *length*
     //       - this can be used without timelock trustlessly
 
-    function transferOwnership(address newOwner) public override {
-        uint256 fcId = numFuncCalls;
-        numFuncCalls = numFuncCalls.add(1);
-        time[fcId] = now;
-        funcIndex[fcId] = 0;
-        addressParam[fcId] = payable(newOwner);
-    }
-
-    function initialize(address nftxAddress) public {
+    function initialize(address nftxAddress) public initializer {
+        initOwnable();
         nftx = INFTX(nftxAddress);
     }
 
@@ -100,7 +71,7 @@ contract XController is Timelocked {
         public
         virtual
         onlyOwner
-        whenNotLockedM
+    /* whenNoteLockedM */
     {
         nftx.changeTokenName(vaultId, newName);
     }
@@ -109,7 +80,7 @@ contract XController is Timelocked {
         public
         virtual
         onlyOwner
-        whenNotLockedM
+    /* whenNoteLockedM */
     {
         nftx.changeTokenSymbol(vaultId, newSymbol);
     }
@@ -130,7 +101,7 @@ contract XController is Timelocked {
         public
         virtual
         onlyOwner
-        whenNotLockedM
+    /* whenNoteLockedM */
     {
         nftx.setExtension(account, isExtension);
     }
@@ -140,7 +111,11 @@ contract XController is Timelocked {
         uint256 _ethBase,
         uint256 _ethStep,
         uint256 _tokenShare
-    ) public virtual onlyOwner whenNotLockedM {
+    )
+        public
+        virtual
+        onlyOwner /* whenNoteLockedM */
+    {
         nftx.setMintFees(vaultId, _ethBase, _ethStep, _tokenShare);
     }
 
@@ -149,7 +124,10 @@ contract XController is Timelocked {
         uint256 _ethBase,
         uint256 _ethStep,
         uint256 _tokenShare
-    ) public onlyOwner whenNotLockedL {
+    )
+        public
+        onlyOwner /* whenNoteLockedL */
+    {
         nftx.setBurnFees(vaultId, _ethBase, _ethStep, _tokenShare);
     }
 
@@ -158,7 +136,11 @@ contract XController is Timelocked {
         uint256 _ethBase,
         uint256 _ethStep,
         uint256 _tokenShare
-    ) public virtual onlyOwner whenNotLockedM {
+    )
+        public
+        virtual
+        onlyOwner /* whenNoteLockedM */
+    {
         nftx.setDualFees(vaultId, _ethBase, _ethStep, _tokenShare);
     }
 
@@ -167,7 +149,11 @@ contract XController is Timelocked {
         uint256 ethMax,
         uint256 tokenMax,
         uint256 length
-    ) public virtual onlyOwner whenNotLockedL {
+    )
+        public
+        virtual
+        onlyOwner /* whenNoteLockedL */
+    {
         nftx.setSupplierBounty(vaultId, ethMax, tokenMax, length);
     }
 }
