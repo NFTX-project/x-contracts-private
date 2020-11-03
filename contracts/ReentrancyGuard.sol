@@ -2,6 +2,8 @@
 
 pragma solidity 0.6.8;
 
+import "./Initializable.sol";
+
 /**
  * @dev Contract module that helps prevent reentrant calls to a function.
  *
@@ -18,7 +20,7 @@ pragma solidity 0.6.8;
  * to protect against it, check out our blog post
  * https://blog.openzeppelin.com/reentrancy-after-istanbul/[Reentrancy After Istanbul].
  */
-contract ReentrancyGuard {
+contract ReentrancyGuard is Initializable {
     // Booleans are more expensive than uint256 or any type that takes up a full
     // word because each write operation emits an extra SLOAD to first read the
     // slot's contents, replace the bits taken up by the boolean, and then write
@@ -35,7 +37,7 @@ contract ReentrancyGuard {
 
     uint256 private _status;
 
-    function initReentrancyGuard() internal {
+    function initReentrancyGuard() internal initializer {
         _status = _NOT_ENTERED;
     }
 

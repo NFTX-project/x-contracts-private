@@ -23,8 +23,6 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     IXStore internal store;
 
     function initialize(address _cpmAddress, address _storeAddress) public {
-        require(cpmAddress == address(0), "CPM already set");
-
         initOwnable();
         initReentrancyGuard();
 
@@ -32,6 +30,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         cpm = ICryptoPunksMarket(cpmAddress);
         storeAddress = _storeAddress;
         store = IXStore(storeAddress);
+
     }
 
     modifier onlyExtension() {
@@ -43,19 +42,9 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         require(_msgSender() == store.manager(vaultId), "Not manager");
     }
 
-    function onlyPrivileged(uint256 vaultId, bool includeCouncil)
-        internal
-        view
-    {
+    function onlyPrivileged(uint256 vaultId) internal view {
         if (store.isFinalized(vaultId)) {
-            if (includeCouncil) {
-                require(
-                    _msgSender() == owner() || _msgSender() == council,
-                    "Not owner or council"
-                );
-            } else {
-                require(_msgSender() == owner(), "Not owner");
-            }
+            require(_msgSender() == owner(), "Not owner");
         } else {
             onlyManager(vaultId);
         }
@@ -445,7 +434,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         uint256[] memory nftIds,
         bool _boolean
     ) public virtual {
-        onlyPrivileged(vaultId, true);
+        onlyPrivileged(vaultId);
         for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
             store.setIsEligible(vaultId, nftIds[i], _boolean);
         }
@@ -455,7 +444,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         public
         virtual
     {
-        onlyPrivileged(vaultId, true);
+        onlyPrivileged(vaultId);
         require(
             store
                 .holdingsLength(vaultId)
@@ -472,7 +461,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         uint256[] memory nftIds,
         bool _boolean
     ) public virtual {
-        onlyPrivileged(vaultId, true);
+        onlyPrivileged(vaultId);
         for (uint256 i = 0; i < nftIds.length; i.add(1)) {
             store.setShouldReserve(vaultId, nftIds[i], _boolean);
         }
@@ -483,7 +472,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         uint256[] memory nftIds,
         bool _boolean
     ) public virtual {
-        onlyPrivileged(vaultId, true);
+        onlyPrivileged(vaultId);
         for (uint256 i = 0; i < nftIds.length; i.add(1)) {
             uint256 nftId = nftIds[i];
             if (_boolean) {
@@ -508,7 +497,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         public
         virtual
     {
-        onlyPrivileged(vaultId, true);
+        onlyPrivileged(vaultId);
         store.xToken(vaultId).changeName(newName);
     }
 
@@ -516,7 +505,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         public
         virtual
     {
-        onlyPrivileged(vaultId, true);
+        onlyPrivileged(vaultId);
         store.xToken(vaultId).changeSymbol(newSymbol);
     }
 
@@ -532,7 +521,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     }
 
     function closeVault(uint256 vaultId) public virtual {
-        onlyPrivileged(vaultId, false);
+        onlyPrivileged(vaultId);
         store.setIsClosed(vaultId, true);
     }
 
@@ -540,7 +529,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         public
         virtual
     {
-        onlyPrivileged(vaultId, true);
+        onlyPrivileged(vaultId);
         store.setMintFees(vaultId, _ethBase, _ethStep);
     }
 
@@ -548,7 +537,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         public
         virtual
     {
-        onlyPrivileged(vaultId, true);
+        onlyPrivileged(vaultId);
         store.setBurnFees(vaultId, _ethBase, _ethStep);
     }
 
@@ -556,7 +545,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         public
         virtual
     {
-        onlyPrivileged(vaultId, true);
+        onlyPrivileged(vaultId);
         store.setDualFees(vaultId, _ethBase, _ethStep);
     }
 
@@ -564,7 +553,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         public
         virtual
     {
-        onlyPrivileged(vaultId, true);
+        onlyPrivileged(vaultId);
         store.setSupplierBounty(vaultId, ethMax, length);
     }
 

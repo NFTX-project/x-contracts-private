@@ -51,7 +51,6 @@ contract XStore is Ownable {
 
     mapping(address => bool) public isExtension;
     uint256 public randNonce;
-    uint256 public lastSetBurnFeesSafeCall;
 
     constructor() public {
         initOwnable();
@@ -386,10 +385,6 @@ contract XStore is Ownable {
 
     function setRandNonce(uint256 _randNonce) public onlyOwner {
         randNonce = _randNonce;
-    }
-
-    function setLastSetBurnFeesSafeCall(uint256 newNum) public onlyOwner {
-        lastSetBurnFeesSafeCall = newNum;
     }
 
     function addNewVault() public onlyOwner returns (uint256) {

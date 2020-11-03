@@ -49,8 +49,6 @@ interface IXStore {
 
     function randNonce() external view returns (uint256);
 
-    function lastSetBurnFeesSafeCall() external view returns (uint256);
-
     function vaultsLength() external view returns (uint256);
 
     function xTokenAddress(uint256 vaultId) external view returns (address);
@@ -182,8 +180,6 @@ interface IXStore {
     function setIsExtension(address addr, bool _isExtension) external;
 
     function setRandNonce(uint256 _randNonce) external;
-
-    function setLastSetBurnFeesSafeCall(uint256 newNum) external;
 
     function addNewVault() external returns (uint256);
 }

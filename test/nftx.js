@@ -1,17 +1,23 @@
 const { expectRevert } = require("../utils/expectRevert");
 const { runVaultTests } = require("./_runVaultTests");
-const { 
-  getIntArray, 
-  initializeAssetTokenVault, 
-  setup, 
-  holdingsOf, 
+const {
+  getIntArray,
+  initializeAssetTokenVault,
+  setup,
+  holdingsOf,
   approveAndMint,
   checkBalances,
   approveAndRedeem,
-  cleanup
+  cleanup,
 } = require("./_helpers");
 
-const { ethers, upgrades } = require("@nomiclabs/buidler");
+const bre = require("@nomiclabs/buidler");
+const { ethers, upgrades } = bre;
+
+const {
+  getProxyFactory,
+  getProxyAdminFactory,
+} = require("@openzeppelin/buidler-upgrades/dist/proxy-factory");
 
 describe("NFTX", function () {
   // return;
@@ -31,16 +37,14 @@ describe("NFTX", function () {
     await xStore.deployed();
 
     const Nftx = await ethers.getContractFactory("NFTX");
-    let nftx = await upgrades.deployProxy(
-      Nftx,
-      [cpm.address, xStore.address],
-      { initializer: "initialize" }
-    );
+    let nftx = await upgrades.deployProxy(Nftx, [cpm.address, xStore.address], {
+      initializer: "initialize",
+    });
     await nftx.deployed();
     await xStore.transferOwnership(nftx.address);
 
     const signers = await ethers.getSigners();
-    const [owner, misc, alice, bob, carol, dave, eve] = signers;
+    const [owner, misc, alice, bob, carol, dave, eve, proxyAdmin] = signers;
 
     const allNftIds = getIntArray(0, 40);
 
@@ -229,7 +233,7 @@ describe("NFTX", function () {
 
     const runContractUpgrade = async () => {
       console.log("Testing: Contract upgrade...\n");
-      const NFTXv2 = await ethers.getContractFactory("NFTXv2");
+
       const { asset, xToken, vaultId } = await initializeAssetTokenVault(
         nftx,
         signers,
@@ -241,15 +245,39 @@ describe("NFTX", function () {
       );
       const eligIds = getIntArray(0, 20);
       await setup(nftx, asset, signers, false, eligIds);
-      const [aliceNFTs] = await holdingsOf(
-        asset,
-        eligIds,
-        [alice],
-        false
-      );
+      const [aliceNFTs] = await holdingsOf(asset, eligIds, [alice], false);
       await approveAndMint(nftx, asset, aliceNFTs, alice, vaultId, 0, false);
       await checkBalances(nftx, asset, xToken, [alice], false);
-      nftx = await upgrades.upgradeProxy(nftx.address, NFTXv2);
+
+      // nftx = await upgrades.upgradeProxy(nftx.address, NFTXv2);
+      const NFTXv2 = await ethers.getContractFactory("NFTXv2");
+      console.log("Preparing upgrade...");
+      const nftxV2Address = await upgrades.prepareUpgrade(nftx.address, NFTXv2);
+      console.log("NftxV2 at:", nftxV2Address);
+      await upgrades.admin.changeProxyAdmin(nftx.address, proxyAdmin._address);
+
+      const ProxyFactory = await getProxyFactory(bre, owner);
+      const proxy = ProxyFactory.attach(nftx.address);
+      console.log("here");
+
+      // Connect to the network
+      // let provider = ethers.getDefaultProvider();
+
+      // We connect to the Contract using a Provider, so we will only
+      // have read-only access to the Contract
+      /* let proxy = new ethers.Contract(
+        nftx.address,
+        ProxyFactory.interface,
+        provider
+      );
+      console.log("here"); */
+      await proxy.connect(proxyAdmin).upgradeTo(nftxV2Address);
+
+      console.log("here");
+
+      nftx = NFTXv2.attach(nftx.address);
+      console.log("here");
+
       const nftId = aliceNFTs[0];
       await nftx.transferERC721(vaultId, nftId, bob._address);
       await expectRevert(
@@ -260,18 +288,32 @@ describe("NFTX", function () {
 
       await checkBalances(nftx, asset, xToken, [alice], false);
       await cleanup(nftx, asset, xToken, signers, vaultId, false, eligIds);
+
+      console.log("DONE");
     };
 
     ////////////////////////////////////////////////////////////////////
     // Run Vault Tests... //////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////
 
-    await runNftBasic();
-    await runPunkBasic();
-    await runNftSpecial();
-    await runNftSpecial2();
-    await runPunkSpecial();
-    await runD2Vault();
+    // await runNftBasic();
+    // await runPunkBasic();
+    // await runNftSpecial();
+    // await runNftSpecial2();
+    // await runPunkSpecial();
+    // await runD2Vault();
     await runContractUpgrade();
+
+    ////////////////////////////////////////////////////////////////////
+    // Initialize XController... ///////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////
+
+    /* const XController = await ethers.getContractFactory("XController");
+    let xController = await upgrades.deployProxy(XController, [nftx.address], {
+      initializer: "initialize",
+    });
+    await xController.deployed(); */
+
+    ////////////////////////////////////////////////////////////////////
   });
 });

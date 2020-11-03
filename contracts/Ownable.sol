@@ -3,6 +3,7 @@
 pragma solidity 0.6.8;
 
 import "./Context.sol";
+import "./Initializable.sol";
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -16,7 +17,7 @@ import "./Context.sol";
  * `onlyOwner`, which can be applied to your functions to restrict their use to
  * the owner.
  */
-contract Ownable is Context {
+contract Ownable is Context, Initializable {
     address private _owner;
 
     event OwnershipTransferred(
@@ -27,7 +28,7 @@ contract Ownable is Context {
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
      */
-    function initOwnable() internal {
+    function initOwnable() internal virtual initializer {
         address msgSender = _msgSender();
         _owner = msgSender;
         emit OwnershipTransferred(address(0), msgSender);
