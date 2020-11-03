@@ -292,6 +292,15 @@ describe("NFTX", function () {
     });
     await xController.deployed(); */
 
+    const ProxyController = await ethers.getContractFactory(
+      "ProxyController"
+    );
+    const proxyController = await upgrades.deployProxy(
+      ProxyController, 
+      [nftx.address], 
+      { initializer: "initialize" },
+    );
+
     ////////////////////////////////////////////////////////////////////
   });
 });

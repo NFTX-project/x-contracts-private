@@ -30,7 +30,6 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         cpm = ICryptoPunksMarket(cpmAddress);
         storeAddress = _storeAddress;
         store = IXStore(storeAddress);
-
     }
 
     modifier onlyExtension() {

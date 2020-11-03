@@ -5,10 +5,14 @@ pragma solidity 0.6.8;
 import "./Timelocked.sol";
 import "./INFTX.sol";
 import "./ITransparentUpgradeableProxy.sol";
+import "./IXStore.sol";
 
 contract XController is Timelocked {
     INFTX private nftx;
-    ITransparentUpgradeableProxy private proxy;
+    IXStore store;
+
+    ITransparentUpgradeableProxy private nftxProxy;
+    ITransparentUpgradeableProxy private controllerProxy;
 
     /* struct FunctionCall {
         uint256 time;
@@ -25,6 +29,7 @@ contract XController is Timelocked {
     mapping(uint256 => uint256) public time;
     mapping(uint256 => uint256) public funcIndex;
     mapping(uint256 => address payable) public addressParam;
+    mapping(uint256 => uint256) public uIntParam;
 
     /*
         0 = transferNftxOwnership,
@@ -52,15 +57,17 @@ contract XController is Timelocked {
         if (funcIndex[fcId] == 0) {
             Ownable.transferOwnership(addressParam[fcId]);
         } else if (funcIndex[fcId] == 1) {
-            
+            nftxProxy.changeAdmin(addressParam[fcId]);
         } else if (funcIndex[fcId] == 2) {
-
+            nftxProxy.upgradeTo(addressParam[fcId]);
         } else if (funcIndex[fcId] == 3) {
-
+            controllerProxy.changeAdmin(addressParam[fcId]);
         } else if (funcIndex[fcId] == 4) {
-            
+            controllerProxy.upgradeTo(addressParam[fcId]);
         } else if (funcIndex[fcId] == 5) {
-
+            store.xToken(uIntParam[fcId]).transferOwnership(
+                addressParam[fcId]
+            );
         } else if (funcIndex[fcId] == 6) {
             
         } else if (funcIndex[fcId] == 7) {
