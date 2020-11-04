@@ -16,7 +16,7 @@ contract Timelocked is Ownable {
         uint256 _shortDelay,
         uint256 _mediumDelay,
         uint256 _longDelay
-    ) internal {
+    ) internal virtual {
         shortDelay = _shortDelay;
         mediumDelay = _mediumDelay;
         longDelay = _longDelay;

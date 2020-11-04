@@ -24,8 +24,7 @@ contract XController is ControllerBase {
     mapping(uint256 => uint256[]) public uintArrayParam;
     mapping(uint256 => bool) public boolParam;
 
-    mapping(uint256 => uint256) public vaultIdToPendingEligAdditions;
-
+    mapping(uint256 => uint256) public pendingEligAdditions;
 
     function initXController(address nftxAddress) public initializer {
         initOwnable();
@@ -50,17 +49,25 @@ contract XController is ControllerBase {
         uintArrayParam[fcId] = _uintArrayParam;
         boolParam[fcId] = _boolParam;
 
-        if (funcIndex[fcId] == 3 && store.negateEligibility(uintParam[fcId]) != !boolParam[fcId]) {
-            vaultIdToPendingEligAdditions[uintParam[fcId]] = vaultIdToPendingEligAdditions[uintParam[fcId]].add(uintArrayParam[fcId].length);
+        if (
+            funcIndex[fcId] == 3 &&
+            store.negateEligibility(uintParam[fcId]) != !boolParam[fcId]
+        ) {
+            pendingEligAdditions[uintParam[fcId]] = pendingEligAdditions[uintParam[fcId]]
+                .add(uintArrayParam[fcId].length);
         }
     }
 
     function cancelFuncCall(uint256 fcId) public override virtual onlyOwner {
         require(funcIndex[fcId] != 0, "Already cancelled");
         funcIndex[fcId] = 0;
-        
-        if (funcIndex[fcId] == 3 && store.negateEligibility(uintParam[fcId]) != !boolParam[fcId]) {
-            vaultIdToPendingEligAdditions[uintParam[fcId]] = vaultIdToPendingEligAdditions[uintParam[fcId]].sub(uintArrayParam[fcId].length);
+
+        if (
+            funcIndex[fcId] == 3 &&
+            store.negateEligibility(uintParam[fcId]) != !boolParam[fcId]
+        ) {
+            pendingEligAdditions[uintParam[fcId]] = pendingEligAdditions[uintParam[fcId]]
+                .sub(uintArrayParam[fcId].length);
         }
     }
 
@@ -74,7 +81,9 @@ contract XController is ControllerBase {
             onlyIfPastDelay(2, time[fcId]);
             nftx.transferOwnership(addressParam[fcId]);
         } else if (funcIndex[fcId] == 3) {
-            uint256 percentInc = vaultIdToPendingEligAdditions[uintParam[fcId]].mul(100).div(nftx.vaultSize(uintParam[fcId]));
+            uint256 percentInc = pendingEligAdditions[uintParam[fcId]]
+                .mul(100)
+                .div(nftx.vaultSize(uintParam[fcId]));
             if (percentInc > 10) {
                 onlyIfPastDelay(2, time[fcId]);
             } else if (percentInc > 1) {
@@ -87,7 +96,8 @@ contract XController is ControllerBase {
                 uintArrayParam[fcId],
                 boolParam[fcId]
             );
-            vaultIdToPendingEligAdditions[uintParam[fcId]] = vaultIdToPendingEligAdditions[uintParam[fcId]].sub(uintArrayParam[fcId].length);
+            pendingEligAdditions[uintParam[fcId]] = pendingEligAdditions[uintParam[fcId]]
+                .sub(uintArrayParam[fcId].length);
         } else if (funcIndex[fcId] == 4) {
             onlyIfPastDelay(0, time[fcId]); // vault must be empty
             nftx.setNegateEligibility(funcIndex[fcId], boolParam[fcId]);
@@ -122,16 +132,22 @@ contract XController is ControllerBase {
                 uintArrayParam[fcId][2]
             );
         } else if (funcIndex[fcId] == 11) {
-            (uint256 ethMax, uint256 length) = store.burnFees(uintArrayParam[fcId][0]);
-            uint256 ethMaxPercentInc = uintArrayParam[fcId][1].mul(100).div(ethMax);
-            uint256 lengthPercentInc = uintArrayParam[fcId][2].mul(100).div(length);
-            if (ethMaxPercentInc.add(lengthPercentInc) > 20) {
+            (uint256 ethBase, uint256 ethStep) = store.burnFees(
+                uintArrayParam[fcId][0]
+            );
+            uint256 ethBasePercentInc = uintArrayParam[fcId][1].mul(100).div(
+                ethBase
+            );
+            uint256 ethStepPercentInc = uintArrayParam[fcId][2].mul(100).div(
+                ethStep
+            );
+            if (ethBasePercentInc.add(ethStepPercentInc) > 15) {
                 onlyIfPastDelay(2, time[fcId]);
-            } else if (ethMaxPercentInc.add(lengthPercentInc) > 5) {
+            } else if (ethBasePercentInc.add(ethStepPercentInc) > 5) {
                 onlyIfPastDelay(1, time[fcId]);
             } else {
                 onlyIfPastDelay(0, time[fcId]);
-            }     
+            }
             nftx.setBurnFees(
                 uintArrayParam[fcId][0],
                 uintArrayParam[fcId][1],
@@ -145,8 +161,22 @@ contract XController is ControllerBase {
                 uintArrayParam[fcId][2]
             );
         } else if (funcIndex[fcId] == 13) {
-            // TODO: check magnitude of change
-            onlyIfPastDelay(2, time[fcId]);
+            (uint256 ethMax, uint256 length) = store.supplierBounty(
+                uintArrayParam[fcId][0]
+            );
+            uint256 ethMaxPercentInc = uintArrayParam[fcId][1].mul(100).div(
+                ethMax
+            );
+            uint256 lengthPercentInc = uintArrayParam[fcId][2].mul(100).div(
+                length
+            );
+            if (ethMaxPercentInc.add(lengthPercentInc) > 20) {
+                onlyIfPastDelay(2, time[fcId]);
+            } else if (ethMaxPercentInc.add(lengthPercentInc) > 5) {
+                onlyIfPastDelay(1, time[fcId]);
+            } else {
+                onlyIfPastDelay(0, time[fcId]);
+            }
             nftx.setSupplierBounty(
                 uintArrayParam[fcId][0],
                 uintArrayParam[fcId][1],
