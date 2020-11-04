@@ -10,6 +10,8 @@ interface ITransparentUpgradeableProxy {
     function changeAdmin(address newAdmin) external;
 
     function upgradeTo(address newImplementation) external;
-    
-    function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
+
+    function upgradeToAndCall(address newImplementation, bytes calldata data)
+        external
+        payable;
 }

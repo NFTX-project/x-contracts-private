@@ -36,6 +36,8 @@ interface INFTX {
         bool _boolean
     ) external;
 
+    function setNegateEligibility(uint256 vaultId, bool shouldNegate) external;
+
     function setShouldReserve(
         uint256 vaultId,
         uint256[] calldata nftIds,
@@ -69,33 +71,21 @@ interface INFTX {
     function changeTokenSymbol(uint256 vaultId, string calldata newSymbol)
         external;
 
-    function setPaused(bool shouldPause) external;
+    function setManager(uint256 vaultId, address newManager) external;
 
-    function setMintFees(
-        uint256 vaultId,
-        uint256 _ethBase,
-        uint256 _ethStep,
-        uint256 _tokenShare
-    ) external;
+    function finalizeVault(uint256 vaultId) external;
 
-    function setBurnFees(
-        uint256 vaultId,
-        uint256 _ethBase,
-        uint256 _ethStep,
-        uint256 _tokenShare
-    ) external;
+    function closeVault(uint256 vaultId) external;
 
-    function setDualFees(
-        uint256 vaultId,
-        uint256 _ethBase,
-        uint256 _ethStep,
-        uint256 _tokenShare
-    ) external;
+    function setMintFees(uint256 vaultId, uint256 _ethBase, uint256 _ethStep)
+        external;
 
-    function setSupplierBounty(
-        uint256 vaultId,
-        uint256 ethMax,
-        uint256 tokenMax,
-        uint256 length
-    ) external;
+    function setBurnFees(uint256 vaultId, uint256 _ethBase, uint256 _ethStep)
+        external;
+
+    function setDualFees(uint256 vaultId, uint256 _ethBase, uint256 _ethStep)
+        external;
+
+    function setSupplierBounty(uint256 vaultId, uint256 ethMax, uint256 length)
+        external;
 }

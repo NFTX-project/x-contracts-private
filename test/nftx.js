@@ -274,25 +274,25 @@ describe("NFTX", function () {
     // Run Vault Tests... //////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////
 
-    await runNftBasic();
-    await runPunkBasic();
-    await runNftSpecial();
-    await runNftSpecial2();
-    await runPunkSpecial();
-    await runD2Vault();
-    await runContractUpgrade();
+    // await runNftBasic();
+    // await runPunkBasic();
+    // await runNftSpecial();
+    // await runNftSpecial2();
+    // await runPunkSpecial();
+    // await runD2Vault();
+    // await runContractUpgrade();
 
     ////////////////////////////////////////////////////////////////////
     // Initialize XController... ///////////////////////////////////////
     ////////////////////////////////////////////////////////////////////
 
-    /* const XController = await ethers.getContractFactory("XController");
+    const XController = await ethers.getContractFactory("XController");
     let xController = await upgrades.deployProxy(XController, [nftx.address], {
-      initializer: "initialize",
+      initializer: "initXController",
     });
     await xController.deployed();
 
-    const UpgradeController = await ethers.getContractFactory(
+    /* const UpgradeController = await ethers.getContractFactory(
       "UpgradeController"
     );
     let upgradeController = await upgrades.deployProxy(
@@ -316,7 +316,7 @@ describe("NFTX", function () {
     await upgradeController.callUpgradeTo(upgradeControllerV2Address);
     upgradeController = UpgradeControllerV2.attach(upgradeController.address);
     await upgradeController.callBitchez();
-    console.log("\nAT THE END\n");*/
+    console.log("\nAT THE END\n"); */
 
     ////////////////////////////////////////////////////////////////////
   });

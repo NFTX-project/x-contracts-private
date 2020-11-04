@@ -3,11 +3,11 @@
 pragma solidity 0.6.8;
 
 import "./ITransparentUpgradeableProxy.sol";
-import "./Ownable.sol";
+import "./Timelocked.sol";
 import "./SafeMath.sol";
 import "./Initializable.sol";
 
-abstract contract ControllerBase is Ownable {
+abstract contract ControllerBase is Timelocked {
     using SafeMath for uint256;
 
     /* struct FunctionCall {
@@ -58,6 +58,18 @@ abstract contract ControllerBase is Ownable {
 
     function initialize() public initializer {
         initOwnable();
+    }
+
+
+    function stageFuncCall(
+        uint256 _funcIndex,
+        address payable _addressParam
+    ) public onlyOwner {
+        uint256 fcId = numFuncCalls;
+        numFuncCalls = numFuncCalls.add(1);
+        time[fcId] = now;
+        funcIndex[fcId] = _funcIndex;
+        addressParam[fcId] = _addressParam;
     }
 
     function executeFuncCall(uint256 fcId) public virtual {
