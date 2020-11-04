@@ -74,16 +74,20 @@ contract XController is ControllerBase {
             onlyIfPastDelay(2, time[fcId]);
             nftx.transferOwnership(addressParam[fcId]);
         } else if (funcIndex[fcId] == 3) {
-            // TODO: check magnitude of change
-            //       - keep track of pending elig additions
-            //       - less than 10% pending change is (1)
-            //       - less than 1% pending change is (0)
-            onlyIfPastDelay(2, time[fcId]);
+            uint256 percentInc = vaultIdToPendingEligAdditions[uintParam[fcId]].mul(100).div(nftx.vaultSize(uintParam[fcId]));
+            if (percentInc > 10) {
+                onlyIfPastDelay(2, time[fcId]);
+            } else if (percentInc > 1) {
+                onlyIfPastDelay(1, time[fcId]);
+            } else {
+                onlyIfPastDelay(0, time[fcId]);
+            }
             nftx.setIsEligible(
                 uintParam[fcId],
                 uintArrayParam[fcId],
                 boolParam[fcId]
             );
+            vaultIdToPendingEligAdditions[uintParam[fcId]] = vaultIdToPendingEligAdditions[uintParam[fcId]].sub(uintArrayParam[fcId].length);
         } else if (funcIndex[fcId] == 4) {
             onlyIfPastDelay(0, time[fcId]); // vault must be empty
             nftx.setNegateEligibility(funcIndex[fcId], boolParam[fcId]);
@@ -118,8 +122,16 @@ contract XController is ControllerBase {
                 uintArrayParam[fcId][2]
             );
         } else if (funcIndex[fcId] == 11) {
-            // TODO: check magnitude of change
-            onlyIfPastDelay(2, time[fcId]);
+            (uint256 ethMax, uint256 length) = store.burnFees(uintArrayParam[fcId][0]);
+            uint256 ethMaxPercentInc = uintArrayParam[fcId][1].mul(100).div(ethMax);
+            uint256 lengthPercentInc = uintArrayParam[fcId][2].mul(100).div(length);
+            if (ethMaxPercentInc.add(lengthPercentInc) > 20) {
+                onlyIfPastDelay(2, time[fcId]);
+            } else if (ethMaxPercentInc.add(lengthPercentInc) > 5) {
+                onlyIfPastDelay(1, time[fcId]);
+            } else {
+                onlyIfPastDelay(0, time[fcId]);
+            }     
             nftx.setBurnFees(
                 uintArrayParam[fcId][0],
                 uintArrayParam[fcId][1],
