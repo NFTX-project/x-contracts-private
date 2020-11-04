@@ -26,28 +26,6 @@ abstract contract ControllerBase is Timelocked {
     mapping(uint256 => uint256) public funcIndex;
     mapping(uint256 => address payable) public addressParam;
 
-    /*
-        0 = transferNftxOwnership,
-
-    */
-
-    /* enum Func {
-        transferAllOwnerships,
-        mintRetroactively,
-        redeemRetroactively,
-        migrate,
-        changeTokenName,
-        changeTokenSymbol,
-        setReverseLink,
-        pause,
-        unpause,
-        setEligibilities,
-        setController,
-        setFeesArray,
-        setSupplierBounty,
-        setExtension
-    } */
-
     function transferOwnership(address newOwner) public override {
         uint256 fcId = numFuncCalls;
         numFuncCalls = numFuncCalls.add(1);
@@ -72,9 +50,13 @@ abstract contract ControllerBase is Timelocked {
         addressParam[fcId] = _addressParam;
     }
 
+    function cancelFuncCall(uint256 fcId) public virtual onlyOwner {
+        funcIndex[fcId] = 0;
+    }
+
     function executeFuncCall(uint256 fcId) public virtual {
-        // TODO: add time check
-        if (funcIndex[fcId] == 0) {
+        if (funcIndex[fcId] == 1) {
+            onlyIfPastDelay(1, time[fcId]);
             Ownable.transferOwnership(addressParam[fcId]);
         } 
     }

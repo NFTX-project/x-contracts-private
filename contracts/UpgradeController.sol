@@ -22,14 +22,16 @@ contract UpgradeController is ControllerBase {
     function executeFuncCall(uint256 fcId) public override {
         // TODO: add time check
         if (funcIndex[fcId] == 0) {
-            Ownable.transferOwnership(addressParam[fcId]);
+            return;
         } else if (funcIndex[fcId] == 1) {
-            nftxProxy.changeAdmin(addressParam[fcId]);
+            Ownable.transferOwnership(addressParam[fcId]);
         } else if (funcIndex[fcId] == 2) {
-            nftxProxy.upgradeTo(addressParam[fcId]);
+            nftxProxy.changeAdmin(addressParam[fcId]);
         } else if (funcIndex[fcId] == 3) {
-            xControllerProxy.changeAdmin(addressParam[fcId]);
+            nftxProxy.upgradeTo(addressParam[fcId]);
         } else if (funcIndex[fcId] == 4) {
+            xControllerProxy.changeAdmin(addressParam[fcId]);
+        } else if (funcIndex[fcId] == 5) {
             xControllerProxy.upgradeTo(addressParam[fcId]);
         }
     }
