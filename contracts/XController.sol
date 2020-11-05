@@ -11,17 +11,14 @@ contract XController is ControllerBase {
     INFTX private nftx;
     IXStore store;
 
-    ITransparentUpgradeableProxy private nftxProxy;
-    ITransparentUpgradeableProxy private controllerProxy;
-
     /* uint256 numFuncCalls;
 
     mapping(uint256 => uint256) public time;
     mapping(uint256 => uint256) public funcIndex;
-    mapping(uint256 => address payable) public addressParam; */
+    mapping(uint256 => address payable) public addressParam;
+    mapping(uint256 => uint256[]) public uintArrayParam; */
     mapping(uint256 => uint256) public uintParam;
     mapping(uint256 => string) public stringParam;
-    mapping(uint256 => uint256[]) public uintArrayParam;
     mapping(uint256 => bool) public boolParam;
 
     mapping(uint256 => uint256) public pendingEligAdditions;
@@ -31,6 +28,15 @@ contract XController is ControllerBase {
         nftx = INFTX(nftxAddress);
     }
 
+    function onlyOwnerOrLeadDev(uint256 funcIndex) public virtual view {
+        if (funcIndex > 3) {
+            require(_msgSender() == leadDev || _msgSender() == owner(), 
+                "Not owner or leadDev");
+        } else {
+            require(_msgSender() == owner(), "Not owner");
+        }
+    }
+
     function stageFuncCall(
         uint256 _funcIndex,
         address payable _addressParam,
@@ -38,7 +44,8 @@ contract XController is ControllerBase {
         string memory _stringParam,
         uint256[] memory _uintArrayParam,
         bool _boolParam
-    ) public virtual onlyOwner {
+    ) public virtual {
+        onlyOwnerOrLeadDev(_funcIndex);
         uint256 fcId = numFuncCalls;
         numFuncCalls = numFuncCalls.add(1);
         time[fcId] = now;
@@ -49,7 +56,7 @@ contract XController is ControllerBase {
         uintArrayParam[fcId] = _uintArrayParam;
         boolParam[fcId] = _boolParam;
         if (
-            funcIndex[fcId] == 3 &&
+            funcIndex[fcId] == 4 &&
             store.negateEligibility(uintParam[fcId]) != !boolParam[fcId]
         ) {
             pendingEligAdditions[uintParam[fcId]] = pendingEligAdditions[uintParam[fcId]]
@@ -57,7 +64,8 @@ contract XController is ControllerBase {
         }
     }
 
-    function cancelFuncCall(uint256 fcId) public override virtual onlyOwner {
+    function cancelFuncCall(uint256 fcId) public override virtual {
+        onlyOwnerOrLeadDev(funcIndex[fcId]);
         require(funcIndex[fcId] != 0, "Already cancelled");
         funcIndex[fcId] = 0;
         if (
@@ -70,30 +78,8 @@ contract XController is ControllerBase {
     }
 
     function executeFuncCall(uint256 fcId) public override virtual {
-        if (funcIndex[fcId] == 0) {
-            return;
-        } else if (funcIndex[fcId] == 1) {
-            if (uintArrayParam[fcId][2] != longDelay) {
-                require(
-                    uintArrayParam[fcId][2] >= uintArrayParam[fcId][1] &&
-                        uintArrayParam[fcId][1] >= uintArrayParam[fcId][0],
-                    "Invalid delays"
-                );
-                onlyIfPastDelay(2, time[fcId]);
-            } else if (uintArrayParam[fcId][1] != mediumDelay) {
-                onlyIfPastDelay(1, time[fcId]);
-            } else {
-                onlyIfPastDelay(0, time[fcId]);
-            }
-            setDelays(
-                uintArrayParam[fcId][0],
-                uintArrayParam[fcId][1],
-                uintArrayParam[fcId][2]
-            );
-        } else if (funcIndex[fcId] == 2) {
-            onlyIfPastDelay(1, time[fcId]);
-            Ownable.transferOwnership(addressParam[fcId]);
-        } else if (funcIndex[fcId] == 3) {
+        super.executeFuncCall(fcId);
+        if (funcIndex[fcId] == 3) {
             onlyIfPastDelay(2, time[fcId]);
             nftx.transferOwnership(addressParam[fcId]);
         } else if (funcIndex[fcId] == 4) {
