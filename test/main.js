@@ -274,13 +274,13 @@ describe("NFTX", function () {
     // Run Vault Tests... //////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////
 
-    // await runNftBasic();
-    // await runPunkBasic();
-    // await runNftSpecial();
-    // await runNftSpecial2();
-    // await runPunkSpecial();
-    // await runD2Vault();
-    // await runContractUpgrade();
+    await runNftBasic();
+    await runPunkBasic();
+    await runNftSpecial();
+    await runNftSpecial2();
+    await runPunkSpecial();
+    await runD2Vault();
+    await runContractUpgrade();
 
     ////////////////////////////////////////////////////////////////////
     // Initialize XController... ///////////////////////////////////////

@@ -40,6 +40,6 @@ contract Timelocked is Ownable {
         internal
         view
     {
-        require(now >= startTime.add(getDelay(delayIndex)), "Delay not over");
+        require(1 >= startTime.add(getDelay(delayIndex)), "Delay not over");
     }
 }

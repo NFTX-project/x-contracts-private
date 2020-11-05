@@ -28,10 +28,12 @@ contract XController is ControllerBase {
         nftx = INFTX(nftxAddress);
     }
 
-    function onlyOwnerOrLeadDev(uint256 funcIndex) public virtual view {
+    function onlyOwnerOrLeadDev(uint256 funcIndex) public view virtual {
         if (funcIndex > 3) {
-            require(_msgSender() == leadDev || _msgSender() == owner(), 
-                "Not owner or leadDev");
+            require(
+                _msgSender() == leadDev || _msgSender() == owner(),
+                "Not owner or leadDev"
+            );
         } else {
             require(_msgSender() == owner(), "Not owner");
         }
@@ -48,7 +50,7 @@ contract XController is ControllerBase {
         onlyOwnerOrLeadDev(_funcIndex);
         uint256 fcId = numFuncCalls;
         numFuncCalls = numFuncCalls.add(1);
-        time[fcId] = now;
+        time[fcId] = 1;
         funcIndex[fcId] = _funcIndex;
         addressParam[fcId] = _addressParam;
         uintParam[fcId] = _uintParam;
