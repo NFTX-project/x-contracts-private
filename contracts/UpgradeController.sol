@@ -19,19 +19,15 @@ contract UpgradeController is ControllerBase {
         xControllerProxy = ITransparentUpgradeableProxy(_xControllerAddress);
     }
 
-    function executeFuncCall(uint256 fcId) public override {
-        // TODO: add time check
-        if (funcIndex[fcId] == 0) {
-            return;
-        } else if (funcIndex[fcId] == 1) {
-            Ownable.transferOwnership(addressParam[fcId]);
-        } else if (funcIndex[fcId] == 2) {
+    function executeFuncCall(uint256 fcId) public override onlyOwner {
+        super.executeFuncCall(fcId);
+        if (funcIndex[fcId] == 3) {
             nftxProxy.changeAdmin(addressParam[fcId]);
-        } else if (funcIndex[fcId] == 3) {
-            nftxProxy.upgradeTo(addressParam[fcId]);
         } else if (funcIndex[fcId] == 4) {
-            xControllerProxy.changeAdmin(addressParam[fcId]);
+            nftxProxy.upgradeTo(addressParam[fcId]);
         } else if (funcIndex[fcId] == 5) {
+            xControllerProxy.changeAdmin(addressParam[fcId]);
+        } else if (funcIndex[fcId] == 6) {
             xControllerProxy.upgradeTo(addressParam[fcId]);
         }
     }
