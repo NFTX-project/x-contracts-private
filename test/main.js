@@ -25,7 +25,7 @@ describe("NFTX", function () {
   it("Should run as expected", async function () {
     console.log("");
     ///////////////////////////////////////////////////////////////
-    // Initialize NFTX ////////////////////////////////////////////
+    // Initialize CPM, XStore, NFTX ///////////////////////////////
     ///////////////////////////////////////////////////////////////
 
     const Cpm = await ethers.getContractFactory("CryptoPunksMarket");
@@ -227,9 +227,9 @@ describe("NFTX", function () {
       );
     };
 
-    //////////////////////
-    // Contract upgrade //
-    //////////////////////
+    ///////////////////////////
+    // NFTX contract upgrade //
+    ///////////////////////////
 
     const runContractUpgrade = async () => {
       console.log("Testing: Contract upgrade...\n");
@@ -292,31 +292,21 @@ describe("NFTX", function () {
     });
     await xController.deployed();
 
-    /* const UpgradeController = await ethers.getContractFactory(
-      "UpgradeController"
-    );
-    let upgradeController = await upgrades.deployProxy(
-      UpgradeController,
-      [nftx.address],
-      { initializer: "initialize" }
-    );
+    await nftx.transferOwnership(xController.address);
 
-    const UpgradeControllerV2 = await ethers.getContractFactory(
-      "UpgradeControllerV2"
-    );
-    const upgradeControllerV2Address = await upgrades.prepareUpgrade(
-      upgradeController.address,
-      UpgradeControllerV2
-    );
-    await upgrades.admin.changeProxyAdmin(
-      upgradeController.address,
-      upgradeController.address
-    );
+    // TODO - Test timelocks
 
-    await upgradeController.callUpgradeTo(upgradeControllerV2Address);
-    upgradeController = UpgradeControllerV2.attach(upgradeController.address);
-    await upgradeController.callBitchez();
-    console.log("\nAT THE END\n"); */
+    //////////////////////////////////
+    // XController contract upgrade //
+    //////////////////////////////////
+
+    // TODO
+
+    ////////////////////////////////////////////////////////////////////
+    // Initialize UpgradeController... /////////////////////////////////
+    ////////////////////////////////////////////////////////////////////
+
+    // TODO
 
     ////////////////////////////////////////////////////////////////////
   });
