@@ -28,16 +28,12 @@ describe("NFTX", function () {
     // Initialize CPM, XStore, NFTX ///////////////////////////////
     ///////////////////////////////////////////////////////////////
 
-    const Cpm = await ethers.getContractFactory("CryptoPunksMarket");
-    const cpm = await Cpm.deploy();
-    await cpm.deployed();
-
     const XStore = await ethers.getContractFactory("XStore");
     const xStore = await XStore.deploy();
     await xStore.deployed();
 
     const Nftx = await ethers.getContractFactory("NFTX");
-    let nftx = await upgrades.deployProxy(Nftx, [cpm.address, xStore.address], {
+    let nftx = await upgrades.deployProxy(Nftx, [xStore.address], {
       initializer: "initialize",
     });
     await nftx.deployed();
@@ -59,7 +55,6 @@ describe("NFTX", function () {
         "NFT",
         "XToken",
         allNftIds,
-        false,
         false
       );
       const eligIds = getIntArray(0, 20);
@@ -72,34 +67,6 @@ describe("NFTX", function () {
         allNftIds,
         eligIds,
         false,
-        false
-      );
-    };
-
-    ////////////////
-    // Punk-basic //
-    ////////////////
-
-    const runPunkBasic = async () => {
-      const { asset, xToken, vaultId } = await initializeAssetTokenVault(
-        nftx,
-        signers,
-        cpm,
-        "Punk-Basic",
-        allNftIds,
-        true,
-        false
-      );
-      const eligIds = getIntArray(0, 20);
-      await runVaultTests(
-        nftx,
-        asset,
-        xToken,
-        signers,
-        vaultId,
-        allNftIds,
-        eligIds,
-        true,
         false
       );
     };
@@ -116,7 +83,6 @@ describe("NFTX", function () {
         "NFT",
         "XToken",
         allNftIds,
-        false,
         false
       );
       const eligIds = getIntArray(0, 20).map((n) => n * 2);
@@ -151,7 +117,6 @@ describe("NFTX", function () {
         _asset,
         "XToken",
         allNftIds,
-        false,
         false
       );
       const eligIds = getIntArray(0, 20).map((n) => n * 2 + 1);
@@ -170,36 +135,6 @@ describe("NFTX", function () {
       );
     };
 
-    //////////////////
-    // Punk-special //
-    //////////////////
-
-    const runPunkSpecial = async () => {
-      const { asset, xToken, vaultId } = await initializeAssetTokenVault(
-        nftx,
-        signers,
-        cpm,
-        "Punk-Special",
-        allNftIds,
-        true,
-        false
-      );
-      const eligIds = getIntArray(0, 20).map((n) => n * 2);
-      nftx.connect(owner).setNegateEligibility(vaultId, false);
-      nftx.connect(owner).setIsEligible(vaultId, eligIds, true);
-      await runVaultTests(
-        nftx,
-        asset,
-        xToken,
-        signers,
-        vaultId,
-        allNftIds,
-        eligIds,
-        true,
-        false
-      );
-    };
-
     //////////////
     // D2 Vault //
     //////////////
@@ -211,7 +146,6 @@ describe("NFTX", function () {
         "Punk-BPT",
         "Punk",
         allNftIds,
-        false,
         true
       );
       await runVaultTests(
@@ -240,7 +174,6 @@ describe("NFTX", function () {
         "NFT",
         "XToken",
         allNftIds,
-        false,
         false
       );
       const eligIds = getIntArray(0, 20);

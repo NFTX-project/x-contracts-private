@@ -4,7 +4,6 @@ pragma solidity 0.6.8;
 
 import "./Pausable.sol";
 import "./IXToken.sol";
-import "./ICryptoPunksMarket.sol";
 import "./IERC721.sol";
 import "./ReentrancyGuard.sol";
 import "./ERC721Holder.sol";
@@ -17,21 +16,16 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
 
     event NewVault(uint256 vaultId);
 
-    address public cpmAddress;
-    ICryptoPunksMarket internal cpm;
-
     address public storeAddress;
     IXStore internal store;
 
-    function initialize(address _cpmAddress, address _storeAddress)
+    function initialize(address _storeAddress)
         public
         initializer
     {
         initOwnable();
         initReentrancyGuard();
 
-        cpmAddress = _cpmAddress;
-        cpm = ICryptoPunksMarket(cpmAddress);
         storeAddress = _storeAddress;
         store = IXStore(storeAddress);
     }
@@ -179,9 +173,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         store.setAssetAddress(vaultId, _assetAddress);
         store.setXToken(vaultId);
         if (!_isD2Vault) {
-            if (_assetAddress != cpmAddress) {
-                store.setNft(vaultId);
-            }
+            store.setNft(vaultId);
             store.setNegateEligibility(vaultId, true);
         } else {
             store.setD2Asset(vaultId);
@@ -237,23 +229,19 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
             uint256 nftId = nftIds[i];
             require(isEligible(vaultId, nftId), "Not eligible");
-            if (store.assetAddress(vaultId) == cpmAddress) {
-                cpm.buyPunk(nftId);
-            } else {
-                require(
-                    store.nft(vaultId).ownerOf(nftId) != address(this),
-                    "Already owner"
-                );
-                store.nft(vaultId).safeTransferFrom(
-                    _msgSender(),
-                    address(this),
-                    nftId
-                );
-                require(
-                    store.nft(vaultId).ownerOf(nftId) == address(this),
-                    "Not received"
-                );
-            }
+            require(
+                store.nft(vaultId).ownerOf(nftId) != address(this),
+                "Already owner"
+            );
+            store.nft(vaultId).safeTransferFrom(
+                _msgSender(),
+                address(this),
+                nftId
+            );
+            require(
+                store.nft(vaultId).ownerOf(nftId) == address(this),
+                "Not received"
+            );
             if (store.shouldReserve(vaultId, nftId)) {
                 store.reservesAdd(vaultId, nftId);
             } else {
@@ -322,15 +310,11 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
             } else {
                 store.reservesRemove(vaultId, nftId);
             }
-            if (store.assetAddress(vaultId) == cpmAddress) {
-                cpm.transferPunk(_msgSender(), nftId);
-            } else {
-                store.nft(vaultId).safeTransferFrom(
-                    address(this),
-                    _msgSender(),
-                    nftId
-                );
-            }
+            store.nft(vaultId).safeTransferFrom(
+                address(this),
+                _msgSender(),
+                nftId
+            );
         }
     }
 

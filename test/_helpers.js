@@ -18,7 +18,6 @@ const initializeAssetTokenVault = async (
   assetNameOrExistingContract,
   xTokenName,
   idsToMint,
-  isPV,
   isD2
 ) => {
   const [owner, misc, alice, bob, carol, dave, eve] = signers;
@@ -53,24 +52,17 @@ const initializeAssetTokenVault = async (
       await asset.mint(misc._address, BASE.mul(1000));
     }
   } else {
-    await checkMintNFTs(asset, idsToMint, misc, isPV);
+    await checkMintNFTs(asset, idsToMint, misc);
   }
   return { asset, xToken, vaultId };
 };
 
-const checkMintNFTs = async (nft, nftIds, to, isPV) => {
+const checkMintNFTs = async (nft, nftIds, to) => {
   for (let i = 0; i < nftIds.length; i++) {
-    if (isPV) {
-      const owner = await nft.punkIndexToAddress(nftIds[i]);
-      if (owner === zeroAddress) {
-        await nft.setInitialOwner(to._address, nftIds[i]);
-      }
-    } else {
-      try {
-        await nft.ownerOf(nftIds[i]);
-      } catch (err) {
-        await nft.safeMint(to._address, nftIds[i]);
-      }
+    try {
+      await nft.ownerOf(nftIds[i]);
+    } catch (err) {
+      await nft.safeMint(to._address, nftIds[i]);
     }
   }
 };

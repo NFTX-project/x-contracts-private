@@ -24,7 +24,7 @@ contract XStore is Ownable {
 
     struct Vault {
         address xTokenAddress;
-        address assetAddress;
+        address nftAddress;
         address manager;
         IXToken xToken;
         IERC721 nft;
@@ -70,9 +70,9 @@ contract XStore is Ownable {
         return vault.xTokenAddress;
     }
 
-    function assetAddress(uint256 vaultId) public view returns (address) {
+    function nftAddress(uint256 vaultId) public view returns (address) {
         Vault storage vault = _getVault(vaultId);
-        return vault.assetAddress;
+        return vault.nftAddress;
     }
 
     function manager(uint256 vaultId) public view returns (address) {
@@ -231,12 +231,12 @@ contract XStore is Ownable {
         vault.xTokenAddress = _xTokenAddress;
     }
 
-    function setAssetAddress(uint256 vaultId, address _assetAddress)
+    function setAssetAddress(uint256 vaultId, address _nftAddress)
         public
         onlyOwner
     {
         Vault storage vault = _getVault(vaultId);
-        vault.assetAddress = _assetAddress;
+        vault.nftAddress = _nftAddress;
     }
 
     function setManager(uint256 vaultId, address _manager) public onlyOwner {
@@ -251,7 +251,7 @@ contract XStore is Ownable {
 
     function setNft(uint256 vaultId) public onlyOwner {
         Vault storage vault = _getVault(vaultId);
-        vault.nft = IERC721(vault.assetAddress);
+        vault.nft = IERC721(vault.nftAddress);
     }
 
     function holdingsAdd(uint256 vaultId, uint256 elem) public onlyOwner {
@@ -366,7 +366,7 @@ contract XStore is Ownable {
 
     function setD2Asset(uint256 vaultId) public onlyOwner {
         Vault storage vault = _getVault(vaultId);
-        vault.d2Asset = IERC20(vault.assetAddress);
+        vault.d2Asset = IERC20(vault.nftAddress);
     }
 
     function setD2Holdings(uint256 vaultId, uint256 _d2Holdings)
