@@ -67,24 +67,20 @@ const checkMintNFTs = async (nft, nftIds, to) => {
   }
 };
 
-const transferNFTs = async (nftx, nft, nftIds, sender, recipient, isPV) => {
+const transferNFTs = async (nftx, nft, nftIds, sender, recipient) => {
   for (let i = 0; i < nftIds.length; i++) {
-    if (isPV) {
-      await nft.connect(sender).transferPunk(recipient._address, nftIds[i]);
-    } else {
-      await nft
-        .connect(sender)
-        .transferFrom(sender._address, recipient._address, nftIds[i]);
-    }
+    await nft
+      .connect(sender)
+      .transferFrom(sender._address, recipient._address, nftIds[i]);
   }
 };
 
-const setup = async (nftx, nft, signers, isPV, eligIds) => {
+const setup = async (nftx, nft, signers, eligIds) => {
   const [owner, misc, alice, bob, carol, dave, eve] = signers;
-  await transferNFTs(nftx, nft, eligIds.slice(0, 8), misc, alice, isPV);
-  await transferNFTs(nftx, nft, eligIds.slice(8, 16), misc, bob, isPV);
-  await transferNFTs(nftx, nft, eligIds.slice(16, 19), misc, carol, isPV);
-  await transferNFTs(nftx, nft, eligIds.slice(19, 20), misc, dave, isPV);
+  await transferNFTs(nftx, nft, eligIds.slice(0, 8), misc, alice);
+  await transferNFTs(nftx, nft, eligIds.slice(8, 16), misc, bob);
+  await transferNFTs(nftx, nft, eligIds.slice(16, 19), misc, carol);
+  await transferNFTs(nftx, nft, eligIds.slice(19, 20), misc, dave);
 };
 
 const setupD2 = async (nftx, asset, signers) => {
@@ -95,7 +91,7 @@ const setupD2 = async (nftx, asset, signers) => {
   await asset.connect(misc).transfer(dave._address, BASE.mul(1));
 };
 
-const cleanup = async (nftx, nft, token, signers, vaultId, isPV, eligIds) => {
+const cleanup = async (nftx, nft, token, signers, vaultId, eligIds) => {
   const [owner, misc, alice, bob, carol, dave, eve] = signers;
   for (let i = 2; i < 7; i++) {
     const signer = signers[i];
@@ -108,20 +104,12 @@ const cleanup = async (nftx, nft, token, signers, vaultId, isPV, eligIds) => {
     try {
       const nftId = eligIds[i];
       let addr;
-      if (isPV) {
-        addr = await nft.punkIndexToAddress(nftId);
-      } else {
-        addr = await nft.ownerOf(nftId);
-      }
+      addr = await nft.ownerOf(nftId);
       if (addr == misc._address) continue;
       const signer = signers.find((s) => s._address == addr);
-      if (isPV) {
-        await nft.connect(signer).transferPunk(misc._address, nftId);
-      } else {
-        await nft
-          .connect(signer)
-          .transferFrom(signer._address, misc._address, nftId);
-      }
+      await nft
+        .connect(signer)
+        .transferFrom(signer._address, misc._address, nftId);
     } catch (err) {
       console.log("catch:", i, err);
       break;
@@ -144,16 +132,14 @@ const cleanupD2 = async (nftx, asset, xToken, signers, vaultId) => {
   }
 };
 
-const holdingsOf = async (nft, nftIds, accounts, isPV, isD2) => {
+const holdingsOf = async (nft, nftIds, accounts, isD2) => {
   const lists = [];
   for (let i = 0; i < accounts.length; i++) {
     const account = accounts[i];
     const list = [];
     for (let _i = 0; _i < nftIds.length; _i++) {
       const id = nftIds[_i];
-      const nftOwner = isPV
-        ? await nft.punkIndexToAddress(id)
-        : await nft.ownerOf(id);
+      const nftOwner = await nft.ownerOf(id);
       if (nftOwner === account._address) {
         list.push(id);
       }
@@ -171,7 +157,7 @@ const balancesOf = async (token, accounts) => {
   return balances;
 };
 
-const checkBalances = async (nftx, nft, xToken, users, nftIds, isPV) => {
+const checkBalances = async (nftx, nft, xToken, users) => {
   let tokenAmount = BigNumber.from(0);
   for (let i = 0; i < users.length; i++) {
     const user = users[i];
@@ -196,27 +182,15 @@ const checkBalancesD2 = async (nftx, asset, xToken, accounts) => {
   }
 };
 
-const approveEach = async (nft, nftIds, signer, to, isPV) => {
+const approveEach = async (nft, nftIds, signer, to) => {
   for (let i = 0; i < nftIds.length; i++) {
     const nftId = nftIds[i];
-    if (isPV) {
-      await nft.connect(signer).offerPunkForSaleToAddress(nftId, 0, to);
-    } else {
-      await nft.connect(signer).approve(to, nftId);
-    }
+    await nft.connect(signer).approve(to, nftId);
   }
 };
 
-const approveAndMint = async (
-  nftx,
-  nft,
-  nftIds,
-  signer,
-  vaultId,
-  value,
-  isPV
-) => {
-  await approveEach(nft, nftIds, signer, nftx.address, isPV);
+const approveAndMint = async (nftx, nft, nftIds, signer, vaultId, value) => {
+  await approveEach(nft, nftIds, signer, nftx.address);
   await nftx.connect(signer).mint(vaultId, nftIds, 0, { value: value });
 };
 

@@ -180,94 +180,6 @@
         }
       }
     },
-    "906e5b28de617fc95521be661ac476324b6f3b458070528cbc229406c2c8a76f": {
-      "address": "0x0078371BDeDE8aAc7DeBfFf451B74c5EDB385Af7",
-      "txHash": "0xd43bd914c199b59209e44cbca083c6d31db4b6963dc851c402981b5a0c8e010c",
-      "layout": {
-        "storage": [
-          {
-            "contract": "Initializable",
-            "label": "initialized",
-            "type": "t_bool",
-            "src": "contracts/Initializable.sol:21"
-          },
-          {
-            "contract": "Initializable",
-            "label": "initializing",
-            "type": "t_bool",
-            "src": "contracts/Initializable.sol:26"
-          },
-          {
-            "contract": "Initializable",
-            "label": "______gap",
-            "type": "t_array(t_uint256)50_storage",
-            "src": "contracts/Initializable.sol:66"
-          },
-          {
-            "contract": "Ownable",
-            "label": "_owner",
-            "type": "t_address",
-            "src": "contracts/Ownable.sol:21"
-          },
-          {
-            "contract": "Pausable",
-            "label": "isPaused",
-            "type": "t_bool",
-            "src": "contracts/Pausable.sol:9"
-          },
-          {
-            "contract": "ReentrancyGuard",
-            "label": "_status",
-            "type": "t_uint256",
-            "src": "contracts/ReentrancyGuard.sol:38"
-          },
-          {
-            "contract": "NFTX",
-            "label": "cpmAddress",
-            "type": "t_address",
-            "src": "contracts/NFTX.sol:20"
-          },
-          {
-            "contract": "NFTX",
-            "label": "cpm",
-            "type": "t_contract(ICryptoPunksMarket)4221",
-            "src": "contracts/NFTX.sol:21"
-          },
-          {
-            "contract": "NFTX",
-            "label": "storeAddress",
-            "type": "t_address",
-            "src": "contracts/NFTX.sol:23"
-          },
-          {
-            "contract": "NFTX",
-            "label": "store",
-            "type": "t_contract(IXStore)5240",
-            "src": "contracts/NFTX.sol:24"
-          }
-        ],
-        "types": {
-          "t_address": {
-            "label": "address"
-          },
-          "t_contract(ICryptoPunksMarket)4221": {
-            "label": "contract ICryptoPunksMarket"
-          },
-          "t_contract(IXStore)5240": {
-            "label": "contract IXStore"
-          },
-          "t_uint256": {
-            "label": "uint256"
-          },
-          "t_bool": {
-            "label": "bool"
-          },
-          "t_array(t_uint256)50_storage": {
-            "label": "uint256[50]"
-          }
-        }
-      }
-    },
     "7847089115c72b9a74d05764dac1963f036e66588f7f948871c47184446bf023": {
       "address": "0x038B86d9d8FAFdd0a02ebd1A476432877b0107C8",
       "txHash": "0xa4024290ba7f25c7618f2a989c9ac58790534d555cb1235619b7167a60e3302f",
@@ -654,10 +566,313 @@
           }
         }
       }
+    },
+    "a1d52063f1a52c3f08f4a473c4fec2e44c43ddbcfcfd5931e6a19c6f4df804da": {
+      "address": "0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf",
+      "txHash": "0xacbd95f46ce8a47aa30219419723e95e2db1d3c00c19863954b126efa36edfef",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "initialized",
+            "type": "t_bool",
+            "src": "contracts/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "initializing",
+            "type": "t_bool",
+            "src": "contracts/Initializable.sol:26"
+          },
+          {
+            "contract": "Initializable",
+            "label": "______gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "contracts/Initializable.sol:66"
+          },
+          {
+            "contract": "Ownable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "contracts/Ownable.sol:21"
+          },
+          {
+            "contract": "Pausable",
+            "label": "isPaused",
+            "type": "t_bool",
+            "src": "contracts/Pausable.sol:9"
+          },
+          {
+            "contract": "ReentrancyGuard",
+            "label": "_status",
+            "type": "t_uint256",
+            "src": "contracts/ReentrancyGuard.sol:38"
+          },
+          {
+            "contract": "NFTX",
+            "label": "storeAddress",
+            "type": "t_address",
+            "src": "contracts/NFTX.sol:19"
+          },
+          {
+            "contract": "NFTX",
+            "label": "store",
+            "type": "t_contract(IXStore)5240",
+            "src": "contracts/NFTX.sol:20"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_contract(IXStore)5240": {
+            "label": "contract IXStore"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "017e1120653270f1f46b8f3b73250054081bfc97f32103498e8c2b3ce248da39": {
+      "address": "0x5f687ea375c359E0CF6aa8A1004BE0c3BaBee7Fd",
+      "txHash": "0xf99d7ac4e8bec3595a300994fbcc1a4468e1dc5971e7356f9d7504fa4de1ee8c",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "initialized",
+            "type": "t_bool",
+            "src": "contracts/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "initializing",
+            "type": "t_bool",
+            "src": "contracts/Initializable.sol:26"
+          },
+          {
+            "contract": "Initializable",
+            "label": "______gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "contracts/Initializable.sol:66"
+          },
+          {
+            "contract": "Ownable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "contracts/Ownable.sol:21"
+          },
+          {
+            "contract": "Pausable",
+            "label": "isPaused",
+            "type": "t_bool",
+            "src": "contracts/Pausable.sol:9"
+          },
+          {
+            "contract": "ReentrancyGuard",
+            "label": "_status",
+            "type": "t_uint256",
+            "src": "contracts/ReentrancyGuard.sol:38"
+          },
+          {
+            "contract": "NFTX",
+            "label": "storeAddress",
+            "type": "t_address",
+            "src": "contracts/NFTX.sol:19"
+          },
+          {
+            "contract": "NFTX",
+            "label": "store",
+            "type": "t_contract(IXStore)5240",
+            "src": "contracts/NFTX.sol:20"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_contract(IXStore)5240": {
+            "label": "contract IXStore"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "9910eef8e441182bd46b84313a71345e711ac48e4db39127365f4a9df9d98539": {
+      "address": "0x830bceA96E56DBC1F8578f75fBaC0AF16B32A07d",
+      "txHash": "0x0dbfff54494120970391c5ba3f763ee8377c43963dbadf537cc4462b8ce08a00",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "initialized",
+            "type": "t_bool",
+            "src": "contracts/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "initializing",
+            "type": "t_bool",
+            "src": "contracts/Initializable.sol:26"
+          },
+          {
+            "contract": "Initializable",
+            "label": "______gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "contracts/Initializable.sol:66"
+          },
+          {
+            "contract": "Ownable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "contracts/Ownable.sol:21"
+          },
+          {
+            "contract": "Timelocked",
+            "label": "shortDelay",
+            "type": "t_uint256",
+            "src": "contracts/Timelocked.sol:11"
+          },
+          {
+            "contract": "Timelocked",
+            "label": "mediumDelay",
+            "type": "t_uint256",
+            "src": "contracts/Timelocked.sol:12"
+          },
+          {
+            "contract": "Timelocked",
+            "label": "longDelay",
+            "type": "t_uint256",
+            "src": "contracts/Timelocked.sol:13"
+          },
+          {
+            "contract": "ControllerBase",
+            "label": "leadDev",
+            "type": "t_address",
+            "src": "contracts/ControllerBase.sol:12"
+          },
+          {
+            "contract": "ControllerBase",
+            "label": "numFuncCalls",
+            "type": "t_uint256",
+            "src": "contracts/ControllerBase.sol:14"
+          },
+          {
+            "contract": "ControllerBase",
+            "label": "time",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "contracts/ControllerBase.sol:16"
+          },
+          {
+            "contract": "ControllerBase",
+            "label": "funcIndex",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "contracts/ControllerBase.sol:17"
+          },
+          {
+            "contract": "ControllerBase",
+            "label": "addressParam",
+            "type": "t_mapping(t_uint256,t_address_payable)",
+            "src": "contracts/ControllerBase.sol:18"
+          },
+          {
+            "contract": "ControllerBase",
+            "label": "uintArrayParam",
+            "type": "t_mapping(t_uint256,t_array(t_uint256)dyn_storage)",
+            "src": "contracts/ControllerBase.sol:19"
+          },
+          {
+            "contract": "XController",
+            "label": "nftx",
+            "type": "t_contract(INFTX)4738",
+            "src": "contracts/XController.sol:11"
+          },
+          {
+            "contract": "XController",
+            "label": "store",
+            "type": "t_contract(IXStore)5240",
+            "src": "contracts/XController.sol:12"
+          },
+          {
+            "contract": "XController",
+            "label": "uintParam",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "contracts/XController.sol:20"
+          },
+          {
+            "contract": "XController",
+            "label": "stringParam",
+            "type": "t_mapping(t_uint256,t_string_storage)",
+            "src": "contracts/XController.sol:21"
+          },
+          {
+            "contract": "XController",
+            "label": "boolParam",
+            "type": "t_mapping(t_uint256,t_bool)",
+            "src": "contracts/XController.sol:22"
+          },
+          {
+            "contract": "XController",
+            "label": "pendingEligAdditions",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "contracts/XController.sol:24"
+          }
+        ],
+        "types": {
+          "t_contract(INFTX)4738": {
+            "label": "contract INFTX"
+          },
+          "t_contract(IXStore)5240": {
+            "label": "contract IXStore"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_mapping(t_uint256,t_string_storage)": {
+            "label": "mapping(uint256 => string)"
+          },
+          "t_mapping(t_uint256,t_bool)": {
+            "label": "mapping(uint256 => bool)"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_uint256,t_address_payable)": {
+            "label": "mapping(uint256 => address payable)"
+          },
+          "t_mapping(t_uint256,t_array(t_uint256)dyn_storage)": {
+            "label": "mapping(uint256 => uint256[])"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
     }
   },
   "admin": {
-    "address": "0xf4e77E5Da47AC3125140c470c71cBca77B5c638c",
-    "txHash": "0xbea59b6e5dbb2efe8dfe3b669c6dd48d2364f9865507dc95622bab6bf0e63b5e"
+    "address": "0x0078371BDeDE8aAc7DeBfFf451B74c5EDB385Af7",
+    "txHash": "0x480a473bf094daa5770d33813bc5ee3d8c10eac901665420e124a2f9cd880294"
   }
 }

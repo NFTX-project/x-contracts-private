@@ -66,7 +66,6 @@ describe("NFTX", function () {
         vaultId,
         allNftIds,
         eligIds,
-        false,
         false
       );
     };
@@ -96,7 +95,6 @@ describe("NFTX", function () {
         vaultId,
         allNftIds,
         eligIds,
-        false,
         false
       );
       _asset = asset;
@@ -130,7 +128,6 @@ describe("NFTX", function () {
         vaultId,
         allNftIds,
         eligIds,
-        false,
         false
       );
     };
@@ -148,17 +145,7 @@ describe("NFTX", function () {
         allNftIds,
         true
       );
-      await runVaultTests(
-        nftx,
-        asset,
-        xToken,
-        signers,
-        vaultId,
-        [],
-        [],
-        false,
-        true
-      );
+      await runVaultTests(nftx, asset, xToken, signers, vaultId, [], [], true);
     };
 
     ///////////////////////////
@@ -177,10 +164,10 @@ describe("NFTX", function () {
         false
       );
       const eligIds = getIntArray(0, 20);
-      await setup(nftx, asset, signers, false, eligIds);
+      await setup(nftx, asset, signers, eligIds);
       const [aliceNFTs] = await holdingsOf(asset, eligIds, [alice], false);
-      await approveAndMint(nftx, asset, aliceNFTs, alice, vaultId, 0, false);
-      await checkBalances(nftx, asset, xToken, [alice], false);
+      await approveAndMint(nftx, asset, aliceNFTs, alice, vaultId, 0);
+      await checkBalances(nftx, asset, xToken, [alice]);
 
       const NFTXv2 = await ethers.getContractFactory("NFTXv2");
       // nftx = await upgrades.upgradeProxy(nftx.address, NFTXv2);
@@ -199,8 +186,8 @@ describe("NFTX", function () {
       await asset.connect(bob).transferFrom(bob._address, nftx.address, nftId);
       await approveAndRedeem(nftx, xToken, aliceNFTs.length, alice, vaultId);
 
-      await checkBalances(nftx, asset, xToken, [alice], false);
-      await cleanup(nftx, asset, xToken, signers, vaultId, false, eligIds);
+      await checkBalances(nftx, asset, xToken, [alice]);
+      await cleanup(nftx, asset, xToken, signers, vaultId, eligIds);
     };
 
     ////////////////////////////////////////////////////////////////////
@@ -208,10 +195,8 @@ describe("NFTX", function () {
     ////////////////////////////////////////////////////////////////////
 
     await runNftBasic();
-    await runPunkBasic();
     await runNftSpecial();
     await runNftSpecial2();
-    await runPunkSpecial();
     await runD2Vault();
     await runContractUpgrade();
 
