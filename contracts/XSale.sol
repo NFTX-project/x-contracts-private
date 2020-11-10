@@ -95,6 +95,7 @@ contract XSale is Ownable {
         uint256 _amount = nftBounty.quantity < amount ? nftBounty.quantity : amount;
         if (_amount > 0) {
             xStore.xToken(vaultId).transferFrom(_msgSender(), nftxAddress, _amount);
+            nftBounty.quantity = nftBounty.quantity.sub()
         }
     }
 }
