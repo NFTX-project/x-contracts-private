@@ -8,6 +8,7 @@ import "./INFTX.sol";
 import "./IXStore.sol";
 import "./IERC721.sol";
 import "./Context.sol";
+import "./ReentrancyGuard.sol";
 
 contract XSale is Ownable {
     using SafeMath for uint256;
@@ -63,16 +64,18 @@ contract XSale is Ownable {
         nftBounty.quantity = quantity;
     }
 
-    function fillBounty(
+    function fillBountyUsingNFTs(
         uint256 vaultId,
         uint256 bountyIndex,
         uint256[] memory nftIds
-    ) public {
+    ) public nonReentrant {
+        
         uint256 acc;
+        NftBounty storage nftBounty = nftBounties[vaultId][bountyIndex];
         for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
             if (
                 !nftx.isEligible(vaultId, nftIds[i]) ||
-                nftBounties[vaultId][bountyIndex].quantity < 1
+                nftBounty.quantity < 1
             ) {
                 break;
             }
@@ -81,10 +84,17 @@ contract XSale is Ownable {
                 nftxAddress,
                 nftIds[i]
             );
-            nftBounties[vaultId][bountyIndex]
-                .quantity = nftBounties[vaultId][bountyIndex].quantity.sub(1);
-            acc = acc.add(nftBounties[vaultId][bountyIndex].priceInNftx);
+            nftBounty.quantity = nftBounty.quantity.sub(1);
+            acc = acc.add(nftBounty.priceInNftx);
         }
         // TODO: transfer vested NFTX tokens
+    }
+
+    function fillBountyUsingXToken(uint256 vaultId, uint256 bountyIndex, uint256 amount) public nonReentrant {
+        NftBounty storage nftBounty = nftBounties[vaultId][bountyIndex];
+        uint256 _amount = nftBounty.quantity < amount ? nftBounty.quantity : amount;
+        if (_amount > 0) {
+            xStore.xToken(vaultId).transferFrom(_msgSender(), nftxAddress, _amount);
+        }
     }
 }
