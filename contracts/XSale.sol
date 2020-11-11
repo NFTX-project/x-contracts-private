@@ -23,6 +23,8 @@ contract XSale is Pausable, ReentrancyGuard {
     IERC20 public nftxToken;
     ITokenManager public tokenManager;
 
+    uint64 public constant vestedUntil = 1610250000;
+
     mapping(uint256 => Bounty[]) public bounties;
 
     struct Bounty {
@@ -31,7 +33,7 @@ contract XSale is Pausable, ReentrancyGuard {
     }
 
     constructor(
-        address _nftxAddress, 
+        address _nftxAddress,
         address _nftxTokenAddress,
         address tokenManagerAddress
     ) public {
@@ -45,7 +47,8 @@ contract XSale is Pausable, ReentrancyGuard {
     }
 
     function addBounty(uint256 vaultId, uint256 reward, uint256 request)
-        public onlyOwner
+        public
+        onlyOwner
     {
         Bounty memory newBounty;
         newBounty.reward = reward;
@@ -64,15 +67,29 @@ contract XSale is Pausable, ReentrancyGuard {
         bounty.request = newRequest;
     }
 
-    function fillBounty(uint256 vaultId, uint256 bountyIndex, uint256 amount) public nonReentrant {
+    function fillBounty(uint256 vaultId, uint256 bountyIndex, uint256 amount)
+        public
+        nonReentrant
+    {
         Bounty storage bounty = bounties[vaultId][bountyIndex];
         uint256 _amount = bounty.request < amount ? bounty.request : amount;
         if (_amount > 0) {
-            xStore.xToken(vaultId).transferFrom(_msgSender(), nftxAddress, _amount);
+            xStore.xToken(vaultId).transferFrom(
+                _msgSender(),
+                nftxAddress,
+                _amount
+            );
             uint256 _reward = bounty.reward.mul(_amount).div(bounty.request);
             bounty.request = bounty.request.sub(_amount);
             bounty.reward = bounty.reward.sub(_reward);
-            // TODO: tokenManager.assignVested(...);
+            tokenManager.assignVested(
+                _msgSender(),
+                _reward,
+                vestedUntil,
+                vestedUntil,
+                vestedUntil,
+                false
+            );
         }
     }
 }
