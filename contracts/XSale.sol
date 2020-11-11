@@ -17,6 +17,7 @@ contract XSale is Pausable, ReentrancyGuard {
 
     address public nftxAddress;
     address public nftxTokenAddress;
+    address public tokenManagerAddress;
 
     INFTX public nftx;
     IXStore public xStore;
@@ -25,7 +26,8 @@ contract XSale is Pausable, ReentrancyGuard {
 
     uint64 public constant vestedUntil = 1610250000;
 
-    mapping(uint256 => Bounty[]) public bounties;
+    Bounty[] public ethBounties;
+    mapping(uint256 => Bounty[]) public xBounties;
 
     struct Bounty {
         uint256 reward;
@@ -35,61 +37,74 @@ contract XSale is Pausable, ReentrancyGuard {
     constructor(
         address _nftxAddress,
         address _nftxTokenAddress,
-        address tokenManagerAddress
+        address _tokenManagerAddress
     ) public {
         initOwnable();
         nftxAddress = _nftxAddress;
         nftxTokenAddress = _nftxTokenAddress;
+        tokenManagerAddress = _tokenManagerAddress;
         nftx = INFTX(nftxAddress);
         xStore = IXStore(nftx.storeAddress());
         nftxToken = IERC20(nftxTokenAddress);
         tokenManager = ITokenManager(tokenManagerAddress);
     }
 
-    function addBounty(uint256 vaultId, uint256 reward, uint256 request)
+    function addXBounty(uint256 vaultId, uint256 reward, uint256 request)
         public
         onlyOwner
     {
-        Bounty memory newBounty;
-        newBounty.reward = reward;
-        newBounty.request = request;
-        bounties[vaultId].push(newBounty);
+        Bounty memory newXBounty;
+        newXBounty.reward = reward;
+        newXBounty.request = request;
+        xBounties[vaultId].push(newXBounty);
     }
 
-    function setBounty(
+    function setXBounty(
         uint256 vaultId,
-        uint256 bountyIndex,
+        uint256 xBountyIndex,
         uint256 newReward,
         uint256 newRequest
     ) public onlyOwner {
-        Bounty storage bounty = bounties[vaultId][bountyIndex];
-        bounty.reward = newReward;
-        bounty.request = newRequest;
+        Bounty storage xBounty = xBounties[vaultId][xBountyIndex];
+        xBounty.reward = newReward;
+        xBounty.request = newRequest;
     }
 
-    function fillBounty(uint256 vaultId, uint256 bountyIndex, uint256 amount)
+    function withdrawNFTX(address to, uint256 amount) public onlyOwner {
+        nftxToken.transfer(to, amount);
+    }
+
+    function withdrawXToken(uint256 vaultId, address to, uint256 amount) public onlyOwner {
+        xStore.xToken(vaultId).transfer(to, amount);
+    }
+
+    function withdrawETH(address payable to, uint256 amount) public onlyOwner {
+        to.transfer(amount);
+    }
+
+    function fillXBounty(uint256 vaultId, uint256 xBountyIndex, uint256 amount)
         public
         nonReentrant
     {
-        Bounty storage bounty = bounties[vaultId][bountyIndex];
-        uint256 _amount = bounty.request < amount ? bounty.request : amount;
-        if (_amount > 0) {
-            xStore.xToken(vaultId).transferFrom(
-                _msgSender(),
-                nftxAddress,
-                _amount
-            );
-            uint256 _reward = bounty.reward.mul(_amount).div(bounty.request);
-            bounty.request = bounty.request.sub(_amount);
-            bounty.reward = bounty.reward.sub(_reward);
-            tokenManager.assignVested(
-                _msgSender(),
-                _reward,
-                vestedUntil,
-                vestedUntil,
-                vestedUntil,
-                false
-            );
-        }
+        Bounty storage xBounty = xBounties[vaultId][xBountyIndex];
+        require(amount <= xBounty.request, "Amount > bounty");
+        require(amount <= nftxToken.balanceOf(nftxAddress), "Amount > balance");
+        xStore.xToken(vaultId).transferFrom(
+            _msgSender(),
+            nftxAddress,
+            amount
+        );
+        uint256 reward = xBounty.reward.mul(amount).div(xBounty.request);
+        xBounty.request = xBounty.request.sub(amount);
+        xBounty.reward = xBounty.reward.sub(reward);
+        nftxToken.transfer(tokenManagerAddress, reward);
+        tokenManager.assignVested(
+            _msgSender(),
+            reward,
+            vestedUntil,
+            vestedUntil,
+            vestedUntil,
+            false
+        );
     }
 }
