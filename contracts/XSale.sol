@@ -15,10 +15,6 @@ contract XSale is Pausable, ReentrancyGuard {
     using SafeMath for uint256;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    address public nftxAddress;
-    address public nftxTokenAddress;
-    address public tokenManagerAddress;
-
     INFTX public nftx;
     IXStore public xStore;
     IERC20 public nftxToken;
@@ -34,19 +30,14 @@ contract XSale is Pausable, ReentrancyGuard {
         uint256 request;
     }
 
-    constructor(
-        address _nftxAddress,
-        address _nftxTokenAddress,
-        address _tokenManagerAddress
-    ) public {
+    constructor(address _nftx, address _nftxToken, address _tokenManager)
+        public
+    {
         initOwnable();
-        nftxAddress = _nftxAddress;
-        nftxTokenAddress = _nftxTokenAddress;
-        tokenManagerAddress = _tokenManagerAddress;
-        nftx = INFTX(nftxAddress);
-        xStore = IXStore(nftx.storeAddress());
-        nftxToken = IERC20(nftxTokenAddress);
-        tokenManager = ITokenManager(tokenManagerAddress);
+        nftx = INFTX(_nftx);
+        xStore = IXStore(nftx.store());
+        nftxToken = IERC20(_nftxToken);
+        tokenManager = ITokenManager(_tokenManager);
     }
 
     function addXBounty(uint256 vaultId, uint256 reward, uint256 request)
@@ -74,7 +65,10 @@ contract XSale is Pausable, ReentrancyGuard {
         nftxToken.transfer(to, amount);
     }
 
-    function withdrawXToken(uint256 vaultId, address to, uint256 amount) public onlyOwner {
+    function withdrawXToken(uint256 vaultId, address to, uint256 amount)
+        public
+        onlyOwner
+    {
         xStore.xToken(vaultId).transfer(to, amount);
     }
 
@@ -88,16 +82,19 @@ contract XSale is Pausable, ReentrancyGuard {
     {
         Bounty storage xBounty = xBounties[vaultId][xBountyIndex];
         require(amount <= xBounty.request, "Amount > bounty");
-        require(amount <= nftxToken.balanceOf(nftxAddress), "Amount > balance");
+        require(
+            amount <= nftxToken.balanceOf(address(nftx)),
+            "Amount > balance"
+        );
         xStore.xToken(vaultId).transferFrom(
             _msgSender(),
-            nftxAddress,
+            address(nftx),
             amount
         );
         uint256 reward = xBounty.reward.mul(amount).div(xBounty.request);
         xBounty.request = xBounty.request.sub(amount);
         xBounty.reward = xBounty.reward.sub(reward);
-        nftxToken.transfer(tokenManagerAddress, reward);
+        nftxToken.transfer(address(tokenManager), reward);
         tokenManager.assignVested(
             _msgSender(),
             reward,

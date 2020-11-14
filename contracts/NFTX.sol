@@ -16,17 +16,11 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
 
     event NewVault(uint256 vaultId);
 
-    address public storeAddress;
-    IXStore internal store;
+    IXStore public store;
 
-    function initialize(address _storeAddress)
-        public
-        initializer
-    {
+    function initialize(address storeAddress) public initializer {
         initOwnable();
         initReentrancyGuard();
-
-        storeAddress = _storeAddress;
         store = IXStore(storeAddress);
     }
 
@@ -168,6 +162,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         address _assetAddress,
         bool _isD2Vault
     ) public virtual whenNotPaused nonReentrant returns (uint256) {
+        IXToken xToken = IXToken(_xTokenAddress);
+        require(xToken.owner() == address(this), "Wrong owner");
         uint256 vaultId = store.addNewVault();
         store.setXTokenAddress(vaultId, _xTokenAddress);
         store.setAssetAddress(vaultId, _assetAddress);

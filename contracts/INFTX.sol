@@ -4,7 +4,6 @@ pragma solidity 0.6.8;
 
 import "./Pausable.sol";
 import "./IXToken.sol";
-import "./ICryptoPunksMarket.sol";
 import "./IERC721.sol";
 import "./EnumerableSet.sol";
 import "./ReentrancyGuard.sol";
@@ -20,7 +19,7 @@ interface INFTX {
     event ReservesIncreased(uint256 vaultId, uint256 nftId);
     event ReservesDecreased(uint256 vaultId, uint256 nftId);
 
-    function storeAddress() external returns (address);
+    function store() external returns (address);
 
     function transferOwnership(address newOwner) external;
 
