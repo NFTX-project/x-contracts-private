@@ -8,15 +8,14 @@ import "./ControllerBase.sol";
 contract UpgradeController is ControllerBase {
     using SafeMath for uint256;
 
-    address public nftxAddress;
+    
     ITransparentUpgradeableProxy private nftxProxy;
-    address public xControllerAddress;
     ITransparentUpgradeableProxy private xControllerProxy;
 
-    constructor(address _nftxAddress, address _xControllerAddress) public {
+    constructor(address nftx, address xController) public {
         ControllerBase.initialize();
-        nftxProxy = ITransparentUpgradeableProxy(_nftxAddress);
-        xControllerProxy = ITransparentUpgradeableProxy(_xControllerAddress);
+        nftxProxy = ITransparentUpgradeableProxy(nftx);
+        xControllerProxy = ITransparentUpgradeableProxy(xController);
     }
 
     function executeFuncCall(uint256 fcId) public override onlyOwner {

@@ -20,9 +20,9 @@ contract XSale is Pausable, ReentrancyGuard {
     IERC20 public nftxToken;
     ITokenManager public tokenManager;
 
-    uint64 public constant vestedUntil = 1610250000;
+    uint64 public constant vestedUntil = 1610697600000; // Fri Jan 15 2021 00:00:00 GMT-0800
 
-    Bounty[] public ethBounties;
+    // Bounty[] public ethBounties;
     mapping(uint256 => Bounty[]) public xBounties;
 
     struct Bounty {
