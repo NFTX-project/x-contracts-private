@@ -1,6 +1,7 @@
 node_modules
 bin
 .env
+**/.DS_Store
 
 #Buidler files
 cache
