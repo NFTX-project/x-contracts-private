@@ -1,7 +1,5 @@
 # General Overview
 
-Although I have been programming for years, I only started working with Solidity about four months ago. I have not gotten around to documenting the code yet, so please feel free to hit me up at anytime if you have questions. Below I will give a high level overview of how things work.
-
 NFTX is a project for making ERC20 tokens that are backed by NFTs. For example, there will be a PUNK-ZOMBIE token which is backed by zombie cryptopunks. Anyone can mint PUNK-ZOMBIE by transfering a zombie cryptopunk, and anyone can redeem a random zombie cryptopunk by transfering 1 PUNK-ZOMBIE. The name I use for these ERC20 tokens on NFTX are "XTokens".
 
 Anyone can create their own XToken and link it to a set of NFTs by calling the createVault(...) method on the NFTX contract. Every vault keeps track of the number of NFTs which it stores, as well as other settings like fees and a list of which NFTs are elgible. When a vault is created, the account which sends the transaction is designated as the "manager and that allows them to make adjustments. When they are done making adjustments, the manager can call finalizeVault(...) which revokes their manager permissions and hands control of the vault over to the owner the NFTX contract (which will be the NFTX Dao).
@@ -55,6 +53,3 @@ Supply is 4. Bob mints 1. 4 ETH payout to Bob.
 Supply is 5. Bob mints 1. 0 ETH payout to Bob.
 
 However, minters only receive a payout if the vault's "ethBalance" (stored in the Vault struct) is sufficient to cover it. In other words, the first time that a supply increases from zero to its length there is no payout (assuming no ETH is deposited). 
-
-
-I think that basically sums it up. I am still tinkering with the XSale contract and although it depends on the NFTX contract, the NFTX contract does not depend on it. Basically the XSale contract describes the exchange rates for the intial NFTX token sale, which will allow investors to deposit XTokens in exchange for vested $NFTX tokens. 
