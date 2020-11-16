@@ -2,6 +2,7 @@ node_modules
 bin
 .env
 **/.DS_Store
+yarn-error.log
 
 #Buidler files
 cache
