@@ -24,8 +24,9 @@ describe("NFTX", function () {
   this.timeout(0);
   it("Should run as expected", async function () {
     console.log("");
+
     ///////////////////////////////////////////////////////////////
-    // Initialize CPM, XStore, NFTX ///////////////////////////////
+    // Initialize XStore + NFTX ///////////////////////////////////
     ///////////////////////////////////////////////////////////////
 
     const XStore = await ethers.getContractFactory("XStore");
