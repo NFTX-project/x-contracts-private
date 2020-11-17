@@ -6,14 +6,21 @@ import "./Ownable.sol";
 import "./SafeMath.sol";
 
 contract Pausable is Ownable {
-    bool isPaused;
+    mapping(uint256 => bool) isPaused;
+    // 0 : createVault
+    // 1 : mint
+    // 2 : redeem
+    // 3 : mintAndRedeem
 
-    modifier whenNotPaused() {
-        require(!isPaused, "Paused");
-        _;
+    function onlyOwnerIfPaused(uint256 pauserId) public view virtual {
+        require(!isPaused[pauserId] || msg.sender == owner(), "Paused");
     }
 
-    function setPaused(bool _isPaused) public virtual onlyOwner {
-        isPaused = _isPaused;
+    function setPaused(uint256 pauserId, bool _isPaused)
+        public
+        virtual
+        onlyOwner
+    {
+        isPaused[pauserId] = _isPaused;
     }
 }

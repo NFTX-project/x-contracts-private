@@ -9,7 +9,6 @@ import "./ReentrancyGuard.sol";
 import "./ERC721Holder.sol";
 import "./IXStore.sol";
 import "./Initializable.sol";
-import "./utils/console.sol";
 
 contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     using SafeMath for uint256;
@@ -24,9 +23,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         store = IXStore(storeAddress);
     }
 
-    modifier onlyExtension() {
+    function onlyExtension() public view virtual {
         require(store.isExtension(_msgSender()), "Not extension");
-        _;
     }
 
     function onlyManager(uint256 vaultId) internal view {
@@ -161,7 +159,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         address _xTokenAddress,
         address _assetAddress,
         bool _isD2Vault
-    ) public virtual whenNotPaused nonReentrant returns (uint256) {
+    ) public virtual nonReentrant returns (uint256) {
+        onlyOwnerIfPaused(0);
         IXToken xToken = IXToken(_xTokenAddress);
         require(xToken.owner() == address(this), "Wrong owner");
         uint256 vaultId = store.addNewVault();
@@ -319,8 +318,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         payable
         virtual
         nonReentrant
-        onlyExtension
     {
+        onlyExtension();
         require(vaultId < store.vaultsLength(), "Invalid vaultId");
         uint256 ethBounty = _calcBounty(vaultId, nftIds.length, true);
         _receiveEthToVault(vaultId, ethBounty, msg.value);
@@ -332,8 +331,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         payable
         virtual
         nonReentrant
-        whenNotPaused
     {
+        onlyOwnerIfPaused(1);
         uint256 amount = store.isD2Vault(vaultId) ? d2Amount : nftIds.length;
         uint256 ethBounty = store.isD2Vault(vaultId)
             ? _calcBountyD2(vaultId, d2Amount, false)
@@ -364,8 +363,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         payable
         virtual
         nonReentrant
-        whenNotPaused
     {
+        onlyOwnerIfPaused(2);
         if (!store.isClosed(vaultId)) {
             uint256 ethBounty = store.isD2Vault(vaultId)
                 ? _calcBountyD2(vaultId, amount, true)
@@ -394,8 +393,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         payable
         virtual
         nonReentrant
-        whenNotPaused
     {
+        onlyOwnerIfPaused(3);
         require(!store.isD2Vault(vaultId), "Is D2 vault");
         require(!store.isClosed(vaultId), "Vault is closed");
         (uint256 ethBase, uint256 ethStep) = store.dualFees(vaultId);
