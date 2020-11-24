@@ -270,7 +270,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
                 nftIds[0] = store.holdingsAt(vaultId, rand);
             } else {
                 uint256 rand = _getPseudoRand(store.reservesLength(vaultId));
-                nftIds[i] = store.reservesAt(vaultId, rand);
+                nftIds[0] = store.reservesAt(vaultId, rand);
             }
             _redeemHelper(vaultId, nftIds, isDualOp);
         }
