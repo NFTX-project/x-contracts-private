@@ -7,9 +7,11 @@ import "./Ownable.sol";
 import "./SafeMath.sol";
 import "./IXToken.sol";
 import "./IERC721.sol";
+import "./SafeERC20.sol";
 
 contract XStore is Ownable {
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
     struct FeeParams {

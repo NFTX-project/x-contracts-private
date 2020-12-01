@@ -23,9 +23,12 @@ const initializeAssetTokenVault = async (
   const [owner, misc, alice, bob, carol, dave, eve] = signers;
 
   const XToken = await ethers.getContractFactory("XToken");
-  const xToken = await XToken.deploy(xTokenName, xTokenName.toUpperCase());
+  const xToken = await XToken.deploy(
+    xTokenName,
+    xTokenName.toUpperCase(),
+    nftx.address
+  );
   await xToken.deployed();
-  await xToken.transferOwnership(nftx.address);
 
   let asset;
   if (typeof assetNameOrExistingContract == "string") {

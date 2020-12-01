@@ -20,7 +20,6 @@ const {
 } = require("@openzeppelin/buidler-upgrades/dist/proxy-factory");
 
 describe("NFTX", function () {
-  // return;
   this.timeout(0);
   it("Should run as expected", async function () {
     console.log("");
