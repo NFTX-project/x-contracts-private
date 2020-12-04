@@ -49,6 +49,16 @@ contract XStore is Ownable {
         uint256 d2Holdings;
     }
 
+    event XTokenAddressSet(uint256 indexed vaultId, address token);
+    event NftAddressSet(uint256 indexed vaultId, address asset);
+    event ManagerSet(uint256 indexed vaultId, address manager);
+
+    event IsEligibleSet(uint256 indexed vaultId, uint256 id, bool _bool);
+    event HoldingsAdded(uint256 indexed vaultId, uint256 id);
+    event HoldingsRemoved(uint256 indexed vaultId, uint256 id);
+    event ReservesAdded(uint256 indexed vaultId, uint256 id);
+    event ReservesRemoved(uint256 indexed vaultId, uint256 id);
+
     Vault[] internal vaults;
 
     mapping(address => bool) public isExtension;
@@ -231,14 +241,12 @@ contract XStore is Ownable {
     {
         Vault storage vault = _getVault(vaultId);
         vault.xTokenAddress = _xTokenAddress;
+        emit XTokenAddressSet(vaultId, _xTokenAddress);
     }
 
-    function setAssetAddress(uint256 vaultId, address _nftAddress)
-        public
-        onlyOwner
-    {
+    function setNftAddress(uint256 vaultId, address _nft) public onlyOwner {
         Vault storage vault = _getVault(vaultId);
-        vault.nftAddress = _nftAddress;
+        vault.nftAddress = _nft;
     }
 
     function setManager(uint256 vaultId, address _manager) public onlyOwner {
@@ -259,21 +267,25 @@ contract XStore is Ownable {
     function holdingsAdd(uint256 vaultId, uint256 elem) public onlyOwner {
         Vault storage vault = _getVault(vaultId);
         vault.holdings.add(elem);
+        emit HoldingsAdded(vaultId, elem);
     }
 
     function holdingsRemove(uint256 vaultId, uint256 elem) public onlyOwner {
         Vault storage vault = _getVault(vaultId);
         vault.holdings.remove(elem);
+        emit HoldingsRemoved(vaultId, elem);
     }
 
     function reservesAdd(uint256 vaultId, uint256 elem) public onlyOwner {
         Vault storage vault = _getVault(vaultId);
         vault.reserves.add(elem);
+        emit ReservesAdded(vaultId, elem);
     }
 
     function reservesRemove(uint256 vaultId, uint256 elem) public onlyOwner {
         Vault storage vault = _getVault(vaultId);
         vault.reserves.remove(elem);
+        emit ReservesRemoved(vaultId, elem);
     }
 
     function setIsEligible(uint256 vaultId, uint256 id, bool _bool)
@@ -282,6 +294,7 @@ contract XStore is Ownable {
     {
         Vault storage vault = _getVault(vaultId);
         vault.isEligible[id] = _bool;
+        emit IsEligibleSet(vaultId, id, _bool);
     }
 
     function setShouldReserve(uint256 vaultId, uint256 id, bool _shouldReserve)
@@ -366,9 +379,17 @@ contract XStore is Ownable {
         vault.isD2Vault = _isD2Vault;
     }
 
+    function setD2AssetAddress(uint256 vaultId, address _d2Asset)
+        public
+        onlyOwner
+    {
+        Vault storage vault = _getVault(vaultId);
+        vault.d2AssetAddress = _d2Asset;
+    }
+
     function setD2Asset(uint256 vaultId) public onlyOwner {
         Vault storage vault = _getVault(vaultId);
-        vault.d2Asset = IERC20(vault.nftAddress);
+        vault.d2Asset = IERC20(vault.d2AssetAddress);
     }
 
     function setD2Holdings(uint256 vaultId, uint256 _d2Holdings)

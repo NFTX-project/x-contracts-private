@@ -163,12 +163,14 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         require(xToken.owner() == address(this), "Wrong owner");
         uint256 vaultId = store.addNewVault();
         store.setXTokenAddress(vaultId, _xTokenAddress);
-        store.setAssetAddress(vaultId, _assetAddress);
+
         store.setXToken(vaultId);
         if (!_isD2Vault) {
+            store.setNftAddress(vaultId, _assetAddress);
             store.setNft(vaultId);
             store.setNegateEligibility(vaultId, true);
         } else {
+            store.setD2AssetAddress(vaultId, _assetAddress);
             store.setD2Asset(vaultId);
             store.setIsD2Vault(vaultId, true);
         }

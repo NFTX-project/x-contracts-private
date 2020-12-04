@@ -26,22 +26,22 @@ async function main() {
   const XToken = await ethers.getContractFactory("XToken");
 
   const funds = [
-    { ticker: "PUNK-BASIC" },
-    { ticker: "PUNK-ATTR-4" },
-    { ticker: "PUNK-ATTR-5" },
-    { ticker: "PUNK-ZOMBIE" },
-    { ticker: "KITTY-GEN-0" },
-    { ticker: "KITTY-GEN-FAST" },
-    { ticker: "KITTY-FANCY" },
-    { ticker: "KITTY-FOUNDER" },
-    { ticker: "AXIE-ORIGIN" },
-    { ticker: "AXIE-MYSTIC-1" },
-    { ticker: "AXIE-MYSTIC-2" },
-    { ticker: "AVASTR-RANK-25" },
-    { ticker: "AVASTR-RANK-50" },
-    { ticker: "AVASTR-RANK-75" },
-    { ticker: "GLYPH" },
-    { ticker: "JOY" },
+    { ticker: "PUNK-BASIC", asset: "cryptopunks" },
+    { ticker: "PUNK-ATTR-4", asset: "cryptopunks" },
+    { ticker: "PUNK-ATTR-5", asset: "cryptopunks" },
+    { ticker: "PUNK-ZOMBIE", asset: "cryptopunks" },
+    { ticker: "KITTY-GEN-0", asset: "cryptokitties" },
+    { ticker: "KITTY-GEN-FAST", asset: "cryptokitties" },
+    { ticker: "KITTY-FANCY", asset: "cryptokitties" },
+    { ticker: "KITTY-FOUNDER", asset: "cryptokitties" },
+    { ticker: "AXIE-ORIGIN", asset: "axies" },
+    { ticker: "AXIE-MYSTIC-1", asset: "axies" },
+    { ticker: "AXIE-MYSTIC-2", asset: "axies" },
+    { ticker: "AVASTR-RANK-25", asset: "avastars" },
+    { ticker: "AVASTR-RANK-50", asset: "avastas" },
+    { ticker: "AVASTR-RANK-75", asset: "avastars" },
+    { ticker: "GLYPH", asset: "autoglyphs" },
+    { ticker: "JOY", asset: "joys" },
   ];
 
   for (let i = 0; i < funds.length; i++) {
@@ -52,7 +52,11 @@ async function main() {
     funds[i].tokenAddress = fundToken.address;
   }
 
-
+  for (let i = 0; i < funds.length; i++) {
+    const fund = funds[i];
+    const response = await nftx.createVault(fund.tokenAddress, addresses[fund.asset], false);
+    console.log('response', response);
+  }
 
   // const xToken = await XToken.deploy(name, symbol, addresses.nftx)
 

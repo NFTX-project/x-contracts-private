@@ -126,7 +126,7 @@ interface IXStore {
 
     function setXTokenAddress(uint256 vaultId, address _xTokenAddress) external;
 
-    function setAssetAddress(uint256 vaultId, address _assetAddress) external;
+    function setNftAddress(uint256 vaultId, address _assetAddress) external;
 
     function setManager(uint256 vaultId, address _manager) external;
 
@@ -170,6 +170,8 @@ interface IXStore {
     function setTokenBalance(uint256 vaultId, uint256 _tokenBalance) external;
 
     function setIsD2Vault(uint256 vaultId, bool _isD2Vault) external;
+
+    function setD2AssetAddress(uint256 vaultId, address _assetAddress) external;
 
     function setD2Asset(uint256 vaultId) external;
 
