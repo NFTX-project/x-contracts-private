@@ -63,6 +63,8 @@ async function main() {
 
   await nftx.transferOwnership(rinkebyDaoAddress);
   console.log("Updated NFTX owner");
+
+  console.log("-- DONE --");
 }
 
 main()

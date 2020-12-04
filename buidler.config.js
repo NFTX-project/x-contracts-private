@@ -18,7 +18,8 @@ module.exports = {
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
       accounts: [`${process.env.PRIVATE_KEY}`],
-      gasprice: 3000000000,
+      gasPrice: 3000000000,
+      timeout: 30000,
     },
   },
   solc: {
