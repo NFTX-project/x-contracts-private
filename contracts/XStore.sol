@@ -52,6 +52,8 @@ contract XStore is Ownable {
     event XTokenAddressSet(uint256 indexed vaultId, address token);
     event NftAddressSet(uint256 indexed vaultId, address asset);
     event ManagerSet(uint256 indexed vaultId, address manager);
+    event XTokenSet(uint256 indexed vaultId);
+    event NftSet(uint256 indexed vaultId);
 
     event IsEligibleSet(uint256 indexed vaultId, uint256 id, bool _bool);
     event HoldingsAdded(uint256 indexed vaultId, uint256 id);
@@ -247,16 +249,19 @@ contract XStore is Ownable {
     function setNftAddress(uint256 vaultId, address _nft) public onlyOwner {
         Vault storage vault = _getVault(vaultId);
         vault.nftAddress = _nft;
+        emit NftAddressSet(vaultId, _nft);
     }
 
     function setManager(uint256 vaultId, address _manager) public onlyOwner {
         Vault storage vault = _getVault(vaultId);
         vault.manager = _manager;
+        emit ManagerSet(vaultId, _manager);
     }
 
     function setXToken(uint256 vaultId) public onlyOwner {
         Vault storage vault = _getVault(vaultId);
         vault.xToken = IXToken(vault.xTokenAddress);
+        emit XTokenSet(vaultId);
     }
 
     function setNft(uint256 vaultId) public onlyOwner {
