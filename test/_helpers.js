@@ -48,7 +48,10 @@ const initializeAssetTokenVault = async (
     .connect(owner)
     .createVault(xToken.address, asset.address, isD2);
   const receipt = await response.wait(0);
-  const vaultId = receipt.events[0].args[0].toString();
+
+  const vaultId = receipt.events
+    .find((elem) => elem.event === "NewVault")
+    .args[0].toString();
   await nftx.connect(owner).finalizeVault(vaultId);
   if (isD2) {
     if (typeof assetNameOrExistingContract == "string") {
