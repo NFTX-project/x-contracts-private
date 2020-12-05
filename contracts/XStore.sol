@@ -32,8 +32,10 @@ contract XStore is Ownable {
         IERC721 nft;
         EnumerableSet.UintSet holdings;
         EnumerableSet.UintSet reserves;
+        mapping(uint256 => address) requester;
         mapping(uint256 => bool) isEligible;
         mapping(uint256 => bool) shouldReserve;
+        bool flipEligOnBurn;
         bool negateEligibility;
         bool isFinalized;
         bool isClosed;
@@ -58,8 +60,10 @@ contract XStore is Ownable {
     event HoldingsRemoved(uint256 indexed vaultId, uint256 id);
     event ReservesAdded(uint256 indexed vaultId, uint256 id);
     event ReservesRemoved(uint256 indexed vaultId, uint256 id);
+    event RequesterSet(uint256 indexed vaultId, uint256 id, address requester);
     event IsEligibleSet(uint256 indexed vaultId, uint256 id, bool _bool);
     event ShouldReserveSet(uint256 indexed vaultId, uint256 id, bool _bool);
+    event FlipEligOnBurnSet(uint256 indexed vaultId, bool _bool);
     event NegateEligibilitySet(uint256 indexed vaultId, bool _bool);
     event IsFinalizedSet(uint256 indexed vaultId, bool _isFinalized);
     event IsClosedSet(uint256 indexed vaultId, bool _isClosed);
@@ -182,6 +186,15 @@ contract XStore is Ownable {
         return vault.holdings.at(index);
     }
 
+    function requester(uint256 vaultId, uint256 id)
+        public
+        view
+        returns (address)
+    {
+        Vault storage vault = _getVault(vaultId);
+        return vault.requester[id];
+    }
+
     function isEligible(uint256 vaultId, uint256 id)
         public
         view
@@ -198,6 +211,11 @@ contract XStore is Ownable {
     {
         Vault storage vault = _getVault(vaultId);
         return vault.shouldReserve[id];
+    }
+
+    function flipEligOnBurn(uint256 vaultId) public view returns (bool) {
+        Vault storage vault = _getVault(vaultId);
+        return vault.flipEligOnBurn;
     }
 
     function negateEligibility(uint256 vaultId) public view returns (bool) {
@@ -326,6 +344,15 @@ contract XStore is Ownable {
         emit ReservesRemoved(vaultId, elem);
     }
 
+    function setRequester(uint256 vaultId, uint256 id, address _requester)
+        public
+        onlyOwner
+    {
+        Vault storage vault = _getVault(vaultId);
+        vault.requester[id] = _requester;
+        emit RequesterSet(vaultId, id, _requester);
+    }
+
     function setIsEligible(uint256 vaultId, uint256 id, bool _bool)
         public
         onlyOwner
@@ -342,6 +369,15 @@ contract XStore is Ownable {
         Vault storage vault = _getVault(vaultId);
         vault.shouldReserve[id] = _shouldReserve;
         emit ShouldReserveSet(vaultId, id, _shouldReserve);
+    }
+
+    function setFlipEligOnBurn(uint256 vaultId, bool flipElig)
+        public
+        onlyOwner
+    {
+        Vault storage vault = _getVault(vaultId);
+        vault.flipEligOnBurn = flipElig;
+        emit FlipEligOnBurnSet(vaultId, flipElig);
     }
 
     function setNegateEligibility(uint256 vaultId, bool negateElig)

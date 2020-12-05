@@ -118,8 +118,10 @@ describe("NFTX", function () {
         false
       );
       const eligIds = getIntArray(0, 20).map((n) => n * 2 + 1);
+      const notEligIds = allNftIds.filter((elem) => !eligIds.includes(elem));
       nftx.connect(owner).setNegateEligibility(vaultId, false);
       nftx.connect(owner).setIsEligible(vaultId, eligIds, true);
+      nftx.connect(owner).setIsEligible(vaultId, notEligIds, false);
       await runVaultTests(
         nftx,
         asset,

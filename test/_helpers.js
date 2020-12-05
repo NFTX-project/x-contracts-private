@@ -106,18 +106,25 @@ const cleanup = async (nftx, nft, token, signers, vaultId, eligIds) => {
       await approveAndRedeem(nftx, token, bal, signer, vaultId);
     }
   }
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 40; i++) {
     try {
       const nftId = eligIds[i];
       let addr;
       addr = await nft.ownerOf(nftId);
-      if (addr == misc._address) continue;
-      const signer = signers.find((s) => s._address == addr);
+      if (addr == misc._address) {
+        // console.log(`owner of ${nftId} is misc (${addr})`);
+        continue;
+      }
+      const signerIndex = signers.findIndex((s) => s._address == addr);
+      const signer = signers[signerIndex];
+      /* console.log(
+        `owner of ${nftId} is signer ${signerIndex} (${signer._address})`
+      ); */
       await nft
         .connect(signer)
         .transferFrom(signer._address, misc._address, nftId);
     } catch (err) {
-      console.log("catch:", i, err);
+      // console.log("catch:", i, "continuing...");
       break;
     }
   }
