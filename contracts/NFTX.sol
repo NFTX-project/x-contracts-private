@@ -368,7 +368,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
             } else {
                 store.reservesRemove(vaultId, nftId);
             }
-            if (store.flipEligOnBurn(vaultId)) {
+            if (store.flipEligOnRedeem(vaultId)) {
                 bool isElig = store.isEligible(vaultId, nftId);
                 store.setIsEligible(vaultId, nftId, !isElig);
             }
@@ -476,9 +476,12 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         }
     }
 
-    function setFlipEligOnBurn(uint256 vaultId, bool flipElig) public virtual {
+    function setFlipEligOnRedeem(uint256 vaultId, bool flipElig)
+        public
+        virtual
+    {
         onlyPrivileged(vaultId);
-        store.setFlipEligOnBurn(vaultId, flipElig);
+        store.setFlipEligOnRedeem(vaultId, flipElig);
     }
 
     function setNegateEligibility(uint256 vaultId, bool shouldNegate)

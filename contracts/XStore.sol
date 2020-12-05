@@ -35,7 +35,7 @@ contract XStore is Ownable {
         mapping(uint256 => address) requester;
         mapping(uint256 => bool) isEligible;
         mapping(uint256 => bool) shouldReserve;
-        bool flipEligOnBurn;
+        bool flipEligOnRedeem;
         bool negateEligibility;
         bool isFinalized;
         bool isClosed;
@@ -63,7 +63,7 @@ contract XStore is Ownable {
     event RequesterSet(uint256 indexed vaultId, uint256 id, address requester);
     event IsEligibleSet(uint256 indexed vaultId, uint256 id, bool _bool);
     event ShouldReserveSet(uint256 indexed vaultId, uint256 id, bool _bool);
-    event FlipEligOnBurnSet(uint256 indexed vaultId, bool _bool);
+    event flipEligOnRedeemSet(uint256 indexed vaultId, bool _bool);
     event NegateEligibilitySet(uint256 indexed vaultId, bool _bool);
     event IsFinalizedSet(uint256 indexed vaultId, bool _isFinalized);
     event IsClosedSet(uint256 indexed vaultId, bool _isClosed);
@@ -213,9 +213,9 @@ contract XStore is Ownable {
         return vault.shouldReserve[id];
     }
 
-    function flipEligOnBurn(uint256 vaultId) public view returns (bool) {
+    function flipEligOnRedeem(uint256 vaultId) public view returns (bool) {
         Vault storage vault = _getVault(vaultId);
-        return vault.flipEligOnBurn;
+        return vault.flipEligOnRedeem;
     }
 
     function negateEligibility(uint256 vaultId) public view returns (bool) {
@@ -371,13 +371,13 @@ contract XStore is Ownable {
         emit ShouldReserveSet(vaultId, id, _shouldReserve);
     }
 
-    function setFlipEligOnBurn(uint256 vaultId, bool flipElig)
+    function setFlipEligOnRedeem(uint256 vaultId, bool flipElig)
         public
         onlyOwner
     {
         Vault storage vault = _getVault(vaultId);
-        vault.flipEligOnBurn = flipElig;
-        emit FlipEligOnBurnSet(vaultId, flipElig);
+        vault.flipEligOnRedeem = flipElig;
+        emit flipEligOnRedeemSet(vaultId, flipElig);
     }
 
     function setNegateEligibility(uint256 vaultId, bool negateElig)

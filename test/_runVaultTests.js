@@ -265,7 +265,7 @@ const runVaultTests = async (
   const runIsEligibleFlip = async () => {
     console.log("Testing: isEligibleFlip...\n");
     await setup(nftx, asset, signers, eligIds);
-    await nftx.connect(owner).setFlipEligOnBurn(vaultId, true);
+    await nftx.connect(owner).setFlipEligOnRedeem(vaultId, true);
     let [aliceNFTs] = await holdingsOf(asset, eligIds, [alice]);
     let nftIds = aliceNFTs.slice(0, 1);
     await approveAndMint(nftx, asset, nftIds, alice, vaultId, 0);
@@ -275,7 +275,7 @@ const runVaultTests = async (
       JSON.stringify(newAliceNFTs)
     );
     await expectRevert(approveAndMint(nftx, asset, nftIds, alice, vaultId, 0));
-    await nftx.connect(owner).setFlipEligOnBurn(vaultId, false);
+    await nftx.connect(owner).setFlipEligOnRedeem(vaultId, false);
     await cleanup(nftx, asset, xToken, signers, vaultId, allNftIds);
   };
 
