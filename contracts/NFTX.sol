@@ -259,8 +259,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     function approveMintRequest(uint256 vaultId, uint256[] memory nftIds)
         public
         virtual
-        onlyOwner
     {
+        onlyPrivileged(vaultId);
         for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
             address requester = store.requester(vaultId, nftIds[i]);
             require(requester != address(0), "No request");
@@ -277,7 +277,6 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
             }
             store.xToken(vaultId).mint(requester, 10**18);
         }
-
     }
 
     function _mint(uint256 vaultId, uint256[] memory nftIds, bool isDualOp)
