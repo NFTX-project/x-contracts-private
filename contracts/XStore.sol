@@ -63,7 +63,7 @@ contract XStore is Ownable {
     event RequesterSet(uint256 indexed vaultId, uint256 id, address requester);
     event IsEligibleSet(uint256 indexed vaultId, uint256 id, bool _bool);
     event ShouldReserveSet(uint256 indexed vaultId, uint256 id, bool _bool);
-    event flipEligOnRedeemSet(uint256 indexed vaultId, bool _bool);
+    event FlipEligOnRedeemSet(uint256 indexed vaultId, bool _bool);
     event NegateEligibilitySet(uint256 indexed vaultId, bool _bool);
     event IsFinalizedSet(uint256 indexed vaultId, bool _isFinalized);
     event IsClosedSet(uint256 indexed vaultId, bool _isClosed);
@@ -377,7 +377,7 @@ contract XStore is Ownable {
     {
         Vault storage vault = _getVault(vaultId);
         vault.flipEligOnRedeem = flipElig;
-        emit flipEligOnRedeemSet(vaultId, flipElig);
+        emit FlipEligOnRedeemSet(vaultId, flipElig);
     }
 
     function setNegateEligibility(uint256 vaultId, bool negateElig)
