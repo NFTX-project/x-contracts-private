@@ -38,7 +38,7 @@ async function main() {
     const {vaultId, ids} = data[i];
     let j = 0;
     while (j < ids.length) {
-      let k = Math.min(j+1000, ids.length);
+      let k = Math.min(j+500, ids.length);
       const nftIds = punkAttr5Ids.slice(j, k);
       console.log(`i: ${i}, j: ${j}, k: ${k}\n`);
       await nftx.setIsEligible(vaultId, nftIds, true);
