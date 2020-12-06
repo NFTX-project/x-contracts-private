@@ -174,10 +174,13 @@ describe("NFTX", function () {
       const NFTXv2 = await ethers.getContractFactory("NFTXv2");
       // nftx = await upgrades.upgradeProxy(nftx.address, NFTXv2);
       const nftxV2Address = await upgrades.prepareUpgrade(nftx.address, NFTXv2);
-      await upgrades.admin.changeProxyAdmin(nftx.address, proxyAdmin._address);
-      const ProxyFactory = await getProxyFactory(bre, owner);
-      const proxy = ProxyFactory.attach(nftx.address);
-      await proxy.connect(proxyAdmin).upgradeTo(nftxV2Address);
+
+      const ProxyController = await ethers.getContractFactory("ProxyController");
+      const pc = await ProxyController.deploy(nftx.address);
+      await pc.deployed();
+      await upgrades.admin.changeProxyAdmin(nftx.address, pc.address);
+      
+      await pc.connect(owner).upgradeProxyTo(nftxV2Address);
       nftx = NFTXv2.attach(nftx.address);
 
       const nftId = aliceNFTs[0];
@@ -189,6 +192,7 @@ describe("NFTX", function () {
       await approveAndRedeem(nftx, xToken, aliceNFTs.length, alice, vaultId);
 
       await checkBalances(nftx, asset, xToken, [alice]);
+      await pc.connect(owner).changeProxyAdmin(proxyAdmin._address);
       await cleanup(nftx, asset, xToken, signers, vaultId, eligIds);
     };
 

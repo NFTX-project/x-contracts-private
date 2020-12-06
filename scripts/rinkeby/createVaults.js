@@ -121,27 +121,37 @@ async function main() {
     await nftx.createVault(fund.tokenAddress, addresses[fund.asset], false);
     console.log(`Vault created: ${fund.ticker}`);
 
+    await new Promise((resolve) => setTimeout(() => resolve(), 5000));
+    console.log('continuing...');
+
     if (fund.flipEligOnRedeem) {
       await nftx.setFlipEligOnRedeem(i, true, {
         gasLimit: "9500000",
       });
       console.log(`${fund.ticker} flipEligOnRedeem set to true`);
+
+      await new Promise((resolve) => setTimeout(() => resolve(), 5000));
+    console.log('continuing...');
     }
     if (fund.negateElig == false) {
       await nftx.setNegateEligibility(i, false, {
         gasLimit: "9500000",
       });
       console.log(`${fund.ticker} negateEligibility set to false`);
+
+      await new Promise((resolve) => setTimeout(() => resolve(), 5000));
+    console.log('continuing...');
     } else {
       await nftx.finalizeVault(i, {
         gasLimit: "9500000",
       });
+      console.log(`${fund.ticker} finalized`);
+
+      await new Promise((resolve) => setTimeout(() => resolve(), 5000));
+    console.log('continuing...');
     }
     console.log("");
   }
-
-  const numVaults = await xStore.vaultsLength();
-  console.log("Num vaults:", numVaults);
 
   console.log("-- DONE --");
 }

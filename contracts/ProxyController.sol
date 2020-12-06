@@ -21,7 +21,7 @@ contract ProxyController is Ownable {
         return nftxProxy.admin();
     }
 
-    function updateImplAddress() public {
+    function fetchImplAddress() public {
         implAddress = nftxProxy.implementation();
     }
 
@@ -29,4 +29,7 @@ contract ProxyController is Ownable {
         nftxProxy.changeAdmin(newAdmin);
     }
 
+    function upgradeProxyTo(address newImpl) public onlyOwner {
+        nftxProxy.upgradeTo(newImpl);
+    }
 }
