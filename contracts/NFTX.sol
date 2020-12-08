@@ -230,6 +230,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         nonReentrant
     {
         onlyOwnerIfPaused(1);
+        require(store.allowMintRequests(vaultId), "Not allowed");
         // TODO: implement bounty + fees
         for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
             require(
@@ -489,6 +490,14 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
             store.setIsEligible(vaultId, nftIds[i], _boolean);
         }
+    }
+
+    function setAllowMintRequests(uint256 vaultId, bool isAllowed)
+        public
+        virtual
+    {
+        onlyPrivileged(vaultId);
+        store.setAllowMintRequests(vaultId, isAllowed);
     }
 
     function setFlipEligOnRedeem(uint256 vaultId, bool flipElig)

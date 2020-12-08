@@ -12,4 +12,15 @@ contract NFTXv2 is NFTX {
     {
         store.nft(vaultId).transferFrom(address(this), to, tokenId);
     }
+
+    function createVault(
+        address _xTokenAddress,
+        address _assetAddress,
+        bool _isD2Vault
+    ) public virtual override nonReentrant returns (uint256) {
+        if (_xTokenAddress != _assetAddress && _isD2Vault) {
+            return 0;
+        }
+        return 0;
+    }
 }

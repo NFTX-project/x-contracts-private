@@ -35,6 +35,7 @@ contract XStore is Ownable {
         mapping(uint256 => address) requester;
         mapping(uint256 => bool) isEligible;
         mapping(uint256 => bool) shouldReserve;
+        bool allowMintRequests;
         bool flipEligOnRedeem;
         bool negateEligibility;
         bool isFinalized;
@@ -63,6 +64,7 @@ contract XStore is Ownable {
     event RequesterSet(uint256 indexed vaultId, uint256 id, address requester);
     event IsEligibleSet(uint256 indexed vaultId, uint256 id, bool _bool);
     event ShouldReserveSet(uint256 indexed vaultId, uint256 id, bool _bool);
+    event AllowMintRequestsSet(uint256 indexed vaultId, bool isAllowed);
     event FlipEligOnRedeemSet(uint256 indexed vaultId, bool _bool);
     event NegateEligibilitySet(uint256 indexed vaultId, bool _bool);
     event IsFinalizedSet(uint256 indexed vaultId, bool _isFinalized);
@@ -211,6 +213,11 @@ contract XStore is Ownable {
     {
         Vault storage vault = _getVault(vaultId);
         return vault.shouldReserve[id];
+    }
+
+    function allowMintRequests(uint256 vaultId) public view returns (bool) {
+        Vault storage vault = _getVault(vaultId);
+        return vault.allowMintRequests;
     }
 
     function flipEligOnRedeem(uint256 vaultId) public view returns (bool) {
@@ -369,6 +376,15 @@ contract XStore is Ownable {
         Vault storage vault = _getVault(vaultId);
         vault.shouldReserve[id] = _shouldReserve;
         emit ShouldReserveSet(vaultId, id, _shouldReserve);
+    }
+
+    function setAllowMintRequests(uint256 vaultId, bool isAllowed)
+        public
+        onlyOwner
+    {
+        Vault storage vault = _getVault(vaultId);
+        vault.allowMintRequests = isAllowed;
+        emit AllowMintRequestsSet(vaultId, isAllowed);
     }
 
     function setFlipEligOnRedeem(uint256 vaultId, bool flipElig)

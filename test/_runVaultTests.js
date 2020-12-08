@@ -286,6 +286,7 @@ const runVaultTests = async (
   const runRequestMint = async () => {
     console.log("Testing requestMint...\n");
     await setup(nftx, asset, signers, allNftIds);
+    await nftx.connect(owner).setAllowMintRequests(vaultId, true);
     let [aliceNFTs] = await holdingsOf(asset, notEligIds, [alice]);
     let nftIds = aliceNFTs.slice(0, 2);
     await expectRevert(approveAndMint(nftx, asset, nftIds, alice, vaultId, 0));
@@ -305,6 +306,7 @@ const runVaultTests = async (
     await approveAndRedeem(nftx, xToken, nftIds.length, alice, vaultId, 0);
     await approveAndMint(nftx, asset, nftIds, alice, vaultId, 0);
     await approveAndRedeem(nftx, xToken, nftIds.length, alice, vaultId, 0);
+    await nftx.connect(owner).setAllowMintRequests(vaultId, false);
     await cleanup(nftx, asset, xToken, signers, vaultId, allNftIds);
   };
 

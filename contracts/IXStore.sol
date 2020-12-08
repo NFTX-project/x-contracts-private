@@ -31,6 +31,7 @@ interface IXStore {
         mapping(uint256 => address) requester;
         mapping(uint256 => bool) isEligible;
         mapping(uint256 => bool) shouldReserve;
+        bool allowMintRequests;
         bool flipEligOnRedeem;
         bool negateEligibility;
         bool isFinalized;
@@ -102,6 +103,8 @@ interface IXStore {
         view
         returns (bool);
 
+    function allowMintRequests(uint256 vaultId) external view returns (bool);
+
     function flipEligOnRedeem(uint256 vaultId) external view returns (bool);
 
     function negateEligibility(uint256 vaultId) external view returns (bool);
@@ -158,6 +161,8 @@ interface IXStore {
 
     function setShouldReserve(uint256 vaultId, uint256 id, bool _shouldReserve)
         external;
+
+    function setAllowMintRequests(uint256 vaultId, bool isAllowed) external;
 
     function setFlipEligOnRedeem(uint256 vaultId, bool flipElig) external;
 
