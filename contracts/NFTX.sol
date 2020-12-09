@@ -15,20 +15,24 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    event NewVault(uint256 vaultId, address sender);
+    event NewVault(uint256 indexed vaultId, address sender);
     event Mint(
-        uint256 vaultId,
+        uint256 indexed vaultId,
         uint256[] nftIds,
         uint256 d2Amount,
         address sender
     );
     event Redeem(
-        uint256 vaultId,
+        uint256 indexed vaultId,
         uint256[] nftIds,
         uint256 d2Amount,
         address sender
     );
-    event MintRequested(uint256 vaultId, uint256[] nftIds, address sender);
+    event MintRequested(
+        uint256 indexed vaultId,
+        uint256[] nftIds,
+        address sender
+    );
 
     IXStore public store;
 

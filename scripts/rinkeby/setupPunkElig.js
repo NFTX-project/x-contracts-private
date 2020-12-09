@@ -22,24 +22,24 @@ async function main() {
   const data = [
     {
       vaultId: 1,
-      ids: punkAttr4Ids
+      ids: punkAttr4Ids,
     },
     {
       vaultId: 2,
-      ids: punkAttr5Ids
+      ids: punkAttr5Ids,
     },
     {
       vaultId: 3,
-      ids: punkZombieIds
-    }
+      ids: punkZombieIds,
+    },
   ];
 
   for (let i = 0; i < data.length; i++) {
-    const {vaultId, ids} = data[i];
+    const { vaultId, ids } = data[i];
     let j = 0;
     while (j < ids.length) {
-      let k = Math.min(j+500, ids.length);
-      const nftIds = punkAttr5Ids.slice(j, k);
+      let k = Math.min(j + 150, ids.length);
+      const nftIds = ids.slice(j, k);
       console.log(`i: ${i}, j: ${j}, k: ${k}\n`);
       await nftx.setIsEligible(vaultId, nftIds, true);
       j = k;
@@ -49,7 +49,7 @@ async function main() {
     });
     console.log(`Vault ${vaultId} finalized\n`);
   }
-  
+
   console.log("-- DONE --");
 }
 
