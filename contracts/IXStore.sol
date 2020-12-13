@@ -22,7 +22,7 @@ interface IXStore {
 
     struct Vault {
         address xTokenAddress;
-        address assetAddress;
+        address nftAddress;
         address manager;
         IXToken xToken;
         IERC721 nft;
@@ -56,7 +56,7 @@ interface IXStore {
 
     function xTokenAddress(uint256 vaultId) external view returns (address);
 
-    function assetAddress(uint256 vaultId) external view returns (address);
+    function nftAddress(uint256 vaultId) external view returns (address);
 
     function manager(uint256 vaultId) external view returns (address);
 

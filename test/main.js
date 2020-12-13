@@ -175,11 +175,13 @@ describe("NFTX", function () {
       // nftx = await upgrades.upgradeProxy(nftx.address, NFTXv2);
       const nftxV2Address = await upgrades.prepareUpgrade(nftx.address, NFTXv2);
 
-      const ProxyController = await ethers.getContractFactory("ProxyController");
+      const ProxyController = await ethers.getContractFactory(
+        "ProxyController"
+      );
       const pc = await ProxyController.deploy(nftx.address);
       await pc.deployed();
       await upgrades.admin.changeProxyAdmin(nftx.address, pc.address);
-      
+
       await pc.connect(owner).upgradeProxyTo(nftxV2Address);
       nftx = NFTXv2.attach(nftx.address);
 

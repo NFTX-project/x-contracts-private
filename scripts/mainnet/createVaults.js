@@ -1,6 +1,6 @@
 const { ethers, upgrades } = require("@nomiclabs/buidler");
 
-const addresses = require("../../addresses/rinkeby.json");
+const addresses = require("../../addresses/mainnet.json");
 
 async function main() {
   const [deployer] = await ethers.getSigners();

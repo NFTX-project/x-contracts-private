@@ -588,12 +588,16 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
 
     function finalizeVault(uint256 vaultId) public virtual {
         onlyPrivileged(vaultId);
-        require(!store.isFinalized(vaultId), "Already finalized");
-        store.setIsFinalized(vaultId, true);
+        if (!store.isFinalized(vaultId)) {
+            store.setIsFinalized(vaultId, true);
+        }
     }
 
     function closeVault(uint256 vaultId) public virtual {
         onlyPrivileged(vaultId);
+        if (!store.isFinalized(vaultId)) {
+            store.setIsFinalized(vaultId, true);
+        }
         store.setIsClosed(vaultId, true);
     }
 
