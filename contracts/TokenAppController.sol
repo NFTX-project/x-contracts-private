@@ -8,34 +8,27 @@ import "./ITokenManager.sol";
 contract TokenAppController is Ownable {
     ITokenManager public tokenManager;
 
-    uint256 public num;
-
-    constructor() public {
+    function initTAC() internal {
         initOwnable();
     }
 
-    function addXToNum(uint256 x) public returns (uint256) {
-        num = num + x;
-        return num;
-    }
-
-    function setTokenManager(address tokenManagerAddress) public onlyOwner {
+    function setTokenManager(address tokenManagerAddress) internal onlyOwner {
         tokenManager = ITokenManager(tokenManagerAddress);
     }
 
-    function callMint(address _receiver, uint256 _amount) public onlyOwner {
+    function callMint(address _receiver, uint256 _amount) internal onlyOwner {
         tokenManager.mint(_receiver, _amount);
     }
 
-    function callIssue(uint256 _amount) public onlyOwner {
+    function callIssue(uint256 _amount) internal onlyOwner {
         tokenManager.issue(_amount);
     }
 
-    function callAssign(address _receiver, uint256 _amount) public onlyOwner {
+    function callAssign(address _receiver, uint256 _amount) internal onlyOwner {
         tokenManager.assign(_receiver, _amount);
     }
 
-    function callBurn(address _holder, uint256 _amount) public onlyOwner {
+    function callBurn(address _holder, uint256 _amount) internal onlyOwner {
         tokenManager.burn(_holder, _amount);
     }
 
@@ -46,7 +39,7 @@ contract TokenAppController is Ownable {
         uint64 _cliff,
         uint64 _vested,
         bool _revokable
-    ) public returns (uint256) {
+    ) internal returns (uint256) {
         return
             tokenManager.assignVested(
                 _receiver,
@@ -59,7 +52,7 @@ contract TokenAppController is Ownable {
     }
 
     function callRevokeVesting(address _holder, uint256 _vestingId)
-        public
+        internal
         onlyOwner
     {
         tokenManager.revokeVesting(_holder, _vestingId);
