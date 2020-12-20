@@ -7,13 +7,15 @@ import "./ITokenManager.sol";
 
 contract TokenAppController is Ownable {
     ITokenManager public tokenManager;
+    address public tokenManagerAddr;
 
     function initTAC() internal {
         initOwnable();
     }
 
     function setTokenManager(address tokenManagerAddress) internal onlyOwner {
-        tokenManager = ITokenManager(tokenManagerAddress);
+        tokenManagerAddr = tokenManagerAddress;
+        tokenManager = ITokenManager(tokenManagerAddr);
     }
 
     function callMint(address _receiver, uint256 _amount) internal onlyOwner {
