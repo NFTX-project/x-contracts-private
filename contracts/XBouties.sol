@@ -34,6 +34,7 @@ contract XBounties is TokenAppController, ReentrancyGuard {
     event BountyFilled(
         uint256 bountyId,
         uint256 nftxAmount,
+        uint256 assetAmount,
         address sender,
         uint64 start,
         uint64 cliff,
@@ -348,6 +349,7 @@ contract XBounties is TokenAppController, ReentrancyGuard {
         emit BountyFilled(
             bountyId,
             willGive,
+            willTake,
             msg.sender,
             _start,
             cliff,
