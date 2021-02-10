@@ -12,65 +12,19 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
+  const hashmaskAddress = "0xC2C747E0F7004F9E8817Db2ca4997657a7746928";
+
   const XToken = await ethers.getContractFactory("XToken");
-  const xStore = await ethers.getContractAt("XStore", addresses.xStore);
 
-  const nftx = await ethers.getContractAt("NFTX", addresses.nftx);
+  const fundToken = await XToken.deploy("Cubes", "CUBES", addresses.nftx);
+  await fundToken.deployed();
+  console.log(`Token deployed to ${fundToken.address}`);
 
-  const funds = [
-    {
-      ticker: "PUNK-FEMALE",
-      name: "Punk-Female",
-      asset: "cryptopunks",
-      negateElig: false,
-    },
-  ];
+  // const xStore = await ethers.getContractAt("XStore", addresses.xStore);
 
-  for (let i = 0; i < funds.length; i++) {
-    const fund = funds[i];
-    const fundToken = await XToken.deploy(
-      fund.name,
-      fund.ticker,
-      addresses.nftx
-    );
-    await fundToken.deployed();
-    console.log(`${fund.ticker} deployed to ${fundToken.address}`);
-    funds[i].tokenAddress = fundToken.address;
+  // const nftx = await ethers.getContractAt("NFTX", addresses.nftx);
 
-    await nftx.createVault(fund.tokenAddress, addresses[fund.asset], false);
-    console.log(`Vault created: ${fund.ticker}`);
-
-    await new Promise((resolve) => setTimeout(() => resolve(), 6000));
-    console.log("continuing...");
-
-    if (fund.flipEligOnRedeem) {
-      await nftx.setFlipEligOnRedeem(i, true, {
-        gasLimit: "9500000",
-      });
-      console.log(`${fund.ticker} flipEligOnRedeem set to true`);
-
-      await new Promise((resolve) => setTimeout(() => resolve(), 6000));
-      console.log("continuing...");
-    }
-    if (fund.negateElig == false) {
-      await nftx.setNegateEligibility(i, false, {
-        gasLimit: "9500000",
-      });
-      console.log(`${fund.ticker} negateEligibility set to false`);
-
-      await new Promise((resolve) => setTimeout(() => resolve(), 6000));
-      console.log("continuing...");
-    } else {
-      await nftx.finalizeVault(i, {
-        gasLimit: "9500000",
-      });
-      console.log(`${fund.ticker} finalized`);
-
-      await new Promise((resolve) => setTimeout(() => resolve(), 6000));
-      console.log("continuing...");
-    }
-    console.log("");
-  }
+  // await nftx.createVault(fundToken.address, hashmaskAddress, false);
 
   console.log("-- DONE --");
 }
