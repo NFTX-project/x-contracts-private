@@ -449,19 +449,23 @@
     safe-buffer "^5.1.1"
     util.promisify "^1.0.0"
 
-"@openzeppelin/buidler-upgrades@^1.2.1":
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/@openzeppelin/buidler-upgrades/-/buidler-upgrades-1.2.1.tgz#b7ff16562d254c00b2f1e036d1375b421b5b86a3"
+"@openzeppelin/buidler-upgrades@^1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/buidler-upgrades/-/buidler-upgrades-1.2.2.tgz#e21e9f3854aafaea9cd4664e7787edf7b1f5b0fa"
   dependencies:
-    "@openzeppelin/upgrades-core" "^1.2.0"
+    "@openzeppelin/upgrades-core" "^1.4.2"
+
+"@openzeppelin/contracts-upgradeable@^3.4.0":
+  version "3.4.0"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-3.4.0.tgz#7674c73c643a509f1b90c509e3e72fe9aae02aeb"
 
 "@openzeppelin/contracts@^3.2.0":
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-3.2.0.tgz#3e6b3a7662d8ed64271ade96ef42655db983fd9d"
 
-"@openzeppelin/upgrades-core@^1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@openzeppelin/upgrades-core/-/upgrades-core-1.2.0.tgz#82ac78b010f0a59deb5ad5b1b4fac4fd2fecb265"
+"@openzeppelin/upgrades-core@^1.4.2":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/upgrades-core/-/upgrades-core-1.5.0.tgz#0dc3ddc5386dfd769b46713c902de9f0e8a59d5d"
   dependencies:
     bn.js "^5.1.2"
     cbor "^5.0.2"
@@ -472,7 +476,7 @@
     fp-ts "^2.7.1"
     io-ts "^2.2.9"
     proper-lockfile "^4.1.1"
-    solidity-ast "^0.4.4"
+    solidity-ast "^0.4.15"
 
 "@resolver-engine/core@^0.3.3":
   version "0.3.3"
@@ -6409,9 +6413,9 @@ solc@^0.6.3:
     semver "^5.5.0"
     tmp "0.0.33"
 
-solidity-ast@^0.4.4:
-  version "0.4.12"
-  resolved "https://registry.yarnpkg.com/solidity-ast/-/solidity-ast-0.4.12.tgz#a3b4dabc73231f9c895d8a22c07f176355952382"
+solidity-ast@^0.4.15:
+  version "0.4.17"
+  resolved "https://registry.yarnpkg.com/solidity-ast/-/solidity-ast-0.4.17.tgz#e857b4f64466f3eb94da78fe961c0d256c84b228"
 
 sort-keys-length@^1.0.0:
   version "1.0.1"

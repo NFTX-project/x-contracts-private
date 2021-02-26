@@ -16,11 +16,12 @@ async function main() {
     addresses.proxyController
   );
 
-  const NFTXv5 = await ethers.getContractFactory("NFTXv5");
+  console.log("A");
+  const NFTXv6 = await ethers.getContractFactory("NFTXv6");
+  console.log("B");
+  const nftxV6Address = await upgrades.prepareUpgrade(addresses.nftx, NFTXv6);
 
-  const nftxV5Address = await upgrades.prepareUpgrade(addresses.nftx, NFTXv5);
-
-  console.log("NFTXv5 Implementation:", nftxV5Address);
+  console.log("NFTXv6 Implementation:", nftxV6Address);
 
   console.log(
     "\nNow go and call proxyController.upgradeProxyTo(...) from Aragon Agent\n"
