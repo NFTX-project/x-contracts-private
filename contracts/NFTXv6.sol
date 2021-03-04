@@ -18,6 +18,12 @@ contract NFTXv6 is NFTXv5 {
         override
     {}
 
+    /* function setSupplierBounty(uint256 vaultId, uint256 ethMax, uint256 length)
+        public
+        virtual
+        override
+    {} */
+
     /* IXTokenFactory public xTokenFactory; */
 
     /* function setXTokenFactoryAddress(address a) public onlyOwner {
@@ -60,7 +66,7 @@ contract NFTXv6 is NFTXv5 {
         return vaultId;
     }
 
-    function redeemD1For(
+    /* function redeemD1For(
         uint256 vaultId,
         uint256 amount,
         uint256[] memory nftIds,
@@ -113,5 +119,6 @@ contract NFTXv6 is NFTXv5 {
                 nftId
             );
         }
-    }
+    } */
+
 }
