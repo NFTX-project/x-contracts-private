@@ -22,7 +22,7 @@ const {
 describe("NFTX", function () {
   this.timeout(0);
   it("Should run as expected", async function () {
-    console.log("0x0");
+    console.log('');
 
     ///////////////////////////////////////////////////////////////
     // Initialize XStore + NFTX ///////////////////////////////////
@@ -37,7 +37,6 @@ describe("NFTX", function () {
     await nftx.deployed();
     await nftx.initialize(xStore.address);
     await xStore.transferOwnership(nftx.address);
-
     const signers = await ethers.getSigners();
     const [owner, misc, alice, bob, carol, dave, eve, proxyAdmin] = signers;
 
@@ -48,6 +47,7 @@ describe("NFTX", function () {
     ///////////////
 
     const runNftBasic = async () => {
+      console.log('aa')
       const { asset, xToken, vaultId } = await initializeAssetTokenVault(
         nftx,
         signers,
@@ -56,6 +56,7 @@ describe("NFTX", function () {
         allNftIds,
         false
       );
+      console.log('aa')
       const eligIds = getIntArray(0, 20);
       await runVaultTests(
         nftx,
@@ -202,10 +203,10 @@ describe("NFTX", function () {
     ////////////////////////////////////////////////////////////////////
 
     await runNftBasic();
-    await runNftSpecial();
-    await runNftSpecial2();
-    await runD2Vault();
-    await runContractUpgrade();
+    // await runNftSpecial();
+    // await runNftSpecial2();
+    // await runD2Vault();
+    // await runContractUpgrade();
 
     ////////////////////////////////////////////////////////////////////
     // Initialize XController... ///////////////////////////////////////
