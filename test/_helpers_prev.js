@@ -1,3 +1,4 @@
+
 const { BigNumber } = require("ethers");
 
 const BASE = BigNumber.from(10).pow(18);
@@ -37,10 +38,8 @@ const initializeAssetTokenVault = async (
       const Erc20 = await ethers.getContractFactory("D2Token");
       asset = await Erc20.deploy(name, name.toUpperCase());
     } else {
-      // const Erc721 = await ethers.getContractFactory("ERC721");
-      // asset = await Erc721.deploy(name, name.toUpperCase());
-      const Erc1155 = await ethers.getContractFactory("ERC1155");
-      asset = await Erc1155.deploy("0x00");
+      const Erc721 = await ethers.getContractFactory("ERC721");
+      asset = await Erc721.deploy(name, name.toUpperCase());
     }
     await asset.deployed();
   } else {
@@ -54,9 +53,6 @@ const initializeAssetTokenVault = async (
   const vaultId = receipt.events
     .find((elem) => elem.event === "NewVault")
     .args[0].toString();
-  if (!isD2) {
-    await nftx.connect(owner).setIs1155(vaultId, true);
-  }
   await nftx.connect(owner).finalizeVault(vaultId);
   if (isD2) {
     if (typeof assetNameOrExistingContract == "string") {
@@ -82,7 +78,7 @@ const transferNFTs = async (nftx, nft, nftIds, sender, recipient) => {
   for (let i = 0; i < nftIds.length; i++) {
     await nft
       .connect(sender)
-      .safeTransferFrom(sender._address, recipient._address, nftIds[i], 1, "0x00");
+      .transferFrom(sender._address, recipient._address, nftIds[i]);
   }
 };
 
@@ -127,7 +123,7 @@ const cleanup = async (nftx, nft, token, signers, vaultId, eligIds) => {
       ); */
       await nft
         .connect(signer)
-        .safeTransferFrom(signer._address, misc._address, nftId, 1, "0x00");
+        .transferFrom(signer._address, misc._address, nftId);
     } catch (err) {
       // console.log("catch:", i, "continuing...");
       break;
@@ -157,8 +153,8 @@ const holdingsOf = async (nft, nftIds, accounts, isD2) => {
     const list = [];
     for (let _i = 0; _i < nftIds.length; _i++) {
       const id = nftIds[_i];
-      const nftOwnerBalance = await nft.balanceOf(account._address, id);
-      if (nftOwnerBalance > 0) {
+      const nftOwner = await nft.ownerOf(id);
+      if (nftOwner === account._address) {
         list.push(id);
       }
     }
@@ -208,10 +204,7 @@ const approveEach = async (nft, nftIds, signer, to) => {
 };
 
 const approveAndMint = async (nftx, nft, nftIds, signer, vaultId, value) => {
-  // await approveEach(nft, nftIds, signer, nftx.address);
-  console.log('----1')
-  await nft.connect(signer).setApprovalForAll(nftx.address, true);
-  console.log('----2')
+  await approveEach(nft, nftIds, signer, nftx.address);
   await nftx.connect(signer).mint(vaultId, nftIds, 0, { value: value });
 };
 

@@ -44,8 +44,9 @@ const runVaultTests = async (
     console.log("Testing: mint, redeem...\n");
     await setup(nftx, asset, signers, eligIds);
     let [aliceNFTs, bobNFTs] = await holdingsOf(asset, eligIds, [alice, bob]);
-
+    console.log('----A')
     await approveAndMint(nftx, asset, aliceNFTs, alice, vaultId, 0);
+    console.log('----B')
     await approveAndMint(nftx, asset, bobNFTs, bob, vaultId, 0);
     await checkBalances(nftx, asset, xToken, signers.slice(2));
     await approveAndRedeem(nftx, xToken, aliceNFTs.length, alice, vaultId);
@@ -82,7 +83,8 @@ const runVaultTests = async (
     let [aliceNFTs, bobNFTs] = await holdingsOf(asset, eligIds, [alice, bob]);
     await approveAndMint(nftx, asset, aliceNFTs, alice, vaultId, 0);
 
-    await approveEach(asset, bobNFTs, bob, nftx.address);
+    // await approveEach(asset, bobNFTs, bob, nftx.address);
+    await asset.setApprovalForAll(nftx.address, true);
     await nftx.connect(bob).mintAndRedeem(vaultId, bobNFTs);
     await checkBalances(nftx, asset, xToken, signers.slice(2));
 

@@ -22,7 +22,7 @@ const {
 describe("NFTX", function () {
   this.timeout(0);
   it("Should run as expected", async function () {
-    console.log("");
+    console.log("0x0");
 
     ///////////////////////////////////////////////////////////////
     // Initialize XStore + NFTX ///////////////////////////////////
@@ -32,11 +32,10 @@ describe("NFTX", function () {
     const xStore = await XStore.deploy();
     await xStore.deployed();
 
-    const Nftx = await ethers.getContractFactory("NFTX");
-    let nftx = await upgrades.deployProxy(Nftx, [xStore.address], {
-      initializer: "initialize",
-    });
+    const NFTXv7 = await ethers.getContractFactory("NFTXv7");
+    let nftx = await NFTXv7.deploy();
     await nftx.deployed();
+    await nftx.initialize(xStore.address);
     await xStore.transferOwnership(nftx.address);
 
     const signers = await ethers.getSigners();
