@@ -471,13 +471,6 @@ interface IERC20 {
     );
 }
 
-
-// File contracts/solidity/contracts-v1/IXToken.sol
-
-
-
-pragma solidity 0.6.8;
-
 interface IXToken is IERC20 {
     function owner() external returns (address);
 
@@ -497,21 +490,6 @@ interface IXToken is IERC20 {
 }
 
 
-// File contracts/solidity/contracts-v1/IERC165.sol
-
-
-
-pragma solidity ^0.6.0;
-
-/**
- * @dev Interface of the ERC165 standard, as defined in the
- * https://eips.ethereum.org/EIPS/eip-165[EIP].
- *
- * Implementers can declare support of contract interfaces, which can then be
- * queried by others ({ERC165Checker}).
- *
- * For an implementation, see {ERC165}.
- */
 interface IERC165 {
     /**
      * @dev Returns true if this contract implements the interface defined by
@@ -524,16 +502,6 @@ interface IERC165 {
     function supportsInterface(bytes4 interfaceId) external view returns (bool);
 }
 
-
-// File contracts/solidity/contracts-v1/IERC721.sol
-
-
-
-pragma solidity ^0.6.2;
-
-/**
- * @dev Required interface of an ERC721 compliant contract.
- */
 interface IERC721 is IERC165 {
     /**
      * @dev Emitted when `tokenId` token is transferred from `from` to `to`.
@@ -1093,18 +1061,6 @@ library EnumerableSet {
     }
 }
 
-
-// File contracts/solidity/contracts-v1/IXStore.sol
-
-
-
-pragma solidity 0.6.8;
-
-
-
-
-
-
 interface IXStore {
     struct FeeParams {
         uint256 ethBase;
@@ -1618,10 +1574,13 @@ library SafeERC20 {
 pragma solidity 0.6.8;
 
 
-
-
-
-
+interface KittyCoreAlt {
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _tokenId
+    ) external;
+}
 
 
 contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
@@ -1847,22 +1806,19 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         nonReentrant
     {
         onlyOwnerIfPaused(1);
-        require(store.allowMintRequests(vaultId), "Not allowed");
-        // TODO: implement bounty + fees
+        require(store.allowMintRequests(vaultId), "1");
         for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
-            require(
-                store.nft(vaultId).ownerOf(nftIds[i]) != address(this),
-                "Already owner"
-            );
-            store.nft(vaultId).safeTransferFrom(
-                msg.sender,
-                address(this),
-                nftIds[i]
-            );
-            require(
-                store.nft(vaultId).ownerOf(nftIds[i]) == address(this),
-                "Not received"
-            );
+            if (vaultId > 6 && vaultId < 10) {
+                KittyCoreAlt kittyCoreAlt =
+                    KittyCoreAlt(store.nftAddress(vaultId));
+                kittyCoreAlt.transferFrom(msg.sender, address(this), nftIds[i]);
+            } else {
+                store.nft(vaultId).safeTransferFrom(
+                    msg.sender,
+                    address(this),
+                    nftIds[i]
+                );
+            }
             store.setRequester(vaultId, nftIds[i], msg.sender);
         }
         emit MintRequested(vaultId, nftIds, msg.sender);
@@ -1879,11 +1835,16 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
                 "Not requester"
             );
             store.setRequester(vaultId, nftIds[i], address(0));
-            store.nft(vaultId).safeTransferFrom(
-                address(this),
-                msg.sender,
-                nftIds[i]
-            );
+            if (vaultId > 6 && vaultId < 10) {
+                KittyCore kittyCore = KittyCore(store.nftAddress(vaultId));
+                kittyCore.transfer(msg.sender, nftIds[i]);
+            } else {
+                store.nft(vaultId).safeTransferFrom(
+                    address(this),
+                    msg.sender,
+                    nftIds[i]
+                );
+            }
         }
     }
 
@@ -2490,62 +2451,6 @@ contract NFTXv6 is NFTXv5 {
         emit NewVault(vaultId, msg.sender);
         return vaultId;
     }
-
-    /* function redeemD1For(
-        uint256 vaultId,
-        uint256 amount,
-        uint256[] memory nftIds,
-        address recipient
-    ) public payable virtual nonReentrant {
-        onlyOwnerIfPaused(2);
-        _redeemHelperFor(vaultId, nftIds, false, recipient);
-        emit Redeem(vaultId, nftIds, 0, msg.sender);
-    }
-
-    function _redeemHelper(
-        uint256 vaultId,
-        uint256[] memory nftIds,
-        bool isDualOp
-    ) internal virtual override {
-        _redeemHelperFor(vaultId, nftIds, isDualOp, msg.sender);
-    }
-
-    function _redeemHelperFor(
-        uint256 vaultId,
-        uint256[] memory nftIds,
-        bool isDualOp,
-        address recipient
-    ) internal virtual {
-        if (!isDualOp) {
-            store.xToken(vaultId).burnFrom(
-                msg.sender,
-                nftIds.length.mul(10**18)
-            );
-        }
-        for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
-            uint256 nftId = nftIds[i];
-            require(
-                store.holdingsContains(vaultId, nftId) ||
-                    store.reservesContains(vaultId, nftId),
-                "NFT not in vault"
-            );
-            if (store.holdingsContains(vaultId, nftId)) {
-                store.holdingsRemove(vaultId, nftId);
-            } else {
-                store.reservesRemove(vaultId, nftId);
-            }
-            if (store.flipEligOnRedeem(vaultId)) {
-                bool isElig = store.isEligible(vaultId, nftId);
-                store.setIsEligible(vaultId, nftId, !isElig);
-            }
-            store.nft(vaultId).safeTransferFrom(
-                address(this),
-                recipient,
-                nftId
-            );
-        }
-    } */
-
 }
 
 
@@ -2562,101 +2467,17 @@ pragma solidity ^0.6.2;
  * _Available since v3.1._
  */
 interface IERC1155 is IERC165 {
-    /**
-     * @dev Emitted when `value` tokens of token type `id` are transferred from `from` to `to` by `operator`.
-     */
     event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);
-
-    /**
-     * @dev Equivalent to multiple {TransferSingle} events, where `operator`, `from` and `to` are the same for all
-     * transfers.
-     */
     event TransferBatch(address indexed operator, address indexed from, address indexed to, uint256[] ids, uint256[] values);
-
-    /**
-     * @dev Emitted when `account` grants or revokes permission to `operator` to transfer their tokens, according to
-     * `approved`.
-     */
     event ApprovalForAll(address indexed account, address indexed operator, bool approved);
-
-    /**
-     * @dev Emitted when the URI for token type `id` changes to `value`, if it is a non-programmatic URI.
-     *
-     * If an {URI} event was emitted for `id`, the standard
-     * https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions[guarantees] that `value` will equal the value
-     * returned by {IERC1155MetadataURI-uri}.
-     */
     event URI(string value, uint256 indexed id);
-
-    /**
-     * @dev Returns the amount of tokens of token type `id` owned by `account`.
-     *
-     * Requirements:
-     *
-     * - `account` cannot be the zero address.
-     */
     function balanceOf(address account, uint256 id) external view returns (uint256);
-
-    /**
-     * @dev xref:ROOT:erc1155.adoc#batch-operations[Batched] version of {balanceOf}.
-     *
-     * Requirements:
-     *
-     * - `accounts` and `ids` must have the same length.
-     */
     function balanceOfBatch(address[] calldata accounts, uint256[] calldata ids) external view returns (uint256[] memory);
-
-    /**
-     * @dev Grants or revokes permission to `operator` to transfer the caller's tokens, according to `approved`,
-     *
-     * Emits an {ApprovalForAll} event.
-     *
-     * Requirements:
-     *
-     * - `operator` cannot be the caller.
-     */
     function setApprovalForAll(address operator, bool approved) external;
-
-    /**
-     * @dev Returns true if `operator` is approved to transfer ``account``'s tokens.
-     *
-     * See {setApprovalForAll}.
-     */
     function isApprovedForAll(address account, address operator) external view returns (bool);
-
-    /**
-     * @dev Transfers `amount` tokens of token type `id` from `from` to `to`.
-     *
-     * Emits a {TransferSingle} event.
-     *
-     * Requirements:
-     *
-     * - `to` cannot be the zero address.
-     * - If the caller is not `from`, it must be have been approved to spend ``from``'s tokens via {setApprovalForAll}.
-     * - `from` must have a balance of tokens of type `id` of at least `amount`.
-     * - If `to` refers to a smart contract, it must implement {IERC1155Receiver-onERC1155Received} and return the
-     * acceptance magic value.
-     */
     function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes calldata data) external;
-
-    /**
-     * @dev xref:ROOT:erc1155.adoc#batch-operations[Batched] version of {safeTransferFrom}.
-     *
-     * Emits a {TransferBatch} event.
-     *
-     * Requirements:
-     *
-     * - `ids` and `amounts` must have the same length.
-     * - If `to` refers to a smart contract, it must implement {IERC1155Receiver-onERC1155BatchReceived} and return the
-     * acceptance magic value.
-     */
     function safeBatchTransferFrom(address from, address to, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external;
 }
-
-
-// File contracts/solidity/contracts-v1/IERC1155Receiver.sol
-
-
 
 pragma solidity ^0.6.0;
 
@@ -2664,20 +2485,6 @@ pragma solidity ^0.6.0;
  * _Available since v3.1._
  */
 interface IERC1155Receiver is IERC165 {
-
-    /**
-        @dev Handles the receipt of a single ERC1155 token type. This function is
-        called at the end of a `safeTransferFrom` after the balance has been updated.
-        To accept the transfer, this must return
-        `bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"))`
-        (i.e. 0xf23a6e61, or its own function selector).
-        @param operator The address which initiated the transfer (i.e. msg.sender)
-        @param from The address which previously owned the token
-        @param id The ID of the token being transferred
-        @param value The amount of tokens being transferred
-        @param data Additional data with no specified format
-        @return `bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"))` if transfer is allowed
-    */
     function onERC1155Received(
         address operator,
         address from,
@@ -2688,19 +2495,6 @@ interface IERC1155Receiver is IERC165 {
         external
         returns(bytes4);
 
-    /**
-        @dev Handles the receipt of a multiple ERC1155 token types. This function
-        is called at the end of a `safeBatchTransferFrom` after the balances have
-        been updated. To accept the transfer(s), this must return
-        `bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))`
-        (i.e. 0xbc197c81, or its own function selector).
-        @param operator The address which initiated the batch transfer (i.e. msg.sender)
-        @param from The address which previously owned the token
-        @param ids An array containing ids of each token being transferred (order and length must match values array)
-        @param values An array containing amounts of each token being transferred (order and length must match ids array)
-        @param data Additional data with no specified format
-        @return `bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))` if transfer is allowed
-    */
     function onERC1155BatchReceived(
         address operator,
         address from,
@@ -2715,12 +2509,11 @@ interface IERC1155Receiver is IERC165 {
 
 // File contracts/solidity/contracts-v1/NFTXv7.sol
 
-
-
 pragma solidity 0.6.8;
 
-
-
+interface KittyCore {
+    function transfer(address _to, uint256 _tokenId) external;
+}
 
 contract NFTXv7 is NFTXv6, IERC1155Receiver {
 
@@ -2771,10 +2564,7 @@ contract NFTXv7 is NFTXv6, IERC1155Receiver {
         store.xToken(vaultId).burnFrom(msg.sender, nftIds.length.mul(10**18));
         for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
             uint256 nftId = nftIds[i];
-            require(
-                store.holdingsContains(vaultId, nftId),
-                "1"
-            );
+            require(store.holdingsContains(vaultId, nftId), "1");
             if (store.holdingsContains(vaultId, nftId)) {
                 store.holdingsRemove(vaultId, nftId);
             }
@@ -2785,6 +2575,9 @@ contract NFTXv7 is NFTXv6, IERC1155Receiver {
             if (isVault1155[vaultId]) {
                 IERC1155 nft = IERC1155(store.nftAddress(vaultId));
                 nft.safeTransferFrom(address(this), msg.sender, nftId, 1, "");
+            } else if (vaultId > 6 && vaultId < 10) {
+                KittyCore kittyCore = KittyCore(store.nftAddress(vaultId));
+                kittyCore.transfer(msg.sender, nftId);
             } else {
                 store.nft(vaultId).safeTransferFrom(
                     address(this),
@@ -2792,7 +2585,6 @@ contract NFTXv7 is NFTXv6, IERC1155Receiver {
                     nftId
                 );
             }
-            
         }
     }
 
@@ -2963,171 +2755,5 @@ contract NFTXv7 is NFTXv6, IERC1155Receiver {
                 ? !store.isEligible(vaultId, nftId)
                 : store.isEligible(vaultId, nftId);
         
-    }
-}
-
-
-// File contracts/solidity/contracts-v1/NFTXv8.sol
-
-
-
-pragma solidity 0.6.8;
-
-contract NFTXv8 is NFTXv7 {
-    function _redeemHelper(
-        uint256 vaultId,
-        uint256[] memory nftIds,
-        bool isDualOp
-    ) internal virtual override {
-        store.xToken(vaultId).burnFrom(msg.sender, nftIds.length.mul(10**18));
-        for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
-            uint256 nftId = nftIds[i];
-            require(store.holdingsContains(vaultId, nftId), "1");
-            if (store.holdingsContains(vaultId, nftId)) {
-                store.holdingsRemove(vaultId, nftId);
-            }
-            if (store.flipEligOnRedeem(vaultId)) {
-                bool isElig = store.isEligible(vaultId, nftId);
-                store.setIsEligible(vaultId, nftId, !isElig);
-            }
-            if (isVault1155[vaultId]) {
-                IERC1155 nft = IERC1155(store.nftAddress(vaultId));
-                nft.safeTransferFrom(address(this), msg.sender, nftId, 1, "");
-            } else if (vaultId > 6 && vaultId < 10) {
-                store.nft(vaultId).transferFrom(
-                    address(this),
-                    msg.sender,
-                    nftId
-                );
-            } else {
-                store.nft(vaultId).safeTransferFrom(
-                    address(this),
-                    msg.sender,
-                    nftId
-                );
-            }
-        }
-    }
-}
-
-
-// File contracts/solidity/contracts-v1/NFTXv9.sol
-
-
-
-pragma solidity 0.6.8;
-
-interface KittyCore {
-    function transfer(address _to, uint256 _tokenId) external;
-}
-
-contract NFTXv9 is NFTXv8 {
-    function _redeemHelper(
-        uint256 vaultId,
-        uint256[] memory nftIds,
-        bool isDualOp
-    ) internal virtual override {
-        store.xToken(vaultId).burnFrom(msg.sender, nftIds.length.mul(10**18));
-        for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
-            uint256 nftId = nftIds[i];
-            require(store.holdingsContains(vaultId, nftId), "1");
-            if (store.holdingsContains(vaultId, nftId)) {
-                store.holdingsRemove(vaultId, nftId);
-            }
-            if (store.flipEligOnRedeem(vaultId)) {
-                bool isElig = store.isEligible(vaultId, nftId);
-                store.setIsEligible(vaultId, nftId, !isElig);
-            }
-            if (isVault1155[vaultId]) {
-                IERC1155 nft = IERC1155(store.nftAddress(vaultId));
-                nft.safeTransferFrom(address(this), msg.sender, nftId, 1, "");
-            } else if (vaultId > 6 && vaultId < 10) {
-                KittyCore kittyCore = KittyCore(store.nftAddress(vaultId));
-                kittyCore.transfer(msg.sender, nftId);
-            } else {
-                store.nft(vaultId).safeTransferFrom(
-                    address(this),
-                    msg.sender,
-                    nftId
-                );
-            }
-        }
-    }
-}
-
-
-// File contracts/solidity/contracts-v1/NFTXv10.sol
-
-
-
-pragma solidity 0.6.8;
-
-interface KittyCoreAlt {
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) external;
-}
-
-contract NFTXv10 is NFTXv9 {
-    function requestMint(uint256 vaultId, uint256[] memory nftIds)
-        public
-        payable
-        virtual
-        override
-        nonReentrant
-    {
-        onlyOwnerIfPaused(1);
-        require(store.allowMintRequests(vaultId), "1");
-        for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
-            if (vaultId > 6 && vaultId < 10) {
-                KittyCoreAlt kittyCoreAlt =
-                    KittyCoreAlt(store.nftAddress(vaultId));
-                kittyCoreAlt.transferFrom(msg.sender, address(this), nftIds[i]);
-            } else {
-                store.nft(vaultId).safeTransferFrom(
-                    msg.sender,
-                    address(this),
-                    nftIds[i]
-                );
-            }
-            store.setRequester(vaultId, nftIds[i], msg.sender);
-        }
-        emit MintRequested(vaultId, nftIds, msg.sender);
-    }
-}
-
-
-// File contracts/solidity/contracts-v1/NFTXv11.sol
-
-
-
-pragma solidity 0.6.8;
-
-contract NFTXv11 is NFTXv10 {
-    function revokeMintRequests(uint256 vaultId, uint256[] memory nftIds)
-        public
-        virtual
-        override
-        nonReentrant
-    {
-        for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
-            require(
-                store.requester(vaultId, nftIds[i]) == msg.sender,
-                "Not requester"
-            );
-            store.setRequester(vaultId, nftIds[i], address(0));
-            if (vaultId > 6 && vaultId < 10) {
-                KittyCore kittyCore = KittyCore(store.nftAddress(vaultId));
-                kittyCore.transfer(msg.sender, nftIds[i]);
-            } else {
-                store.nft(vaultId).safeTransferFrom(
-                    address(this),
-                    msg.sender,
-                    nftIds[i]
-                );
-            }
-        }
     }
 }
