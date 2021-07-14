@@ -1712,12 +1712,18 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         }
     }
 
+
     function isEligible(uint256 vaultId, uint256 nftId)
         public
         view
         virtual
         returns (bool)
     {
+        if (rangeEnd[vaultId] > 0) {
+            if (nftId >= rangeStart[vaultId] && nftId <= rangeEnd[vaultId]) {
+                return true;
+            }
+        }
         return
             store.negateEligibility(vaultId)
                 ? !store.isEligible(vaultId, nftId)
@@ -2128,6 +2134,29 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         }
     }
 
+    function setNegateEligibility(uint256 vaultId, bool shouldNegate)
+        public
+        virtual
+    {
+        onlyPrivileged(vaultId);
+        require(
+            store
+                .holdingsLength(vaultId)
+                .add(store.d2Holdings(vaultId)) ==
+                0,
+            "1"
+        );
+        store.setNegateEligibility(vaultId, shouldNegate);
+    }
+    
+    function setIs1155(
+        uint256 vaultId,
+        bool _boolean
+    ) public virtual {
+        onlyPrivileged(vaultId);
+        isVault1155[vaultId] = _boolean;
+    }
+
     function setAllowMintRequests(uint256 vaultId, bool isAllowed)
         public
         virtual
@@ -2142,22 +2171,6 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     {
         onlyPrivileged(vaultId);
         store.setFlipEligOnRedeem(vaultId, flipElig);
-    }
-
-    function setNegateEligibility(uint256 vaultId, bool shouldNegate)
-        public
-        virtual
-    {
-        onlyPrivileged(vaultId);
-        require(
-            store
-                .holdingsLength(vaultId)
-                .add(store.reservesLength(vaultId))
-                .add(store.d2Holdings(vaultId)) ==
-                0,
-            "Vault not empty"
-        );
-        store.setNegateEligibility(vaultId, shouldNegate);
     }
 
     function setManager(uint256 vaultId, address newManager) public virtual {
@@ -2179,93 +2192,9 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         }
         store.setIsClosed(vaultId, true);
     }
-
 }
-
-
-// File contracts/solidity/contracts-v1/NFTXv2.sol
-
-
-
-pragma solidity 0.6.8;
 
 contract NFTXv2 is NFTX {
-    function _mint(uint256 vaultId, uint256[] memory nftIds, bool isDualOp)
-        internal
-        virtual
-        override
-    {
-        for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
-            uint256 nftId = nftIds[i];
-            require(isEligible(vaultId, nftId), "Not eligible");
-            require(
-                store.nft(vaultId).ownerOf(nftId) != address(this),
-                "Already owner"
-            );
-            store.nft(vaultId).transferFrom(msg.sender, address(this), nftId);
-            require(
-                store.nft(vaultId).ownerOf(nftId) == address(this),
-                "Not received"
-            );
-            if (store.shouldReserve(vaultId, nftId)) {
-                store.reservesAdd(vaultId, nftId);
-            } else {
-                store.holdingsAdd(vaultId, nftId);
-            }
-        }
-        if (!isDualOp) {
-            uint256 amount = nftIds.length.mul(10**18);
-            store.xToken(vaultId).mint(msg.sender, amount);
-        }
-    }
-}
-
-
-// File contracts/solidity/contracts-v1/NFTXv3.sol
-
-
-
-pragma solidity 0.6.8;
-
-contract NFTXv3 is NFTXv2 {
-    function requestMint(uint256 vaultId, uint256[] memory nftIds)
-        public
-        payable
-        virtual
-        override
-        nonReentrant
-    {
-        onlyOwnerIfPaused(1);
-        require(store.allowMintRequests(vaultId), "Not allowed");
-        // TODO: implement bounty + fees
-        for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
-            require(
-                store.nft(vaultId).ownerOf(nftIds[i]) != address(this),
-                "Already owner"
-            );
-            store.nft(vaultId).transferFrom(
-                msg.sender,
-                address(this),
-                nftIds[i]
-            );
-            require(
-                store.nft(vaultId).ownerOf(nftIds[i]) == address(this),
-                "Not received"
-            );
-            store.setRequester(vaultId, nftIds[i], msg.sender);
-        }
-        emit MintRequested(vaultId, nftIds, msg.sender);
-    }
-}
-
-
-// File contracts/solidity/contracts-v1/NFTXv4.sol
-
-
-
-pragma solidity 0.6.8;
-
-contract NFTXv4 is NFTXv3 {
     function _mintD2(uint256 vaultId, uint256 amount)
         internal
         virtual
@@ -2295,9 +2224,7 @@ contract NFTXv4 is NFTXv3 {
             store.d2Holdings(vaultId).sub(amount.mul(1000))
         );
     }
-}
 
-contract NFTXv5 is NFTXv4 {
     function _calcFee(
         uint256 amount,
         uint256 ethBase,
@@ -2317,7 +2244,7 @@ contract NFTXv5 is NFTXv4 {
     }
 }
 
-contract NFTXv6 is NFTXv5, IERC1155Receiver {
+contract NFTXv3 is NFTXv2, IERC1155Receiver {
     function onERC1155Received(
         address,
         address,
@@ -2371,14 +2298,6 @@ contract NFTXv6 is NFTXv5, IERC1155Receiver {
         store.setManager(vaultId, msg.sender);
         emit NewVault(vaultId, msg.sender);
         return vaultId;
-    }
-
-    function setIs1155(
-        uint256 vaultId,
-        bool _boolean
-    ) public virtual {
-        onlyPrivileged(vaultId);
-        isVault1155[vaultId] = _boolean;
     }
 
     function _mint(uint256 vaultId, uint256[] memory nftIds, bool isDualOp)
@@ -2441,6 +2360,7 @@ contract NFTXv6 is NFTXv5, IERC1155Receiver {
             }
         }
     }
+
     function requestMint(uint256 vaultId, uint256[] memory nftIds)
         public
         payable
@@ -2467,22 +2387,6 @@ contract NFTXv6 is NFTXv5, IERC1155Receiver {
         emit MintRequested(vaultId, nftIds, msg.sender);
     }
 
-    function setNegateEligibility(uint256 vaultId, bool shouldNegate)
-        public
-        virtual
-        override
-    {
-        onlyPrivileged(vaultId);
-        require(
-            store
-                .holdingsLength(vaultId)
-                .add(store.d2Holdings(vaultId)) ==
-                0,
-            "1"
-        );
-        store.setNegateEligibility(vaultId, shouldNegate);
-    }
-
     function mint(uint256 vaultId, uint256[] memory nftIds, uint256 d2Amount)
         public
         payable
@@ -2491,57 +2395,12 @@ contract NFTXv6 is NFTXv5, IERC1155Receiver {
         nonReentrant
     {
         onlyOwnerIfPaused(1);
-        // uint256 amount = store.isD2Vault(vaultId) ? d2Amount : nftIds.length;
-        // uint256 ethBounty = store.isD2Vault(vaultId)
-        //     ? _calcBountyD2(vaultId, d2Amount, false)
-        //     : _calcBounty(vaultId, amount, false);
-        // (uint256 ethBase, uint256 ethStep) = store.mintFees(vaultId);
-        // uint256 ethFee = _calcFee(
-        //     amount,
-        //     ethBase,
-        //     ethStep,
-        //     store.isD2Vault(vaultId)
-        // );
-        // if (ethFee > ethBounty) {
-        //     _receiveEthToVault(vaultId, ethFee.sub(ethBounty), msg.value);
-        // }
         if (store.isD2Vault(vaultId)) {
             _mintD2(vaultId, d2Amount);
         } else {
             _mint(vaultId, nftIds, false);
         }
-        // if (ethBounty > ethFee) {
-        //     _payEthFromVault(vaultId, ethBounty.sub(ethFee), msg.sender);
-        // }
         emit Mint(vaultId, nftIds, d2Amount, msg.sender);
-    }
-    function setRange(
-        uint256 vaultId,
-        uint256 start,
-        uint256 end
-    ) public virtual {
-        onlyPrivileged(vaultId);
-        rangeStart[vaultId] = start;
-        rangeEnd[vaultId] = end;
-    }
-
-    function isEligible(uint256 vaultId, uint256 nftId)
-        public
-        view
-        virtual
-        override
-        returns (bool)
-    {
-        if (rangeEnd[vaultId] > 0) {
-            if (nftId >= rangeStart[vaultId] && nftId <= rangeEnd[vaultId]) {
-                return true;
-            }
-        }
-        return
-            store.negateEligibility(vaultId)
-                ? !store.isEligible(vaultId, nftId)
-                : store.isEligible(vaultId, nftId);
-        
     }
 
     function revokeMintRequests(uint256 vaultId, uint256[] memory nftIds)
