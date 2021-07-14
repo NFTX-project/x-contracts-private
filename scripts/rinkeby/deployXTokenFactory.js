@@ -1,4 +1,4 @@
-const { ethers, upgrades } = require("@nomiclabs/buidler");
+const { ethers, upgrades } = require("hardhat");
 
 const addresses = require("../../addresses/rinkeby.json");
 
@@ -14,21 +14,19 @@ async function main() {
 
   const XTokenClonable = await ethers.getContractFactory("XTokenClonable");
   const xTokenClonable = await XTokenClonable.deploy();
-  
+
   await xTokenClonable.deployed();
-  console.log('xtokenclonable deployed at', xTokenClonable.address);
-  await xTokenClonable.initialize('Template Token', 'TEMPLATE', {
+  console.log("xtokenclonable deployed at", xTokenClonable.address);
+  await xTokenClonable.initialize("Template Token", "TEMPLATE", {
     gasLimit: "9500000",
   });
-  console.log('xtokenclonable initialized');
-  
+  console.log("xtokenclonable initialized");
 
   const XTokenFactory = await ethers.getContractFactory("XTokenFactory");
   const xTokenFactory = await XTokenFactory.deploy(xTokenClonable.address);
   await xTokenFactory.deployed();
-  console.log('xtokenfactory deployed at', xTokenFactory.address);
-  await xTokenFactory.transferOwnership(addresses.nftx); 
-  
+  console.log("xtokenfactory deployed at", xTokenFactory.address);
+  await xTokenFactory.transferOwnership(addresses.nftx);
 
   console.log("-- DONE --");
 }
