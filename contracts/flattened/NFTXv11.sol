@@ -1689,6 +1689,11 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
 
     IXStore public store;
 
+    mapping(uint256 => bool) public isVault1155;
+
+    mapping(uint256 => uint256) public rangeStart;
+    mapping(uint256 => uint256) public rangeEnd;
+
     function initialize(address storeAddress) public initializer {
         initOwnable();
         initReentrancyGuard();
@@ -1820,32 +1825,6 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         if (_vaultSize >= length) return 0;
         uint256 depth = length.sub(_vaultSize);
         return ethMax.mul(depth).div(length);
-    }
-
-    function createVault(
-        address _xTokenAddress,
-        address _assetAddress,
-        bool _isD2Vault
-    ) public virtual nonReentrant returns (uint256) {
-        onlyOwnerIfPaused(0);
-        IXToken xToken = IXToken(_xTokenAddress);
-        require(xToken.owner() == address(this), "Wrong owner");
-        uint256 vaultId = store.addNewVault();
-        store.setXTokenAddress(vaultId, _xTokenAddress);
-
-        store.setXToken(vaultId);
-        if (!_isD2Vault) {
-            store.setNftAddress(vaultId, _assetAddress);
-            store.setNft(vaultId);
-            store.setNegateEligibility(vaultId, true);
-        } else {
-            store.setD2AssetAddress(vaultId, _assetAddress);
-            store.setD2Asset(vaultId);
-            store.setIsD2Vault(vaultId, true);
-        }
-        store.setManager(vaultId, msg.sender);
-        emit NewVault(vaultId, msg.sender);
-        return vaultId;
     }
 
     function depositETH(uint256 vaultId) public payable virtual {
@@ -2201,38 +2180,6 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         store.setIsClosed(vaultId, true);
     }
 
-    function setMintFees(uint256 vaultId, uint256 _ethBase, uint256 _ethStep)
-        public
-        virtual
-    {
-        onlyPrivileged(vaultId);
-        store.setMintFees(vaultId, _ethBase, _ethStep);
-    }
-
-    function setBurnFees(uint256 vaultId, uint256 _ethBase, uint256 _ethStep)
-        public
-        virtual
-    {
-        onlyPrivileged(vaultId);
-        store.setBurnFees(vaultId, _ethBase, _ethStep);
-    }
-
-    /* function setDualFees(uint256 vaultId, uint256 _ethBase, uint256 _ethStep)
-        public
-        virtual
-    {
-        onlyPrivileged(vaultId);
-        store.setDualFees(vaultId, _ethBase, _ethStep);
-    } */
-
-    function setSupplierBounty(uint256 vaultId, uint256 ethMax, uint256 length)
-        public
-        virtual
-    {
-        onlyPrivileged(vaultId);
-        store.setSupplierBounty(vaultId, ethMax, length);
-    }
-
 }
 
 
@@ -2243,25 +2190,6 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
 pragma solidity 0.6.8;
 
 contract NFTXv2 is NFTX {
-    /* function transferERC721(uint256 vaultId, uint256 tokenId, address to)
-        public
-        virtual
-        onlyOwner
-    {
-        store.nft(vaultId).transferFrom(address(this), to, tokenId);
-    }
-
-    function createVault(
-        address _xTokenAddress,
-        address _assetAddress,
-        bool _isD2Vault
-    ) public virtual override nonReentrant returns (uint256) {
-        if (_xTokenAddress != _assetAddress && _isD2Vault) {
-            return 0;
-        }
-        return 0;
-    } */
-
     function _mint(uint256 vaultId, uint256[] memory nftIds, bool isDualOp)
         internal
         virtual
@@ -2389,14 +2317,33 @@ contract NFTXv5 is NFTXv4 {
     }
 }
 
-contract NFTXv6 is NFTXv5 {
-    function createVault(
-        address _xTokenAddress,
-        address _assetAddress,
-        bool _isD2Vault
-    ) public virtual override nonReentrant returns (uint256) {
-        return 99999;
+contract NFTXv6 is NFTXv5, IERC1155Receiver {
+    function onERC1155Received(
+        address,
+        address,
+        uint256,
+        uint256,
+        bytes memory
+    ) public virtual override returns (bytes4) {
+        return this.onERC1155Received.selector;
     }
+
+    function onERC1155BatchReceived(
+        address,
+        address,
+        uint256[] memory,
+        uint256[] memory,
+        bytes memory
+    ) public virtual override returns (bytes4) {
+        return this.onERC1155BatchReceived.selector;
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        external
+        override
+        view
+        returns (bool)
+    {}
 
     function createVault(
         string memory name,
@@ -2425,11 +2372,6 @@ contract NFTXv6 is NFTXv5 {
         emit NewVault(vaultId, msg.sender);
         return vaultId;
     }
-}
-
-contract NFTXv7 is NFTXv6, IERC1155Receiver {
-
-    mapping(uint256 => bool) public isVault1155;
 
     function setIs1155(
         uint256 vaultId,
@@ -2476,10 +2418,7 @@ contract NFTXv7 is NFTXv6, IERC1155Receiver {
         store.xToken(vaultId).burnFrom(msg.sender, nftIds.length.mul(10**18));
         for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
             uint256 nftId = nftIds[i];
-            require(
-                store.holdingsContains(vaultId, nftId),
-                "1"
-            );
+            require(store.holdingsContains(vaultId, nftId), "1");
             if (store.holdingsContains(vaultId, nftId)) {
                 store.holdingsRemove(vaultId, nftId);
             }
@@ -2490,6 +2429,9 @@ contract NFTXv7 is NFTXv6, IERC1155Receiver {
             if (isVault1155[vaultId]) {
                 IERC1155 nft = IERC1155(store.nftAddress(vaultId));
                 nft.safeTransferFrom(address(this), msg.sender, nftId, 1, "");
+            } else if (vaultId > 6 && vaultId < 10) {
+                KittyCore kittyCore = KittyCore(store.nftAddress(vaultId));
+                kittyCore.transfer(msg.sender, nftId);
             } else {
                 store.nft(vaultId).safeTransferFrom(
                     address(this),
@@ -2497,10 +2439,8 @@ contract NFTXv7 is NFTXv6, IERC1155Receiver {
                     nftId
                 );
             }
-            
         }
     }
-
     function requestMint(uint256 vaultId, uint256[] memory nftIds)
         public
         payable
@@ -2510,21 +2450,18 @@ contract NFTXv7 is NFTXv6, IERC1155Receiver {
     {
         onlyOwnerIfPaused(1);
         require(store.allowMintRequests(vaultId), "1");
-        // TODO: implement bounty + fees
         for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
-            require(
-                store.nft(vaultId).ownerOf(nftIds[i]) != address(this),
-                "2"
-            );
-            store.nft(vaultId).safeTransferFrom(
-                msg.sender,
-                address(this),
-                nftIds[i]
-            );
-            require(
-                store.nft(vaultId).ownerOf(nftIds[i]) == address(this),
-                "3"
-            );
+            if (vaultId > 6 && vaultId < 10) {
+                KittyCoreAlt kittyCoreAlt =
+                    KittyCoreAlt(store.nftAddress(vaultId));
+                kittyCoreAlt.transferFrom(msg.sender, address(this), nftIds[i]);
+            } else {
+                store.nft(vaultId).safeTransferFrom(
+                    msg.sender,
+                    address(this),
+                    nftIds[i]
+                );
+            }
             store.setRequester(vaultId, nftIds[i], msg.sender);
         }
         emit MintRequested(vaultId, nftIds, msg.sender);
@@ -2578,69 +2515,6 @@ contract NFTXv7 is NFTXv6, IERC1155Receiver {
         // }
         emit Mint(vaultId, nftIds, d2Amount, msg.sender);
     }
-
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes memory
-    ) public virtual override returns (bytes4) {
-        return this.onERC1155Received.selector;
-    }
-
-    function onERC1155BatchReceived(
-        address,
-        address,
-        uint256[] memory,
-        uint256[] memory,
-        bytes memory
-    ) public virtual override returns (bytes4) {
-        return this.onERC1155BatchReceived.selector;
-    }
-
-    function supportsInterface(bytes4 interfaceId)
-        external
-        override
-        view
-        returns (bool)
-    {}
-
-    function createVault(
-        address _xTokenAddress,
-        address _assetAddress,
-        bool _isD2Vault
-    ) public virtual override nonReentrant returns (uint256) {
-        revert();
-    }
-
-    function setMintFees(uint256 vaultId, uint256 _ethBase, uint256 _ethStep)
-        public
-        virtual
-        override
-    {
-        revert();
-    }
-
-    function setBurnFees(uint256 vaultId, uint256 _ethBase, uint256 _ethStep)
-        public
-        virtual
-        override
-    {
-        revert();
-    }
-
-    function setSupplierBounty(uint256 vaultId, uint256 ethMax, uint256 length)
-        public
-        virtual
-        override
-    {
-        revert();
-    }
-
-    mapping(uint256 => uint256) public rangeStart;
-    mapping(uint256 => uint256) public rangeEnd;
-
     function setRange(
         uint256 vaultId,
         uint256 start,
@@ -2669,116 +2543,7 @@ contract NFTXv7 is NFTXv6, IERC1155Receiver {
                 : store.isEligible(vaultId, nftId);
         
     }
-}
 
-contract NFTXv8 is NFTXv7 {
-    function _redeemHelper(
-        uint256 vaultId,
-        uint256[] memory nftIds,
-        bool isDualOp
-    ) internal virtual override {
-        store.xToken(vaultId).burnFrom(msg.sender, nftIds.length.mul(10**18));
-        for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
-            uint256 nftId = nftIds[i];
-            require(store.holdingsContains(vaultId, nftId), "1");
-            if (store.holdingsContains(vaultId, nftId)) {
-                store.holdingsRemove(vaultId, nftId);
-            }
-            if (store.flipEligOnRedeem(vaultId)) {
-                bool isElig = store.isEligible(vaultId, nftId);
-                store.setIsEligible(vaultId, nftId, !isElig);
-            }
-            if (isVault1155[vaultId]) {
-                IERC1155 nft = IERC1155(store.nftAddress(vaultId));
-                nft.safeTransferFrom(address(this), msg.sender, nftId, 1, "");
-            } else if (vaultId > 6 && vaultId < 10) {
-                store.nft(vaultId).transferFrom(
-                    address(this),
-                    msg.sender,
-                    nftId
-                );
-            } else {
-                store.nft(vaultId).safeTransferFrom(
-                    address(this),
-                    msg.sender,
-                    nftId
-                );
-            }
-        }
-    }
-}
-
-
-// File contracts/solidity/contracts-v1/NFTXv9.sol
-
-
-
-pragma solidity 0.6.8;
-
-
-contract NFTXv9 is NFTXv8 {
-    function _redeemHelper(
-        uint256 vaultId,
-        uint256[] memory nftIds,
-        bool isDualOp
-    ) internal virtual override {
-        store.xToken(vaultId).burnFrom(msg.sender, nftIds.length.mul(10**18));
-        for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
-            uint256 nftId = nftIds[i];
-            require(store.holdingsContains(vaultId, nftId), "1");
-            if (store.holdingsContains(vaultId, nftId)) {
-                store.holdingsRemove(vaultId, nftId);
-            }
-            if (store.flipEligOnRedeem(vaultId)) {
-                bool isElig = store.isEligible(vaultId, nftId);
-                store.setIsEligible(vaultId, nftId, !isElig);
-            }
-            if (isVault1155[vaultId]) {
-                IERC1155 nft = IERC1155(store.nftAddress(vaultId));
-                nft.safeTransferFrom(address(this), msg.sender, nftId, 1, "");
-            } else if (vaultId > 6 && vaultId < 10) {
-                KittyCore kittyCore = KittyCore(store.nftAddress(vaultId));
-                kittyCore.transfer(msg.sender, nftId);
-            } else {
-                store.nft(vaultId).safeTransferFrom(
-                    address(this),
-                    msg.sender,
-                    nftId
-                );
-            }
-        }
-    }
-}
-
-contract NFTXv10 is NFTXv9 {
-    function requestMint(uint256 vaultId, uint256[] memory nftIds)
-        public
-        payable
-        virtual
-        override
-        nonReentrant
-    {
-        onlyOwnerIfPaused(1);
-        require(store.allowMintRequests(vaultId), "1");
-        for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
-            if (vaultId > 6 && vaultId < 10) {
-                KittyCoreAlt kittyCoreAlt =
-                    KittyCoreAlt(store.nftAddress(vaultId));
-                kittyCoreAlt.transferFrom(msg.sender, address(this), nftIds[i]);
-            } else {
-                store.nft(vaultId).safeTransferFrom(
-                    msg.sender,
-                    address(this),
-                    nftIds[i]
-                );
-            }
-            store.setRequester(vaultId, nftIds[i], msg.sender);
-        }
-        emit MintRequested(vaultId, nftIds, msg.sender);
-    }
-}
-
-contract NFTXv11 is NFTXv10 {
     function revokeMintRequests(uint256 vaultId, uint256[] memory nftIds)
         public
         virtual
