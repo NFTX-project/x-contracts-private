@@ -1,9 +1,8 @@
 require("dotenv").config();
-require("@nomiclabs/buidler-waffle");
-require("@nomiclabs/buidler-web3");
-require("@nomiclabs/buidler-ethers");
-require("@openzeppelin/buidler-upgrades");
-// require("buidler-contract-sizer");
+require("@nomiclabs/hardhat-waffle");
+require("@nomiclabs/hardhat-web3");
+require("@nomiclabs/hardhat-ethers");
+require("@openzeppelin/hardhat-upgrades");
 
 const oneGwei = 1000000000;
 

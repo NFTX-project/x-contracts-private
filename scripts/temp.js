@@ -1,6 +1,6 @@
 // import zombidIds from "../data/zombies";
 
-const { ethers, upgrades } = require("@nomiclabs/buidler");
+const { ethers, upgrades } = require("@nomiclabs/hardhat");
 
 const ProxyController = require("../artifacts/ProxyController.json");
 
