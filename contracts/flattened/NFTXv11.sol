@@ -1610,19 +1610,59 @@ library SafeERC20 {
     }
 }
 
+interface IXTokenFactory {
+  function createXToken(string calldata name, string calldata symbol) external returns (address);
+  event NewXToken(address _xTokenAddress);
+}
 
-// File contracts/solidity/contracts-v1/NFTX.sol
+interface IERC1155 is IERC165 {
+    event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);
+    event TransferBatch(address indexed operator, address indexed from, address indexed to, uint256[] ids, uint256[] values);
+    event ApprovalForAll(address indexed account, address indexed operator, bool approved);
+    event URI(string value, uint256 indexed id);
+    function balanceOf(address account, uint256 id) external view returns (uint256);
+    function balanceOfBatch(address[] calldata accounts, uint256[] calldata ids) external view returns (uint256[] memory);
+    function setApprovalForAll(address operator, bool approved) external;
+    function isApprovedForAll(address account, address operator) external view returns (bool);
+    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes calldata data) external;
+    function safeBatchTransferFrom(address from, address to, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external;
+}
 
+interface IERC1155Receiver is IERC165 {
+    function onERC1155Received(
+        address operator,
+        address from,
+        uint256 id,
+        uint256 value,
+        bytes calldata data
+    )
+        external
+        returns(bytes4);
 
+    function onERC1155BatchReceived(
+        address operator,
+        address from,
+        uint256[] calldata ids,
+        uint256[] calldata values,
+        bytes calldata data
+    )
+        external
+        returns(bytes4);
+}
+
+interface KittyCore {
+    function transfer(address _to, uint256 _tokenId) external;
+}
+
+interface KittyCoreAlt {
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _tokenId
+    ) external;
+}
 
 pragma solidity 0.6.8;
-
-
-
-
-
-
-
 
 contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
     using SafeMath for uint256;
@@ -2141,59 +2181,6 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder {
         store.setNegateEligibility(vaultId, shouldNegate);
     }
 
-    /* function setShouldReserve(
-        uint256 vaultId,
-        uint256[] memory nftIds,
-        bool _boolean
-    ) public virtual {
-        onlyPrivileged(vaultId);
-        for (uint256 i = 0; i < nftIds.length; i.add(1)) {
-            store.setShouldReserve(vaultId, nftIds[i], _boolean);
-        }
-    } */
-
-    /* function setIsReserved(
-        uint256 vaultId,
-        uint256[] memory nftIds,
-        bool _boolean
-    ) public virtual {
-        onlyPrivileged(vaultId);
-        for (uint256 i = 0; i < nftIds.length; i.add(1)) {
-            uint256 nftId = nftIds[i];
-            if (_boolean) {
-                require(
-                    store.holdingsContains(vaultId, nftId),
-                    "Invalid nftId"
-                );
-                store.holdingsRemove(vaultId, nftId);
-                store.reservesAdd(vaultId, nftId);
-            } else {
-                require(
-                    store.reservesContains(vaultId, nftId),
-                    "Invalid nftId"
-                );
-                store.reservesRemove(vaultId, nftId);
-                store.holdingsAdd(vaultId, nftId);
-            }
-        }
-    } */
-
-    function changeTokenName(uint256 vaultId, string memory newName)
-        public
-        virtual
-    {
-        onlyPrivileged(vaultId);
-        store.xToken(vaultId).changeName(newName);
-    }
-
-    function changeTokenSymbol(uint256 vaultId, string memory newSymbol)
-        public
-        virtual
-    {
-        onlyPrivileged(vaultId);
-        store.xToken(vaultId).changeSymbol(newSymbol);
-    }
-
     function setManager(uint256 vaultId, address newManager) public virtual {
         onlyPrivileged(vaultId);
         store.setManager(vaultId, newManager);
@@ -2382,13 +2369,6 @@ contract NFTXv4 is NFTXv3 {
     }
 }
 
-
-// File contracts/solidity/contracts-v1/NFTXv5.sol
-
-
-
-pragma solidity 0.6.8;
-
 contract NFTXv5 is NFTXv4 {
     function _calcFee(
         uint256 amount,
@@ -2409,52 +2389,7 @@ contract NFTXv5 is NFTXv4 {
     }
 }
 
-
-// File contracts/solidity/contracts-v1/IXTokenFactory.sol
-
-
-pragma solidity 0.6.8;
-
-interface IXTokenFactory {
-
-  function createXToken(string calldata name, string calldata symbol) external returns (address);
-
-  event NewXToken(address _xTokenAddress);
-}
-
-
-// File contracts/solidity/contracts-v1/NFTXv6.sol
-
-
-
-pragma solidity 0.6.8;
-
-
 contract NFTXv6 is NFTXv5 {
-    function changeTokenName(uint256 vaultId, string memory newName)
-        public
-        virtual
-        override
-    {}
-
-    function changeTokenSymbol(uint256 vaultId, string memory newSymbol)
-        public
-        virtual
-        override
-    {}
-
-    /* function setSupplierBounty(uint256 vaultId, uint256 ethMax, uint256 length)
-        public
-        virtual
-        override
-    {} */
-
-    /* IXTokenFactory public xTokenFactory; */
-
-    /* function setXTokenFactoryAddress(address a) public onlyOwner {
-      xTokenFactory = IXTokenFactory(a);
-    } */
-
     function createVault(
         address _xTokenAddress,
         address _assetAddress,
@@ -2490,237 +2425,7 @@ contract NFTXv6 is NFTXv5 {
         emit NewVault(vaultId, msg.sender);
         return vaultId;
     }
-
-    /* function redeemD1For(
-        uint256 vaultId,
-        uint256 amount,
-        uint256[] memory nftIds,
-        address recipient
-    ) public payable virtual nonReentrant {
-        onlyOwnerIfPaused(2);
-        _redeemHelperFor(vaultId, nftIds, false, recipient);
-        emit Redeem(vaultId, nftIds, 0, msg.sender);
-    }
-
-    function _redeemHelper(
-        uint256 vaultId,
-        uint256[] memory nftIds,
-        bool isDualOp
-    ) internal virtual override {
-        _redeemHelperFor(vaultId, nftIds, isDualOp, msg.sender);
-    }
-
-    function _redeemHelperFor(
-        uint256 vaultId,
-        uint256[] memory nftIds,
-        bool isDualOp,
-        address recipient
-    ) internal virtual {
-        if (!isDualOp) {
-            store.xToken(vaultId).burnFrom(
-                msg.sender,
-                nftIds.length.mul(10**18)
-            );
-        }
-        for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
-            uint256 nftId = nftIds[i];
-            require(
-                store.holdingsContains(vaultId, nftId) ||
-                    store.reservesContains(vaultId, nftId),
-                "NFT not in vault"
-            );
-            if (store.holdingsContains(vaultId, nftId)) {
-                store.holdingsRemove(vaultId, nftId);
-            } else {
-                store.reservesRemove(vaultId, nftId);
-            }
-            if (store.flipEligOnRedeem(vaultId)) {
-                bool isElig = store.isEligible(vaultId, nftId);
-                store.setIsEligible(vaultId, nftId, !isElig);
-            }
-            store.nft(vaultId).safeTransferFrom(
-                address(this),
-                recipient,
-                nftId
-            );
-        }
-    } */
-
 }
-
-
-// File contracts/solidity/contracts-v1/IERC1155.sol
-
-
-
-pragma solidity ^0.6.2;
-
-/**
- * @dev Required interface of an ERC1155 compliant contract, as defined in the
- * https://eips.ethereum.org/EIPS/eip-1155[EIP].
- *
- * _Available since v3.1._
- */
-interface IERC1155 is IERC165 {
-    /**
-     * @dev Emitted when `value` tokens of token type `id` are transferred from `from` to `to` by `operator`.
-     */
-    event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);
-
-    /**
-     * @dev Equivalent to multiple {TransferSingle} events, where `operator`, `from` and `to` are the same for all
-     * transfers.
-     */
-    event TransferBatch(address indexed operator, address indexed from, address indexed to, uint256[] ids, uint256[] values);
-
-    /**
-     * @dev Emitted when `account` grants or revokes permission to `operator` to transfer their tokens, according to
-     * `approved`.
-     */
-    event ApprovalForAll(address indexed account, address indexed operator, bool approved);
-
-    /**
-     * @dev Emitted when the URI for token type `id` changes to `value`, if it is a non-programmatic URI.
-     *
-     * If an {URI} event was emitted for `id`, the standard
-     * https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions[guarantees] that `value` will equal the value
-     * returned by {IERC1155MetadataURI-uri}.
-     */
-    event URI(string value, uint256 indexed id);
-
-    /**
-     * @dev Returns the amount of tokens of token type `id` owned by `account`.
-     *
-     * Requirements:
-     *
-     * - `account` cannot be the zero address.
-     */
-    function balanceOf(address account, uint256 id) external view returns (uint256);
-
-    /**
-     * @dev xref:ROOT:erc1155.adoc#batch-operations[Batched] version of {balanceOf}.
-     *
-     * Requirements:
-     *
-     * - `accounts` and `ids` must have the same length.
-     */
-    function balanceOfBatch(address[] calldata accounts, uint256[] calldata ids) external view returns (uint256[] memory);
-
-    /**
-     * @dev Grants or revokes permission to `operator` to transfer the caller's tokens, according to `approved`,
-     *
-     * Emits an {ApprovalForAll} event.
-     *
-     * Requirements:
-     *
-     * - `operator` cannot be the caller.
-     */
-    function setApprovalForAll(address operator, bool approved) external;
-
-    /**
-     * @dev Returns true if `operator` is approved to transfer ``account``'s tokens.
-     *
-     * See {setApprovalForAll}.
-     */
-    function isApprovedForAll(address account, address operator) external view returns (bool);
-
-    /**
-     * @dev Transfers `amount` tokens of token type `id` from `from` to `to`.
-     *
-     * Emits a {TransferSingle} event.
-     *
-     * Requirements:
-     *
-     * - `to` cannot be the zero address.
-     * - If the caller is not `from`, it must be have been approved to spend ``from``'s tokens via {setApprovalForAll}.
-     * - `from` must have a balance of tokens of type `id` of at least `amount`.
-     * - If `to` refers to a smart contract, it must implement {IERC1155Receiver-onERC1155Received} and return the
-     * acceptance magic value.
-     */
-    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes calldata data) external;
-
-    /**
-     * @dev xref:ROOT:erc1155.adoc#batch-operations[Batched] version of {safeTransferFrom}.
-     *
-     * Emits a {TransferBatch} event.
-     *
-     * Requirements:
-     *
-     * - `ids` and `amounts` must have the same length.
-     * - If `to` refers to a smart contract, it must implement {IERC1155Receiver-onERC1155BatchReceived} and return the
-     * acceptance magic value.
-     */
-    function safeBatchTransferFrom(address from, address to, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external;
-}
-
-
-// File contracts/solidity/contracts-v1/IERC1155Receiver.sol
-
-
-
-pragma solidity ^0.6.0;
-
-/**
- * _Available since v3.1._
- */
-interface IERC1155Receiver is IERC165 {
-
-    /**
-        @dev Handles the receipt of a single ERC1155 token type. This function is
-        called at the end of a `safeTransferFrom` after the balance has been updated.
-        To accept the transfer, this must return
-        `bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"))`
-        (i.e. 0xf23a6e61, or its own function selector).
-        @param operator The address which initiated the transfer (i.e. msg.sender)
-        @param from The address which previously owned the token
-        @param id The ID of the token being transferred
-        @param value The amount of tokens being transferred
-        @param data Additional data with no specified format
-        @return `bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"))` if transfer is allowed
-    */
-    function onERC1155Received(
-        address operator,
-        address from,
-        uint256 id,
-        uint256 value,
-        bytes calldata data
-    )
-        external
-        returns(bytes4);
-
-    /**
-        @dev Handles the receipt of a multiple ERC1155 token types. This function
-        is called at the end of a `safeBatchTransferFrom` after the balances have
-        been updated. To accept the transfer(s), this must return
-        `bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))`
-        (i.e. 0xbc197c81, or its own function selector).
-        @param operator The address which initiated the batch transfer (i.e. msg.sender)
-        @param from The address which previously owned the token
-        @param ids An array containing ids of each token being transferred (order and length must match values array)
-        @param values An array containing amounts of each token being transferred (order and length must match ids array)
-        @param data Additional data with no specified format
-        @return `bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))` if transfer is allowed
-    */
-    function onERC1155BatchReceived(
-        address operator,
-        address from,
-        uint256[] calldata ids,
-        uint256[] calldata values,
-        bytes calldata data
-    )
-        external
-        returns(bytes4);
-}
-
-
-// File contracts/solidity/contracts-v1/NFTXv7.sol
-
-
-
-pragma solidity 0.6.8;
-
-
-
 
 contract NFTXv7 is NFTXv6, IERC1155Receiver {
 
@@ -2966,13 +2671,6 @@ contract NFTXv7 is NFTXv6, IERC1155Receiver {
     }
 }
 
-
-// File contracts/solidity/contracts-v1/NFTXv8.sol
-
-
-
-pragma solidity 0.6.8;
-
 contract NFTXv8 is NFTXv7 {
     function _redeemHelper(
         uint256 vaultId,
@@ -3017,9 +2715,6 @@ contract NFTXv8 is NFTXv7 {
 
 pragma solidity 0.6.8;
 
-interface KittyCore {
-    function transfer(address _to, uint256 _tokenId) external;
-}
 
 contract NFTXv9 is NFTXv8 {
     function _redeemHelper(
@@ -3055,21 +2750,6 @@ contract NFTXv9 is NFTXv8 {
     }
 }
 
-
-// File contracts/solidity/contracts-v1/NFTXv10.sol
-
-
-
-pragma solidity 0.6.8;
-
-interface KittyCoreAlt {
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) external;
-}
-
 contract NFTXv10 is NFTXv9 {
     function requestMint(uint256 vaultId, uint256[] memory nftIds)
         public
@@ -3097,13 +2777,6 @@ contract NFTXv10 is NFTXv9 {
         emit MintRequested(vaultId, nftIds, msg.sender);
     }
 }
-
-
-// File contracts/solidity/contracts-v1/NFTXv11.sol
-
-
-
-pragma solidity 0.6.8;
 
 contract NFTXv11 is NFTXv10 {
     function revokeMintRequests(uint256 vaultId, uint256[] memory nftIds)
