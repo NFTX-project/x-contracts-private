@@ -1,9 +1,9 @@
 require("dotenv").config();
-usePlugin("@nomiclabs/buidler-waffle");
-usePlugin("@nomiclabs/buidler-web3");
-usePlugin("@nomiclabs/buidler-ethers");
-usePlugin("@openzeppelin/buidler-upgrades");
-usePlugin("buidler-contract-sizer");
+require("@nomiclabs/buidler-waffle");
+require("@nomiclabs/buidler-web3");
+require("@nomiclabs/buidler-ethers");
+require("@openzeppelin/buidler-upgrades");
+// require("buidler-contract-sizer");
 
 const oneGwei = 1000000000;
 
@@ -25,11 +25,13 @@ module.exports = {
       timeout: 30000,
     },
   },
-  solc: {
+  solidity: {
     version: "0.6.8",
-    optimizer: {
-      enabled: true,
-      runs: 200,
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
     },
   },
   contractSizer: {
