@@ -2015,7 +2015,6 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder, IERC1155Receiver {
         } else {
             _redeemD2(vaultId, amount);
         }
-
     }
     
     function setIsEligible(
@@ -2159,6 +2158,8 @@ interface INFTXVault {
         returns (bool);
 }
 
+import "hardhat/console.sol";
+
 contract NFTXv12Migration is NFTX {
 
     // v1 ID -> v2 Vault
@@ -2167,24 +2168,26 @@ contract NFTXv12Migration is NFTX {
 
     function migrateVaultToV2(uint256 v1VaultId, uint256 v2VaultId, uint256 count) external onlyOwner {
         uint256 totalHoldings = store.holdingsLength(v1VaultId);
-        require(totalHoldings != 0, "No holdings for this vault");
+        console.log(totalHoldings);
         require(count != 0, "Count cannot be 0");
-        require(count < totalHoldings, "Cannot migrate more than holdings");
+        require(count <= totalHoldings, "Cannot migrate more than holdings");
+        address vault = INFTXVaultFactory(0xBE86f647b167567525cCAAfcd6f881F1Ee558216).vault(v2VaultId);
+        address assetAddr = INFTXVault(vault).assetAddress();
         uint256[] memory ids = new uint256[](count);
-        for (uint256 i = 0; i < totalHoldings; i++) {
+        for (uint256 i = 0; i < count; i++) {
             uint256 tokenId = store.holdingsAt(v1VaultId, i);
             store.holdingsRemove(v1VaultId, tokenId);
             ids[i] = tokenId;
+            approveERC721(assetAddr, vault, tokenId);
         }
-        address vault = INFTXVaultFactory(0xBE86f647b167567525cCAAfcd6f881F1Ee558216).vault(v2VaultId);
         uint256[] memory empty;
         uint256 v2BalBefore = IERC20(vault).balanceOf(address(this));
         INFTXVault(vault).mint(ids, empty);
         uint256 v2BalAfter = IERC20(vault).balanceOf(address(this));
         require(v2BalAfter-v2BalBefore == count * 10**18, "Received less than expected v2");
-        migrationPair[v1VaultId] = vault;
         if (store.holdingsLength(v1VaultId) == 0) {
             isFullyMigrated[v1VaultId] = true;
+            migrationPair[v1VaultId] = vault;
         }
     }
 
@@ -2196,5 +2199,22 @@ contract NFTXv12Migration is NFTX {
         xToken.burnFrom(msg.sender, bal);
         IERC20 v2Token = IERC20(migrationPair[v1VaultId]);
         v2Token.transfer(msg.sender, bal);
+    }
+
+    function approveERC721(address assetAddr, address to, uint256 tokenId) internal virtual {
+        address kitties = 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d;
+        bytes memory data;
+        if (assetAddr == kitties) {
+            // Cryptokitties.
+            data = abi.encodeWithSignature("approve(address,uint256)", to, tokenId);
+        } else {
+            if (IERC721(assetAddr).isApprovedForAll(address(this), to)) {
+                return;
+            }
+            // Default.
+            data = abi.encodeWithSignature("setApprovalForAll(address,bool)", to, true);
+        }
+        (bool success, bytes memory resultData) = address(assetAddr).call(data);
+        require(success, string(resultData));
     }
 }

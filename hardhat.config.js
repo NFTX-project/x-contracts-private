@@ -23,6 +23,15 @@ module.exports = {
       /* gasPrice: 5000000000, */
       timeout: 30000,
     },
+    hardhat: {
+      mining: {
+        auto: true,
+      },
+      forking: {
+        url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_MAINNET_API_KEY}`,
+        blockNumber: 12835000,
+      },
+    },
   },
   solidity: {
     version: "0.6.8",
