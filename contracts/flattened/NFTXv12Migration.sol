@@ -1806,118 +1806,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder, IERC1155Receiver {
         return vaultId;
     }
 
-    function _calcFee(
-        uint256 amount,
-        uint256 ethBase,
-        uint256 ethStep,
-        bool isD2
-    ) internal pure virtual returns (uint256) {
-        if (amount == 0) {
-            return 0;
-        } else if (isD2) {
-            return 0; // this line was causing a bug when < 1.0 of a D2 token was minted
-            // probably won't be using fees much for this version of smart contracts anyway
-        } else {
-            uint256 n = amount;
-            uint256 nSub1 = amount >= 1 ? n.sub(1) : 0;
-            return ethBase.add(ethStep.mul(nSub1));
-        }
-    }
-
-    function _calcBounty(uint256 vaultId, uint256 numTokens, bool isBurn)
-        public
-        view
-        virtual
-        returns (uint256)
-    {
-        (, uint256 length) = store.supplierBounty(vaultId);
-        if (length == 0) return 0;
-        uint256 ethBounty = 0;
-        for (uint256 i = 0; i < numTokens; i = i.add(1)) {
-            uint256 _vaultSize = isBurn
-                ? vaultSize(vaultId).sub(i.add(1))
-                : vaultSize(vaultId).add(i);
-            uint256 _ethBounty = _calcBountyHelper(vaultId, _vaultSize);
-            ethBounty = ethBounty.add(_ethBounty);
-        }
-        return ethBounty;
-    }
-
-    function _calcBountyD2(uint256 vaultId, uint256 amount, bool isBurn)
-        public
-        view
-        virtual
-        returns (uint256)
-    {
-        (uint256 ethMax, uint256 length) = store.supplierBounty(vaultId);
-        if (length == 0) return 0;
-        uint256 prevSize = vaultSize(vaultId);
-        uint256 prevDepth = prevSize > length ? 0 : length.sub(prevSize);
-        uint256 prevReward = _calcBountyD2Helper(ethMax, length, prevSize);
-        uint256 newSize = isBurn
-            ? vaultSize(vaultId).sub(amount)
-            : vaultSize(vaultId).add(amount);
-        uint256 newDepth = newSize > length ? 0 : length.sub(newSize);
-        uint256 newReward = _calcBountyD2Helper(ethMax, length, newSize);
-        uint256 prevTriangle = prevDepth.mul(prevReward).div(2).div(10**18);
-        uint256 newTriangle = newDepth.mul(newReward).div(2).div(10**18);
-        return
-            isBurn
-                ? newTriangle.sub(prevTriangle)
-                : prevTriangle.sub(newTriangle);
-    }
-
-    function _calcBountyD2Helper(uint256 ethMax, uint256 length, uint256 size)
-        internal
-        pure
-        returns (uint256)
-    {
-        if (size >= length) return 0;
-        return ethMax.sub(ethMax.mul(size).div(length));
-    }
-
-    function _calcBountyHelper(uint256 vaultId, uint256 _vaultSize)
-        internal
-        view
-        virtual
-        returns (uint256)
-    {
-        (uint256 ethMax, uint256 length) = store.supplierBounty(vaultId);
-        if (_vaultSize >= length) return 0;
-        uint256 depth = length.sub(_vaultSize);
-        return ethMax.mul(depth).div(length);
-    }
-
     function depositETH(uint256 vaultId) public payable virtual {
         store.setEthBalance(vaultId, store.ethBalance(vaultId).add(msg.value));
-    }
-
-    function _payEthFromVault(
-        uint256 vaultId,
-        uint256 amount,
-        address payable to
-    ) internal virtual {
-        uint256 ethBalance = store.ethBalance(vaultId);
-        uint256 amountToSend = ethBalance < amount ? ethBalance : amount;
-        if (amountToSend > 0) {
-            store.setEthBalance(vaultId, ethBalance.sub(amountToSend));
-            to.transfer(amountToSend);
-        }
-    }
-
-    function _receiveEthToVault(
-        uint256 vaultId,
-        uint256 amountRequested,
-        uint256 amountSent
-    ) internal virtual {
-        require(amountSent >= amountRequested, "Value too low");
-        store.setEthBalance(
-            vaultId,
-            store.ethBalance(vaultId).add(amountRequested)
-        );
-        if (amountSent > amountRequested) {
-            msg.sender.transfer(amountSent.sub(amountRequested));
-        }
     }
 
     function requestMint(uint256 vaultId, uint256[] memory nftIds)
@@ -2112,6 +2002,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder, IERC1155Receiver {
         }
         emit Mint(vaultId, nftIds, d2Amount, msg.sender);
     }
+
     function redeem(uint256 vaultId, uint256 amount)
         public
         payable
@@ -2119,21 +2010,6 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder, IERC1155Receiver {
         nonReentrant
     {
         onlyOwnerIfPaused(2);
-        if (!store.isClosed(vaultId)) {
-            uint256 ethBounty = store.isD2Vault(vaultId)
-                ? _calcBountyD2(vaultId, amount, true)
-                : _calcBounty(vaultId, amount, true);
-            (uint256 ethBase, uint256 ethStep) = store.burnFees(vaultId);
-            uint256 ethFee = _calcFee(
-                amount,
-                ethBase,
-                ethStep,
-                store.isD2Vault(vaultId)
-            );
-            if (ethBounty.add(ethFee) > 0) {
-                _receiveEthToVault(vaultId, ethBounty.add(ethFee), msg.value);
-            }
-        }
         if (!store.isD2Vault(vaultId)) {
             _redeem(vaultId, amount, false);
         } else {
@@ -2141,30 +2017,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder, IERC1155Receiver {
         }
 
     }
-
-    /* function mintAndRedeem(uint256 vaultId, uint256[] memory nftIds)
-        public
-        payable
-        virtual
-        nonReentrant
-    {
-        onlyOwnerIfPaused(3);
-        require(!store.isD2Vault(vaultId), "Is D2 vault");
-        require(!store.isClosed(vaultId), "Vault is closed");
-        (uint256 ethBase, uint256 ethStep) = store.dualFees(vaultId);
-        uint256 ethFee = _calcFee(
-            nftIds.length,
-            ethBase,
-            ethStep,
-            store.isD2Vault(vaultId)
-        );
-        if (ethFee > 0) {
-            _receiveEthToVault(vaultId, ethFee, msg.value);
-        }
-        _mint(vaultId, nftIds, true);
-        _redeem(vaultId, nftIds.length, true);
-    } */
-
+    
     function setIsEligible(
         uint256 vaultId,
         uint256[] memory nftIds,
