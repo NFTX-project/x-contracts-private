@@ -11,18 +11,17 @@ const {
   cleanup,
 } = require("./_helpers");
 
-const bre = require("@nomiclabs/buidler");
-const { ethers, upgrades } = bre;
+const { ethers, upgrades } = require("hardhat");
 
-const {
-  getProxyFactory,
-  getProxyAdminFactory,
-} = require("@openzeppelin/buidler-upgrades/dist/proxy-factory");
+// const {
+//   getProxyFactory,
+//   getProxyAdminFactory,
+// } = require("@openzeppelin/buidler-upgrades/dist/proxy-factory");
 
 describe("NFTX", function () {
   this.timeout(0);
   it("Should run as expected", async function () {
-    console.log('');
+    console.log("");
 
     ///////////////////////////////////////////////////////////////
     // Initialize XStore + NFTX ///////////////////////////////////
@@ -47,7 +46,7 @@ describe("NFTX", function () {
     ///////////////
 
     const runNftBasic = async () => {
-      console.log('aa')
+      console.log("aa");
       const { asset, xToken, vaultId } = await initializeAssetTokenVault(
         nftx,
         signers,
@@ -56,7 +55,7 @@ describe("NFTX", function () {
         allNftIds,
         false
       );
-      console.log('aa')
+      console.log("aa");
       const eligIds = getIntArray(0, 20);
       await runVaultTests(
         nftx,
