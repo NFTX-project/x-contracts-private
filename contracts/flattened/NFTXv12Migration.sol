@@ -1760,9 +1760,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder, IERC1155Receiver {
         return
             store.isD2Vault(vaultId)
                 ? store.d2Holdings(vaultId)
-                : store.holdingsLength(vaultId).add(
-                    store.reservesLength(vaultId)
-                );
+                : store.holdingsLength(vaultId);
+                // Updated here to fix length bug.
     }
 
     function _getPseudoRand(uint256 modulus)
@@ -1810,30 +1809,30 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder, IERC1155Receiver {
         store.setEthBalance(vaultId, store.ethBalance(vaultId).add(msg.value));
     }
 
-    function requestMint(uint256 vaultId, uint256[] memory nftIds)
-        public
-        payable
-        virtual
-        nonReentrant
-    {
-        onlyOwnerIfPaused(1);
-        require(store.allowMintRequests(vaultId), "1");
-        for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
-            if (vaultId > 6 && vaultId < 10) {
-                KittyCoreAlt kittyCoreAlt =
-                    KittyCoreAlt(store.nftAddress(vaultId));
-                kittyCoreAlt.transferFrom(msg.sender, address(this), nftIds[i]);
-            } else {
-                store.nft(vaultId).safeTransferFrom(
-                    msg.sender,
-                    address(this),
-                    nftIds[i]
-                );
-            }
-            store.setRequester(vaultId, nftIds[i], msg.sender);
-        }
-        emit MintRequested(vaultId, nftIds, msg.sender);
-    }
+    // function requestMint(uint256 vaultId, uint256[] memory nftIds)
+    //     public
+    //     payable
+    //     virtual
+    //     nonReentrant
+    // {
+    //     onlyOwnerIfPaused(1);
+    //     require(store.allowMintRequests(vaultId), "1");
+    //     for (uint256 i = 0; i < nftIds.length; i = i.add(1)) {
+    //         if (vaultId > 6 && vaultId < 10) {
+    //             KittyCoreAlt kittyCoreAlt =
+    //                 KittyCoreAlt(store.nftAddress(vaultId));
+    //             kittyCoreAlt.transferFrom(msg.sender, address(this), nftIds[i]);
+    //         } else {
+    //             store.nft(vaultId).safeTransferFrom(
+    //                 msg.sender,
+    //                 address(this),
+    //                 nftIds[i]
+    //             );
+    //         }
+    //         store.setRequester(vaultId, nftIds[i], msg.sender);
+    //     }
+    //     emit MintRequested(vaultId, nftIds, msg.sender);
+    // }
 
     function revokeMintRequests(uint256 vaultId, uint256[] memory nftIds)
         public
@@ -2158,6 +2157,10 @@ interface INFTXVault {
         returns (bool);
 }
 
+interface WrappedPunks {
+    function burn(uint256 punkIndex) external;
+}
+
 import "hardhat/console.sol";
 
 contract NFTXv12Migration is NFTX {
@@ -2168,27 +2171,40 @@ contract NFTXv12Migration is NFTX {
 
     function migrateVaultToV2(uint256 v1VaultId, uint256 v2VaultId, uint256 count) external onlyOwner {
         uint256 totalHoldings = store.holdingsLength(v1VaultId);
-        console.log(totalHoldings);
         require(count != 0, "Count cannot be 0");
         require(count <= totalHoldings, "Cannot migrate more than holdings");
-        address vault = INFTXVaultFactory(0xBE86f647b167567525cCAAfcd6f881F1Ee558216).vault(v2VaultId);
-        address assetAddr = INFTXVault(vault).assetAddress();
+        address v2Vault = INFTXVaultFactory(0xBE86f647b167567525cCAAfcd6f881F1Ee558216).vault(v2VaultId);
+        address v2Addr = migrationPair[v1VaultId];
+        require(v2Addr == address(0) || v2Addr == v2Vault, "Cannot overwrite migration pair");
+        address assetAddr = INFTXVault(v2Vault).assetAddress();
         uint256[] memory ids = new uint256[](count);
+        uint256[] memory amounts = new uint256[](count);
         for (uint256 i = 0; i < count; i++) {
             uint256 tokenId = store.holdingsAt(v1VaultId, i);
-            store.holdingsRemove(v1VaultId, tokenId);
             ids[i] = tokenId;
-            approveERC721(assetAddr, vault, tokenId);
+            amounts[i] = 1;
+            approveERC721(assetAddr, v2Vault, tokenId);
         }
-        uint256[] memory empty;
-        uint256 v2BalBefore = IERC20(vault).balanceOf(address(this));
-        INFTXVault(vault).mint(ids, empty);
-        uint256 v2BalAfter = IERC20(vault).balanceOf(address(this));
+        for (uint256 i = 0; i < ids.length; i++) {
+            store.holdingsRemove(v1VaultId, ids[i]);
+        }
+        uint256 v2BalBefore = IERC20(v2Vault).balanceOf(address(this));
+        INFTXVault(v2Vault).mint(ids, amounts);
+        uint256 v2BalAfter = IERC20(v2Vault).balanceOf(address(this));
         require(v2BalAfter-v2BalBefore == count * 10**18, "Received less than expected v2");
+        migrationPair[v1VaultId] = v2Vault;
         if (store.holdingsLength(v1VaultId) == 0) {
             isFullyMigrated[v1VaultId] = true;
-            migrationPair[v1VaultId] = vault;
         }
+    }
+
+    function targetRedeem(uint256 v1VaultId, uint256[] calldata specificIds) external onlyOwner {
+        _redeemHelper(v1VaultId, specificIds, false);
+        emit Redeem(v1VaultId, specificIds, 0, msg.sender);
+    }
+
+    function forceMigrationComplete(uint256 v1VaultId) external onlyOwner {
+        isFullyMigrated[v1VaultId] = true;
     }
 
     function migrateV1Tokens(uint256 v1VaultId) external {
@@ -2196,6 +2212,7 @@ contract NFTXv12Migration is NFTX {
         require(isFullyMigrated[v1VaultId], "This vault has not been migrated");
         IXToken xToken = store.xToken(v1VaultId);
         uint256 bal = xToken.balanceOf(msg.sender);
+        require(bal > 0, "0");
         xToken.burnFrom(msg.sender, bal);
         IERC20 v2Token = IERC20(migrationPair[v1VaultId]);
         v2Token.transfer(msg.sender, bal);
@@ -2203,10 +2220,17 @@ contract NFTXv12Migration is NFTX {
 
     function approveERC721(address assetAddr, address to, uint256 tokenId) internal virtual {
         address kitties = 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d;
+        address punks = 0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB;
+        // unwrap punks
         bytes memory data;
         if (assetAddr == kitties) {
             // Cryptokitties.
             data = abi.encodeWithSignature("approve(address,uint256)", to, tokenId);
+        } else if (assetAddr == punks) {
+            // Burn the wrapped punk.
+            WrappedPunks(0xb7F7F6C52F2e2fdb1963Eab30438024864c313F6).burn(tokenId);
+            // CryptoPunks.
+            data = abi.encodeWithSignature("offerPunkForSaleToAddress(uint256,uint256,address)", tokenId, 0, to);
         } else {
             if (IERC721(assetAddr).isApprovedForAll(address(this), to)) {
                 return;

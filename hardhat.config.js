@@ -46,4 +46,7 @@ module.exports = {
     alphaSort: true,
     runOnCompile: true,
   },
+  mocha: {
+    timeout: 100000
+  }
 };
