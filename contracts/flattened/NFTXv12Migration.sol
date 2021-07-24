@@ -1805,9 +1805,9 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder, IERC1155Receiver {
         return vaultId;
     }
 
-    function depositETH(uint256 vaultId) public payable virtual {
-        store.setEthBalance(vaultId, store.ethBalance(vaultId).add(msg.value));
-    }
+    // function depositETH(uint256 vaultId) public payable virtual {
+    //     store.setEthBalance(vaultId, store.ethBalance(vaultId).add(msg.value));
+    // }
 
     // function requestMint(uint256 vaultId, uint256[] memory nftIds)
     //     public

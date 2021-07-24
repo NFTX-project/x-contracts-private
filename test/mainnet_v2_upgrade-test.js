@@ -102,6 +102,18 @@ describe("Mainnet Fork Upgrade Test", function () {
     erc721 = await ethers.getContractAt("ERC721", "0x2216d47494e516d8206b70fca8585820ed3c4946");
   });
 
+  let old30RangeStart;
+  let old30RangeEnd;
+  let old29Is1155
+  it("Should get range before change", async () => {
+    old30RangeStart = await nftxv1.rangeStart(30);
+    old30RangeEnd = await nftxv1.rangeEnd(30);
+    old29Is1155 = await nftxv1.isVault1155(29);
+    expect(old30RangeStart).to.equal("25000000");
+    expect(old30RangeEnd).to.equal("25000599");
+    expect(old29Is1155).to.equal(true);
+  })
+  
   it("Should get correct impl address from proxy controller", async () => {
     expect(await proxyController.implAddress()).to.equal("0xdaa17a5f60E94d5f97968aa1E790c164e65c97Be");
   })
@@ -113,6 +125,15 @@ describe("Mainnet Fork Upgrade Test", function () {
     await proxyController.connect(dao).upgradeProxyTo(upgradedImpl.address);
     await proxyController.connect(dao).fetchImplAddress();
     expect(await proxyController.implAddress()).to.equal(upgradedImpl.address);
+  })
+
+  it("Should maintain same range after change", async () => {
+    const new30RangeStart = await nftxv1.rangeStart(30);
+    const new30RangeEnd = await nftxv1.rangeEnd(30);
+    const new29Is1155 = await nftxv1.isVault1155(29);
+    expect(new30RangeStart).to.equal(old30RangeStart);
+    expect(new30RangeEnd).to.equal(old30RangeEnd);
+    expect(new29Is1155).to.equal(old29Is1155);
   })
 
   it("Should not let me migrate ZOMBIE (id 3)", async () => {
