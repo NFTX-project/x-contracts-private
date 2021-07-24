@@ -115,12 +115,8 @@ describe("Mainnet Fork Upgrade Test", function () {
     expect(await proxyController.implAddress()).to.equal(upgradedImpl.address);
   })
 
-  it("Should report similar vault numbers", async () => {
-    let holdings = await xStore.holdingsLength(37);
-    let reserves = await xStore.reservesLength(37);
-    console.log(`Holdings: ${holdings.toString()}`);
-    console.log(`Reserves: ${reserves.toString()}`);
-    expect(await nftxv1.vaultSize(37)).to.equal(holdings)
+  it("Should not let me migrate ZOMBIE (id 3)", async () => {
+    await expectException(nftxv1.connect(gausAdmin).migrateVaultToV2(3, 0, 5), "Migration not allowed");
   })
 
   let v2TwerkyToken;

@@ -2050,13 +2050,13 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder, IERC1155Receiver {
         isVault1155[vaultId] = _boolean;
     }
 
-    function setAllowMintRequests(uint256 vaultId, bool isAllowed)
-        public
-        virtual
-    {
-        onlyPrivileged(vaultId);
-        store.setAllowMintRequests(vaultId, isAllowed);
-    }
+    // function setAllowMintRequests(uint256 vaultId, bool isAllowed)
+    //     public
+    //     virtual
+    // {
+    //     onlyPrivileged(vaultId);
+    //     store.setAllowMintRequests(vaultId, isAllowed);
+    // }
 
     function setFlipEligOnRedeem(uint256 vaultId, bool flipElig)
         public
@@ -2170,6 +2170,9 @@ contract NFTXv12Migration is NFTX {
     mapping(uint256 => bool) public isFullyMigrated;
 
     function migrateVaultToV2(uint256 v1VaultId, uint256 v2VaultId, uint256 count) external onlyOwner {
+        if (v1VaultId == 3) {
+            revert("Migration not allowed");
+        }
         uint256 totalHoldings = store.holdingsLength(v1VaultId);
         require(totalHoldings > 0, "Empty vault");
         require(count != 0, "Count cannot be 0");
