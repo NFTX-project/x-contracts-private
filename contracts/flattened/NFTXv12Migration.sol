@@ -2171,8 +2171,11 @@ contract NFTXv12Migration is NFTX {
 
     function migrateVaultToV2(uint256 v1VaultId, uint256 v2VaultId, uint256 count) external onlyOwner {
         uint256 totalHoldings = store.holdingsLength(v1VaultId);
+        require(totalHoldings > 0, "Empty vault");
         require(count != 0, "Count cannot be 0");
-        require(count <= totalHoldings, "Cannot migrate more than holdings");
+        if (count > totalHoldings) {
+            count = totalHoldings;
+        }
         address v2Vault = INFTXVaultFactory(0xBE86f647b167567525cCAAfcd6f881F1Ee558216).vault(v2VaultId);
         address v2Addr = migrationPair[v1VaultId];
         require(v2Addr == address(0) || v2Addr == v2Vault, "Cannot overwrite migration pair");
@@ -2193,6 +2196,7 @@ contract NFTXv12Migration is NFTX {
         uint256 v2BalAfter = IERC20(v2Vault).balanceOf(address(this));
         require(v2BalAfter-v2BalBefore == count * 10**18, "Received less than expected v2");
         migrationPair[v1VaultId] = v2Vault;
+        console.log("Holdings: ", store.holdingsLength(v1VaultId));
         if (store.holdingsLength(v1VaultId) == 0) {
             isFullyMigrated[v1VaultId] = true;
         }
