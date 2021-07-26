@@ -289,6 +289,11 @@ describe("Mainnet Fork Upgrade Test", function () {
     expect(await v2KittiesToken.balanceOf(nftxv1.address)).to.equal(BASE.mul(40))
   });
 
+  it("Should let me redeem a KITTY in the middle of migration", async () => { 
+    await v1KittiesToken.connect(kittiesV1Owner).approve(nftxv1.address, BASE.mul(37))
+    await nftxv1.connect(kittiesV1Owner).redeem(7, 1);
+  })
+
   it("Should let the DAO migrate 20 kitties from vault 0 to vault 0 (kitties-gen-0)", async () => {
     let tx = await nftxv1.connect(gausAdmin).migrateVaultToV2(7, 5, 20);
     let receipt = await tx.wait()
@@ -301,12 +306,12 @@ describe("Mainnet Fork Upgrade Test", function () {
   })
 
   it("Should let an NFTX v1 holder migrate their v1 to v2 (KITTY)", async () => {
-    expect(await v1KittiesToken.balanceOf(await kittiesV1Owner.getAddress())).to.equal("25586852469804176908");
+    expect(await v1KittiesToken.balanceOf(await kittiesV1Owner.getAddress())).to.equal("24586852469804176908");
     await v1KittiesToken.connect(kittiesV1Owner).approve(nftxv1.address, BASE.mul(37))
     let tx = await nftxv1.connect(kittiesV1Owner).migrateV1Tokens(7);
     let receipt = await tx.wait()
     console.log("Gas used: ", receipt.cumulativeGasUsed.toString())
     expect(await v1KittiesToken.balanceOf(await kittiesV1Owner.getAddress())).to.equal(0);
-    expect(await v2KittiesToken.balanceOf(await kittiesV1Owner.getAddress())).to.equal("25586852469804176908");
+    expect(await v2KittiesToken.balanceOf(await kittiesV1Owner.getAddress())).to.equal("24586852469804176908");
   })
 })

@@ -1873,11 +1873,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder, IERC1155Receiver {
             );
             store.setRequester(vaultId, nftIds[i], address(0));
             store.setIsEligible(vaultId, nftIds[i], true);
-            if (store.shouldReserve(vaultId, nftIds[i])) {
-                store.reservesAdd(vaultId, nftIds[i]);
-            } else {
-                store.holdingsAdd(vaultId, nftIds[i]);
-            }
+            store.holdingsAdd(vaultId, nftIds[i]);
             store.xToken(vaultId).mint(requester, 10**18);
         }
     }
@@ -1932,13 +1928,8 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder, IERC1155Receiver {
     {
         for (uint256 i = 0; i < numNFTs; i = i.add(1)) {
             uint256[] memory nftIds = new uint256[](1);
-            if (store.holdingsLength(vaultId) > 0) {
-                uint256 rand = _getPseudoRand(store.holdingsLength(vaultId));
-                nftIds[0] = store.holdingsAt(vaultId, rand);
-            } else {
-                uint256 rand = _getPseudoRand(store.reservesLength(vaultId));
-                nftIds[0] = store.reservesAt(vaultId, rand);
-            }
+            uint256 rand = _getPseudoRand(store.holdingsLength(vaultId));
+            nftIds[0] = store.holdingsAt(vaultId, rand);
             _redeemHelper(vaultId, nftIds, isDualOp);
             emit Redeem(vaultId, nftIds, 0, msg.sender);
         }
@@ -2096,46 +2087,20 @@ interface INFTXVaultFactory {
   function eligibilityManager() external view returns (address);
   function vault(uint256 vaultId) external view returns (address);
   function vaultsForAsset(address asset) external view returns (address[] memory);
-  function isLocked(uint256 id) external view returns (bool);
-  function excludedFromFees(address addr) external view returns (bool);
-
-  // Write functions.
-  function __NFTXVaultFactory_init(address _vaultImpl, address _feeDistributor) external;
-  function createVault(
-      string calldata name,
-      string calldata symbol,
-      address _assetAddress,
-      bool is1155,
-      bool allowAllItems
-  ) external returns (uint256);
 }
 
 interface INFTXVault {
-    function manager() external returns (address);
     function assetAddress() external returns (address);
     function vaultFactory() external returns (address);
     function eligibilityStorage() external returns (address);
 
     function is1155() external returns (bool);
     function allowAllItems() external returns (bool);
-    function enableMint() external returns (bool);
-    function enableRandomRedeem() external returns (bool);
-    function enableTargetRedeem() external returns (bool);
 
     function vaultId() external returns (uint256);
     function mintFee() external returns (uint256);
     function randomRedeemFee() external returns (uint256);
     function targetRedeemFee() external returns (uint256);
-
-    function __NFTXVault_init(
-        string calldata _name,
-        string calldata _symbol,
-        address _assetAddress,
-        bool _is1155,
-        bool _allowAllItems
-    ) external;
-
-    function finalizeVault() external;
 
     function mint(
         uint256[] calldata tokenIds,
@@ -2145,17 +2110,6 @@ interface INFTXVault {
     function redeem(uint256 amount, uint256[] calldata specificIds)
         external
         returns (uint256[] memory);
-
-    function swap(
-        uint256[] calldata tokenIds,
-        uint256[] calldata amounts, /* ignored for ERC721 vaults */
-        uint256[] calldata specificIds
-    ) external returns (uint256[] memory);
-
-    function allValidNFTs(uint256[] calldata tokenIds)
-        external
-        view
-        returns (bool);
 }
 
 interface WrappedPunks {
@@ -2213,6 +2167,21 @@ contract NFTXv12Migration is NFTX {
     function targetRedeem(uint256 v1VaultId, uint256[] calldata specificIds) external onlyOwner {
         _redeemHelper(v1VaultId, specificIds, false);
         emit Redeem(v1VaultId, specificIds, 0, msg.sender);
+    }
+
+    function targetWithdraw(uint256 v1VaultId, uint256[] calldata specificIds) external onlyOwner {
+        for (uint256 i = 0; i < specificIds.length; i = i.add(1)) {
+            uint256 nftId = specificIds[i];
+            require(store.holdingsContains(v1VaultId, nftId), "1");
+            if (store.holdingsContains(v1VaultId, nftId)) {
+                store.holdingsRemove(v1VaultId, nftId);
+            }
+            store.nft(v1VaultId).safeTransferFrom(
+                address(this),
+                msg.sender,
+                nftId
+            );
+        }
     }
 
     function forceMigrationComplete(uint256 v1VaultId) external onlyOwner {
