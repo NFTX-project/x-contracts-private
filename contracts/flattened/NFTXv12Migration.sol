@@ -365,6 +365,7 @@ contract Pausable is Ownable {
     // 1 : mint
     // 2 : redeem
     // 3 : mintAndRedeem
+    // 4 : migrateV1Tokens
 
     function onlyOwnerIfPaused(uint256 pauserId) public view virtual {
         require(!isPaused[pauserId] || msg.sender == owner(), "Paused");
@@ -2161,8 +2162,6 @@ interface WrappedPunks {
     function burn(uint256 punkIndex) external;
 }
 
-import "hardhat/console.sol";
-
 contract NFTXv12Migration is NFTX {
 
     // v1 ID -> v2 Vault
@@ -2170,6 +2169,7 @@ contract NFTXv12Migration is NFTX {
     mapping(uint256 => bool) public isFullyMigrated;
 
     function migrateVaultToV2(uint256 v1VaultId, uint256 v2VaultId, uint256 count) external onlyOwner {
+        // Safeguards.
         if (v1VaultId == 3) {
             revert("Migration not allowed");
         }
@@ -2179,9 +2179,13 @@ contract NFTXv12Migration is NFTX {
         if (count > totalHoldings) {
             count = totalHoldings;
         }
+
+        // Make sure we're not overriding an existing migration.
         address v2Vault = INFTXVaultFactory(0xBE86f647b167567525cCAAfcd6f881F1Ee558216).vault(v2VaultId);
         address v2Addr = migrationPair[v1VaultId];
         require(v2Addr == address(0) || v2Addr == v2Vault, "Cannot overwrite migration pair");
+
+        // Approveand migrate the assets.
         address assetAddr = INFTXVault(v2Vault).assetAddress();
         uint256[] memory ids = new uint256[](count);
         uint256[] memory amounts = new uint256[](count);
@@ -2196,10 +2200,11 @@ contract NFTXv12Migration is NFTX {
         }
         uint256 v2BalBefore = IERC20(v2Vault).balanceOf(address(this));
         INFTXVault(v2Vault).mint(ids, amounts);
+
+        // Ensure we got the right amount back.
         uint256 v2BalAfter = IERC20(v2Vault).balanceOf(address(this));
         require(v2BalAfter-v2BalBefore == count * 10**18, "Received less than expected v2");
         migrationPair[v1VaultId] = v2Vault;
-        console.log("Holdings: ", store.holdingsLength(v1VaultId));
         if (store.holdingsLength(v1VaultId) == 0) {
             isFullyMigrated[v1VaultId] = true;
         }
@@ -2215,7 +2220,7 @@ contract NFTXv12Migration is NFTX {
     }
 
     function migrateV1Tokens(uint256 v1VaultId) external {
-        onlyOwnerIfPaused(4); // Add to comments.
+        onlyOwnerIfPaused(4);
         require(isFullyMigrated[v1VaultId], "This vault has not been migrated");
         IXToken xToken = store.xToken(v1VaultId);
         uint256 bal = xToken.balanceOf(msg.sender);
