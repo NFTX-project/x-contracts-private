@@ -2176,11 +2176,16 @@ contract NFTXv12Migration is NFTX {
             if (store.holdingsContains(v1VaultId, nftId)) {
                 store.holdingsRemove(v1VaultId, nftId);
             }
-            store.nft(v1VaultId).safeTransferFrom(
-                address(this),
-                msg.sender,
-                nftId
-            );
+            if (v1VaultId > 6 && v1VaultId < 10) {
+                KittyCore kittyCore = KittyCore(store.nftAddress(v1VaultId));
+                kittyCore.transfer(msg.sender, nftId);
+            } else {
+                store.nft(v1VaultId).safeTransferFrom(
+                    address(this),
+                    msg.sender,
+                    nftId
+                );
+            }
         }
     }
 

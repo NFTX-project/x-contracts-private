@@ -268,14 +268,13 @@ describe("Mainnet Fork Upgrade Test", function () {
   let v1KittiesToken;
   it("Should let guas target redeem one kitty", async () => {
     v1KittiesToken = await ethers.getContractAt("contracts/IERC20.sol:IERC20", "0x8712A5580995a1b0E10856e8C3E26B14C1CDF7b6");
-    await v1KittiesToken.connect(kittiesV1Owner).transfer(await gausAdmin.getAddress(), BASE);
-    await v1KittiesToken.connect(gausAdmin).approve(nftxv1.address, BASE.mul(2));
-    await nftxv1.connect(gausAdmin).targetRedeem(7, [12775]);
+    await nftxv1.connect(gausAdmin).targetWithdraw(7, [12775]);
   })
 
   let v2KittiesToken;
   it("Should let the DAO migrate 20 kitties from vault 0 to vault 0 (kitties-gen-0)", async () => {
     v2KittiesToken = await ethers.getContractAt("contracts/IERC20.sol:IERC20", vaults[2].address);
+    await v1KittiesToken.connect(gausAdmin).approve(nftxv1.address, BASE.mul(2));
     let tx = await nftxv1.connect(gausAdmin).migrateVaultToV2(7, 5, 20);
     let receipt = await tx.wait()
     console.log("Gas used: ", receipt.cumulativeGasUsed.toString())
@@ -306,12 +305,12 @@ describe("Mainnet Fork Upgrade Test", function () {
   })
 
   it("Should let an NFTX v1 holder migrate their v1 to v2 (KITTY)", async () => {
-    expect(await v1KittiesToken.balanceOf(await kittiesV1Owner.getAddress())).to.equal("24586852469804176908");
+    expect(await v1KittiesToken.balanceOf(await kittiesV1Owner.getAddress())).to.equal("25586852469804176908");
     await v1KittiesToken.connect(kittiesV1Owner).approve(nftxv1.address, BASE.mul(37))
     let tx = await nftxv1.connect(kittiesV1Owner).migrateV1Tokens(7);
     let receipt = await tx.wait()
     console.log("Gas used: ", receipt.cumulativeGasUsed.toString())
     expect(await v1KittiesToken.balanceOf(await kittiesV1Owner.getAddress())).to.equal(0);
-    expect(await v2KittiesToken.balanceOf(await kittiesV1Owner.getAddress())).to.equal("24586852469804176908");
+    expect(await v2KittiesToken.balanceOf(await kittiesV1Owner.getAddress())).to.equal("25586852469804176908");
   })
 })
