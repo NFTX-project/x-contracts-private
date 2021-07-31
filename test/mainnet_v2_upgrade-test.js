@@ -214,6 +214,15 @@ describe("Mainnet Fork Upgrade Test", function () {
     expect(await v2WaifuToken.balanceOf(waifuOwner.getAddress())).to.equal(BASE.mul(12));
   })
 
+  it("Should let a user redeem from v2", async () => {
+    await vaults[0].connect(dao).setFees(0, 0, 0);
+    await vaults[0].connect(waifuOwner).redeem(10, [4424]);
+  });
+
+  it("Should not let user deposit into v2", async () => {
+    await expectException(nftxv1.connect(waifuOwner).mint(37, [4424], 0), "This vault has been migrated");
+  });
+
   it("Should report similar vault numbers", async () => {
     let holdings = await xStore.holdingsLength(0);
     let reserves = await xStore.reservesLength(0);
@@ -245,6 +254,10 @@ describe("Mainnet Fork Upgrade Test", function () {
     expect(await v2PunkToken.balanceOf(nftxv1.address)).to.equal(BASE.mul(50))
   });
 
+  it("Should not let a user redeem a migrated vault", async () => {
+    await expectException(nftxv1.connect(punkV1Owner).redeem(0, 1), "This vault has been migrated");
+  });
+
   let v1PunkToken;
   it("Should let an NFTX v1 holder migrate their v1 to v2 (punks)", async () => {
     v1PunkToken = await ethers.getContractAt("contracts/IERC20.sol:IERC20", "0x69BbE2FA02b4D90A944fF328663667DC32786385");
@@ -255,7 +268,7 @@ describe("Mainnet Fork Upgrade Test", function () {
     console.log("Gas used: ", receipt.cumulativeGasUsed.toString())
     expect(await v1PunkToken.balanceOf(punkV1Owner.getAddress())).to.equal(0);
     expect(await v2PunkToken.balanceOf(punkV1Owner.getAddress())).to.equal("1000000000000000000");
-  })
+  });
 
   it("Should report similar vault numbers", async () => {
     let holdings = await xStore.holdingsLength(7);
@@ -268,7 +281,7 @@ describe("Mainnet Fork Upgrade Test", function () {
   let v1KittiesToken;
   it("Should let guas target redeem one kitty", async () => {
     v1KittiesToken = await ethers.getContractAt("contracts/IERC20.sol:IERC20", "0x8712A5580995a1b0E10856e8C3E26B14C1CDF7b6");
-    await nftxv1.connect(gausAdmin).targetWithdraw(7, [12775]);
+    await nftxv1.connect(gausAdmin).targetWithdraw(7, [12775], quag.getAddress());
   })
 
   let v2KittiesToken;

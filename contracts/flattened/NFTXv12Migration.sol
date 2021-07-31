@@ -1695,6 +1695,10 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder, IERC1155Receiver {
     mapping(uint256 => uint256) public rangeStart;
     mapping(uint256 => uint256) public rangeEnd;
 
+    // v1 ID -> v2 Vault
+    mapping(uint256 => address) public migrationPair;
+    mapping(uint256 => bool) public isFullyMigrated;
+
     function initialize(address storeAddress) public initializer {
         initOwnable();
         initReentrancyGuard();
@@ -1778,33 +1782,33 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder, IERC1155Receiver {
             modulus;
     }
 
-    function createVault(
-        string memory name,
-        string memory symbol,
-        address _assetAddress,
-        bool _isD2Vault
-    ) public virtual nonReentrant returns (uint256) {
-        onlyOwnerIfPaused(0);
-        IXTokenFactory xTokenFactory = IXTokenFactory(
-            0xE7ac17cE2550f3a0B4fE3616515975eb093CEfea
-        );
-        address xTokenAddress = xTokenFactory.createXToken(name, symbol);
-        uint256 vaultId = store.addNewVault();
-        store.setXTokenAddress(vaultId, xTokenAddress);
-        store.setXToken(vaultId);
-        if (!_isD2Vault) {
-            store.setNftAddress(vaultId, _assetAddress);
-            store.setNft(vaultId);
-            store.setNegateEligibility(vaultId, true);
-        } else {
-            store.setD2AssetAddress(vaultId, _assetAddress);
-            store.setD2Asset(vaultId);
-            store.setIsD2Vault(vaultId, true);
-        }
-        store.setManager(vaultId, msg.sender);
-        emit NewVault(vaultId, msg.sender);
-        return vaultId;
-    }
+    // function createVault(
+    //     string memory name,
+    //     string memory symbol,
+    //     address _assetAddress,
+    //     bool _isD2Vault
+    // ) public virtual nonReentrant returns (uint256) {
+    //     onlyOwnerIfPaused(0);
+    //     IXTokenFactory xTokenFactory = IXTokenFactory(
+    //         0xE7ac17cE2550f3a0B4fE3616515975eb093CEfea
+    //     );
+    //     address xTokenAddress = xTokenFactory.createXToken(name, symbol);
+    //     uint256 vaultId = store.addNewVault();
+    //     store.setXTokenAddress(vaultId, xTokenAddress);
+    //     store.setXToken(vaultId);
+    //     if (!_isD2Vault) {
+    //         store.setNftAddress(vaultId, _assetAddress);
+    //         store.setNft(vaultId);
+    //         store.setNegateEligibility(vaultId, true);
+    //     } else {
+    //         store.setD2AssetAddress(vaultId, _assetAddress);
+    //         store.setD2Asset(vaultId);
+    //         store.setIsD2Vault(vaultId, true);
+    //     }
+    //     store.setManager(vaultId, msg.sender);
+    //     emit NewVault(vaultId, msg.sender);
+    //     return vaultId;
+    // }
 
     // function depositETH(uint256 vaultId) public payable virtual {
     //     store.setEthBalance(vaultId, store.ethBalance(vaultId).add(msg.value));
@@ -1986,6 +1990,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder, IERC1155Receiver {
         nonReentrant
     {
         onlyOwnerIfPaused(1);
+        require(!isFullyMigrated[vaultId], "This vault has been migrated");
         if (store.isD2Vault(vaultId)) {
             _mintD2(vaultId, d2Amount);
         } else {
@@ -2001,6 +2006,7 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder, IERC1155Receiver {
         nonReentrant
     {
         onlyOwnerIfPaused(2);
+        require(!isFullyMigrated[vaultId], "This vault has been migrated");
         if (!store.isD2Vault(vaultId)) {
             _redeem(vaultId, amount, false);
         } else {
@@ -2019,20 +2025,20 @@ contract NFTX is Pausable, ReentrancyGuard, ERC721Holder, IERC1155Receiver {
         }
     }
 
-    function setNegateEligibility(uint256 vaultId, bool shouldNegate)
-        public
-        virtual
-    {
-        onlyPrivileged(vaultId);
-        require(
-            store
-                .holdingsLength(vaultId)
-                .add(store.d2Holdings(vaultId)) ==
-                0,
-            "1"
-        );
-        store.setNegateEligibility(vaultId, shouldNegate);
-    }
+    // function setNegateEligibility(uint256 vaultId, bool shouldNegate)
+    //     public
+    //     virtual
+    // {
+    //     onlyPrivileged(vaultId);
+    //     require(
+    //         store
+    //             .holdingsLength(vaultId)
+    //             .add(store.d2Holdings(vaultId)) ==
+    //             0,
+    //         "1"
+    //     );
+    //     store.setNegateEligibility(vaultId, shouldNegate);
+    // }
     
     function setIs1155(
         uint256 vaultId,
@@ -2102,6 +2108,12 @@ interface INFTXVault {
     function randomRedeemFee() external returns (uint256);
     function targetRedeemFee() external returns (uint256);
 
+    function setFees(
+        uint256 _mintFee,
+        uint256 _randomRedeemFee,
+        uint256 _targetRedeemFee
+    ) external;
+
     function mint(
         uint256[] calldata tokenIds,
         uint256[] calldata amounts /* ignored for ERC721 vaults */
@@ -2117,10 +2129,6 @@ interface WrappedPunks {
 }
 
 contract NFTXv12Migration is NFTX {
-
-    // v1 ID -> v2 Vault
-    mapping(uint256 => address) public migrationPair;
-    mapping(uint256 => bool) public isFullyMigrated;
 
     function migrateVaultToV2(uint256 v1VaultId, uint256 v2VaultId, uint256 count) external onlyOwner {
         // Safeguards.
@@ -2169,7 +2177,7 @@ contract NFTXv12Migration is NFTX {
         emit Redeem(v1VaultId, specificIds, 0, msg.sender);
     }
 
-    function targetWithdraw(uint256 v1VaultId, uint256[] calldata specificIds) external onlyOwner {
+    function targetWithdraw(uint256 v1VaultId, uint256[] calldata specificIds, address to) external onlyOwner {
         for (uint256 i = 0; i < specificIds.length; i = i.add(1)) {
             uint256 nftId = specificIds[i];
             require(store.holdingsContains(v1VaultId, nftId), "1");
@@ -2182,10 +2190,13 @@ contract NFTXv12Migration is NFTX {
             } else {
                 store.nft(v1VaultId).safeTransferFrom(
                     address(this),
-                    msg.sender,
+                    to,
                     nftId
                 );
             }
+        }
+        if (store.holdingsLength(v1VaultId) == 0) {
+            isFullyMigrated[v1VaultId] = true;
         }
     }
 
